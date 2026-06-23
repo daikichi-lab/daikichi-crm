@@ -26,6 +26,7 @@ export default defineConfig({
       APP_DATA_DRIVER: 'pglite',
       APP_AUTH: 'dev',
       APP_SEED: '1',
+      APP_SESSION_SECRET: 'e2e-test-secret',
       NODE_ENV: 'production',
     },
   },

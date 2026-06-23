@@ -21,7 +21,7 @@ const NAV: NavItem[] = [
 const CONNECT: NavItem[] = [
   { id: 'meetings', label: '打ち合わせ', href: '/meetings', ic: 'calendar' },
   { id: 'notes', label: '議事録', href: '/notes', ic: 'doc' },
-  { id: 'forms', label: 'フォーム', href: '/forms', ic: 'inbox' },
+  { id: 'forms', label: 'フォーム', href: '/forms/inbox', ic: 'inbox' },
   { id: 'newsletter', label: 'メルマガ', href: '/newsletters', ic: 'mail' },
 ];
 const ADMIN: NavItem[] = [{ id: 'admin', label: '管理', href: '/admin/users', ic: 'gear' }];
