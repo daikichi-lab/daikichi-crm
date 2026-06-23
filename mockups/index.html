@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>大吉CRM — 画面モックアップ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  body{ background:var(--app-bg); }
+  .hero{ background:linear-gradient(180deg,var(--brand-900),var(--brand-700)); color:#fff; padding:40px 28px; }
+  .hero .seal{ width:46px;height:46px;border-radius:11px;background:var(--gold-500);color:#2a1c05;display:grid;place-items:center;font-weight:800;font-size:24px;}
+  .wrap{ max-width:1080px; margin:0 auto; padding:0 24px; }
+  .hero h1{ color:#fff; font-size:28px; margin-top:14px;}
+  .hero p{ color:#bcd2e4; max-width:680px; }
+  .sec{ padding:28px 0; }
+  .sec h2{ font-size:15px; letter-spacing:.04em; text-transform:none; color:var(--ink-2); margin-bottom:14px; padding-bottom:8px; border-bottom:1px solid var(--line);}
+  .cards{ display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:14px;}
+  .scard{ background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:16px; box-shadow:var(--shadow-1); display:block; color:inherit;}
+  .scard:hover{ box-shadow:var(--shadow-2); text-decoration:none; transform:translateY(-1px); transition:.12s;}
+  .scard .id{ font-size:11px; font-weight:700; color:var(--brand-600); letter-spacing:.05em;}
+  .scard h3{ font-size:15px; margin:4px 0 6px;}
+  .scard p{ margin:0; color:var(--ink-3); font-size:12.5px;}
+  .scard .ph{ display:inline-block; margin-top:10px; font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px; background:var(--brand-50); color:var(--brand-700);}
+  .scard .ph.p15{ background:var(--gold-50); color:var(--gold-700);}
+  .swatches{ display:flex; flex-wrap:wrap; gap:10px;}
+  .sw{ width:108px; }
+  .sw .b{ height:46px; border-radius:8px; box-shadow:var(--shadow-1); border:1px solid rgba(0,0,0,.05);}
+  .sw .l{ font-size:11px; color:var(--ink-3); margin-top:5px;} .sw .h{ font-size:11px; color:var(--ink-2); font-weight:700;}
+  .typ{ display:flex; flex-direction:column; gap:6px;}
+</style>
+</head>
+<body>
+  <div class="hero">
+    <div class="wrap">
+      <span class="seal">大</span>
+      <h1>大吉CRM — 画面モックアップ</h1>
+      <p>会計事務所の顧客管理＋ビジネスマッチング。方向性は「業務向け・信頼感」。台帳の趣（等幅数字・罫）と、求(青)↔提(金)のマッチング・モチーフが識別子です。各画面はHTML/CSSで、後の実装に流用できます。</p>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="sec">
+      <h2>MVP（Phase 1）画面</h2>
+      <div class="cards">
+        <a class="scard" href="login.html"><div class="id">S-00</div><h3>ログイン</h3><p>メール＋パスワード（Supabase Auth）</p><span class="ph">P0/1</span></a>
+        <a class="scard" href="dashboard.html"><div class="id">S-01</div><h3>ホーム / ダッシュボード</h3><p>件数サマリ・最近更新・主要導線</p><span class="ph">P1</span></a>
+        <a class="scard" href="companies.html"><div class="id">S-02</div><h3>顧客（企業）一覧</h3><p>検索・絞り込み・CSV・新規</p><span class="ph">P1</span></a>
+        <a class="scard" href="company-detail.html"><div class="id">S-03</div><h3>企業詳細</h3><p>企業情報＋担当者＋名刺＋<b>資料タブ</b>（PDF・商品資料・契約書等）</p><span class="ph">P1</span></a>
+        <a class="scard" href="company-form.html"><div class="id">S-04</div><h3>企業 新規/編集</h3><p>タグ入力（マスタ＋自由追加）</p><span class="ph">P1</span></a>
+        <a class="scard" href="contact-form.html"><div class="id">S-05</div><h3>担当者 新規/編集</h3><p>名刺画像（表/裏）アップロード</p><span class="ph">P1</span></a>
+        <a class="scard" href="contact-detail.html"><div class="id">S-05</div><h3>担当者 詳細</h3><p>連絡先・名刺・SNS・関連議事録・主担当</p><span class="ph">P1</span></a>
+        <a class="scard" href="people.html"><div class="id">人物</div><h3>会った人（人物ディレクトリ）</h3><p>会社をまたいだ担当者一覧 → 選ぶと右に詳細（マスター/詳細）</p><span class="ph">新機能</span></a>
+        <a class="scard" href="scan.html"><div class="id">S-06</div><h3>名刺スキャン → 顧客作成</h3><p>OCR抽出 → 確認・補正 → 作成</p><span class="ph p15">P1→1.5</span></a>
+        <a class="scard" href="import.html"><div class="id">S-07</div><h3>CSV取込</h3><p>検証 → エラー提示 → 確定</p><span class="ph">P1</span></a>
+        <a class="scard" href="trash.html"><div class="id">S-09</div><h3>ゴミ箱 / 復元</h3><p>論理削除の閲覧・復元</p><span class="ph">P1</span></a>
+        <a class="scard" href="account.html"><div class="id">S-14</div><h3>アカウント</h3><p>プロフィール・パスワード・ログアウト</p><span class="ph">P1</span></a>
+      </div>
+    </div>
+
+    <div class="sec">
+      <h2>マッチング &amp; 紹介（Phase 2）</h2>
+      <div class="cards">
+        <a class="scard" href="matching.html"><div class="id">S-10</div><h3>マッチング候補</h3><p>求↔提の重なりをスコア順に提示・紹介起票</p><span class="ph p15">P2</span></a>
+        <a class="scard" href="referrals.html"><div class="id">S-11</div><h3>紹介履歴</h3><p>提案→打診中→成立/不成立 の追跡</p><span class="ph p15">P2</span></a>
+      </div>
+    </div>
+
+    <div class="sec">
+      <h2>管理・共通（admin / 横断）</h2>
+      <div class="cards">
+        <a class="scard" href="admin-users.html"><div class="id">S-12</div><h3>管理: ユーザー</h3><p>スタッフ招待・無効化・ロール</p><span class="ph">admin</span></a>
+        <a class="scard" href="admin-masters.html"><div class="id">S-13</div><h3>管理: タグ/業種マスタ</h3><p>タグ名寄せ・業種マスタ編集</p><span class="ph">admin</span></a>
+        <a class="scard" href="companies.html"><div class="id">S-08</div><h3>CSV書き出し</h3><p>範囲/文字コード・フォーミュラ対策（一覧内ダイアログ）</p><span class="ph">P1</span></a>
+        <a class="scard" href="states.html"><div class="id">共通</div><h3>状態カタログ</h3><p>空/読込中/エラー/403/404・名刺ビューア</p><span class="ph">横断</span></a>
+      </div>
+    </div>
+
+    <div class="sec">
+      <h2>連携・収集（新機能）</h2>
+      <div class="cards">
+        <a class="scard" href="schedule.html"><div class="id">提案</div><h3>期限・タスク（決算/申告カレンダー）</h3><p>決算月から税務期限を自動生成＋手動タスク・遅延管理・Googleカレンダー書出</p><span class="ph p15">提案</span></a>
+        <a class="scard" href="activities.html"><div class="id">提案</div><h3>活動履歴（タイムライン）</h3><p>電話・面談・メール・議事録・紹介・メルマガ・フォーム・名刺を時系列で横断表示</p><span class="ph p15">提案</span></a>
+        <a class="scard" href="documents.html"><div class="id">提案</div><h3>資料（全社横断検索）</h3><p>全社の保管資料をファイル名・種別・会社で横断検索。UIもClaude（MCP search_documents）も同じ結果</p><span class="ph p15">提案</span></a>
+        <a class="scard" href="meetings.html"><div class="id">連携</div><h3>打ち合わせ（Google Calendar）</h3><p>予定の出席者↔CRM自動リンク・議事録ステータス</p><span class="ph p15">P2-3</span></a>
+        <a class="scard" href="notes.html"><div class="id">連携</div><h3>議事録（Notta）</h3><p>Notta→Googleドライブ自動取込＋手動取込</p><span class="ph p15">P2-3</span></a>
+        <a class="scard" href="note-detail.html"><div class="id">連携</div><h3>議事録 詳細</h3><p>要点・次にやること・全文・次アクション</p><span class="ph p15">P2-3</span></a>
+        <a class="scard" href="form-public.html"><div class="id">公開</div><h3>顧客情報フォーム（公開）</h3><p>お客様が入力する公開フォーム（ログイン不要）</p><span class="ph">公開</span></a>
+        <a class="scard" href="form-inbox.html"><div class="id">収集</div><h3>フォーム回答 受信箱</h3><p>確認→取込・重複検出（スタッフ）</p><span class="ph">P1-2</span></a>
+        <a class="scard" href="form-edit.html"><div class="id">フォーム</div><h3>フォーム管理（編集）</h3><p>項目の追加・必須/表示・公開URL・購読同意の設定</p><span class="ph">新機能</span></a>
+        <a class="scard" href="newsletters.html"><div class="id">メルマガ</div><h3>メルマガ配信</h3><p>配信トピック×顧客属性でセグメント配信・履歴</p><span class="ph">新機能</span></a>
+        <a class="scard" href="newsletter-compose.html"><div class="id">メルマガ</div><h3>メルマガ作成</h3><p>本文＋差し込み・セグメント・対象人数・送信</p><span class="ph">新機能</span></a>
+        <a class="scard" href="newsletter-detail.html"><div class="id">メルマガ</div><h3>配信の結果</h3><p>送信/失敗/停止スキップの明細・本文プレビュー</p><span class="ph">新機能</span></a>
+        <a class="scard" href="unsubscribe.html"><div class="id">公開</div><h3>配信停止（公開）</h3><p>受信者がトピック別に配信停止（ログイン不要・token）</p><span class="ph">公開</span></a>
+      </div>
+    </div>
+
+    <div class="sec">
+      <h2>配色</h2>
+      <div class="swatches">
+        <div class="sw"><div class="b" style="background:#0e2c47"></div><div class="h">ブランド900</div><div class="l">#0e2c47</div></div>
+        <div class="sw"><div class="b" style="background:#1b4d72"></div><div class="h">主操作 700</div><div class="l">#1b4d72</div></div>
+        <div class="sw"><div class="b" style="background:#2e78b0"></div><div class="h">対話 500</div><div class="l">#2e78b0</div></div>
+        <div class="sw"><div class="b" style="background:#b7861f"></div><div class="h">印章ゴールド</div><div class="l">#b7861f</div></div>
+        <div class="sw"><div class="b" style="background:#0f2236"></div><div class="h">文字</div><div class="l">#0f2236</div></div>
+        <div class="sw"><div class="b" style="background:#eaeef3;border-color:#dbe2ea"></div><div class="h">背景</div><div class="l">#eaeef3</div></div>
+        <div class="sw"><div class="b" style="background:#2f8056"></div><div class="h">顧問中</div><div class="l">#2f8056</div></div>
+        <div class="sw"><div class="b" style="background:#c0392f"></div><div class="h">危険</div><div class="l">#c0392f</div></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <h2>タイポ & コンポーネント</h2>
+      <div class="grid-2">
+        <div class="panel"><div class="panel-body typ">
+          <div style="font-size:26px;font-weight:800;">株式会社 大吉商事</div>
+          <div style="font-size:15px;font-weight:700;color:var(--ink-2)">見出し / Inter + Noto Sans JP</div>
+          <div>本文テキスト。視認性と情報密度のバランスを重視します。</div>
+          <div class="num" style="font-size:15px;">ID 000248 ・ 売上 1千万〜5千万 ・ 2026/06/19（等幅数字）</div>
+        </div></div>
+        <div class="panel"><div class="panel-body" style="display:flex;flex-direction:column;gap:12px;">
+          <div class="row">
+            <button class="btn btn-primary">主操作</button>
+            <button class="btn">標準</button>
+            <button class="btn btn-ghost">補助</button>
+            <button class="btn btn-danger">削除</button>
+          </div>
+          <div class="row">
+            <span class="badge active"><span class="dot"></span>顧問中</span>
+            <span class="badge prospect"><span class="dot"></span>見込み</span>
+            <span class="badge dormant"><span class="dot"></span>休眠</span>
+          </div>
+          <div class="chips">
+            <span class="chip need"><span class="mk">求</span>集客</span>
+            <span class="chip need"><span class="mk">求</span>資金調達</span>
+            <span class="chip offer"><span class="mk">提</span>食材卸</span>
+            <span class="chip-add chip">＋ タグ</span>
+          </div>
+        </div></div>
+      </div>
+    </div>
+    <div class="sec muted" style="font-size:12px;">※ 静的モックです（ダミーデータ）。フォントは Google Fonts を参照するためオンラインで閲覧してください。</div>
+  </div>
+</body>
+</html>

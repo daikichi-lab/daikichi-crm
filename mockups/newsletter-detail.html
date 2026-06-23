@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>配信の結果・大吉CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  .topic{ display:inline-flex; align-items:center; height:22px; padding:0 9px; border-radius:6px;
+    font-size:12px; font-weight:700; color:var(--brand-700); background:var(--brand-tint); border:1px solid #cfe0ef; }
+  .badge.sent{ color:var(--green-700); background:var(--green-50); border-color:#cce7d6; }
+  .badge.failed{ color:var(--red-600); background:var(--red-50); border-color:#e6c4c1; }
+  .badge.skip{ color:var(--ink-3); background:var(--surface-3); border-color:var(--line); }
+  .badge.bounce{ color:var(--amber-600); background:var(--amber-50); border-color:#ecdcb4; }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" data-active="newsletter"></aside>
+  <div class="main">
+    <header class="topbar">
+      <button class="btn btn-icon hamb" data-icon="menu" aria-label="メニュー"></button>
+      <div class="crumb"><a href="newsletters.html">メルマガ</a> / <b>配信の結果</b></div>
+      <div class="spacer"></div>
+      <button class="btn btn-sm" onclick="toast('内容を複製して新規作成します')">複製して再利用</button>
+      <button class="btn btn-sm" onclick="toast('配信先をCSVで書き出します（エスケープ済み）')">CSV書き出し</button>
+      <div class="user"><div class="avatar">山</div></div>
+    </header>
+
+    <div class="content">
+      <div class="page-head">
+        <div>
+          <h2>【6月】税制改正のポイントと今すぐできる節税</h2>
+          <div class="sub">2026/06/15 08:00 に送信 ・ <span class="badge sent" style="vertical-align:middle;"><span class="dot"></span>送信済</span></div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <!-- 左: 配信結果サマリ＋明細 -->
+        <div>
+          <div class="stats" style="grid-template-columns:repeat(5,1fr);">
+            <div class="stat"><div class="k">対象</div><div class="v num">142</div></div>
+            <div class="stat" style="--c:var(--green-600);"><div class="k">送信済</div><div class="v num" style="color:var(--green-700);">138</div></div>
+            <div class="stat"><div class="k">失敗</div><div class="v num" style="color:var(--red-600);">1</div></div>
+            <div class="stat"><div class="k">バウンス</div><div class="v num">0</div></div>
+            <div class="stat gold"><div class="k">配信停止スキップ</div><div class="v num">3</div></div>
+          </div>
+
+          <div class="banner info mt16">
+            <span data-icon="help" data-iw="16"></span>
+            <div><b>開封・クリックの計測</b>は拡張フェーズで対応予定です。現在は送信成否（送信済 / 失敗 / バウンス / 配信停止スキップ）を記録します。</div>
+          </div>
+
+          <div class="panel mt16">
+            <div class="panel-head"><h3>配信明細（宛先ごと）</h3><span class="count num">142 件</span>
+              <div class="actions">
+                <select class="select btn-sm" style="height:32px;"><option>状態: すべて</option><option>送信済</option><option>失敗</option><option>バウンス</option><option>配信停止スキップ</option></select>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table class="table">
+                <thead><tr><th>担当者</th><th>会社</th><th>メール</th><th>状態</th><th class="right">送信時刻</th></tr></thead>
+                <tbody>
+                  <tr style="cursor:default;"><td class="name">山田 健太</td><td>株式会社 大吉商事</td><td class="num muted" style="font-size:12px;">yamada@daikichi-shoji.co.jp</td><td><span class="badge sent"><span class="dot"></span>送信済</span></td><td class="right num muted">08:00:12</td></tr>
+                  <tr style="cursor:default;"><td class="name">佐藤 京子</td><td>みどり食堂</td><td class="num muted" style="font-size:12px;">sato@midori-shokudo.jp</td><td><span class="badge sent"><span class="dot"></span>送信済</span></td><td class="right num muted">08:00:13</td></tr>
+                  <tr style="cursor:default;"><td class="name">大島 涼</td><td>合同会社 海風マリン</td><td class="num muted" style="font-size:12px;">oshima@umikaze.jp</td><td><span class="badge sent"><span class="dot"></span>送信済</span></td><td class="right num muted">08:00:15</td></tr>
+                  <tr style="cursor:default;background:var(--red-50);"><td class="name">高橋 結衣</td><td>ベーカリー麦の香</td><td class="num muted" style="font-size:12px;">yui@muginoka.jp</td><td><span class="badge failed"><span class="dot"></span>失敗</span> <span class="muted" style="font-size:11px;">宛先不明(550)</span></td><td class="right num muted">08:00:18</td></tr>
+                  <tr style="cursor:default;background:var(--surface-2);"><td class="name">岡田 司</td><td>フィット鍼灸院</td><td class="num muted" style="font-size:12px;">okada@fit-shinkyu.jp</td><td><span class="badge skip"><span class="dot"></span>配信停止スキップ</span></td><td class="right num muted">—</td></tr>
+                  <tr style="cursor:default;"><td class="name">鈴木 一郎</td><td>鈴木工務店</td><td class="num muted" style="font-size:12px;">suzuki@suzuki-koumuten.jp</td><td><span class="badge sent"><span class="dot"></span>送信済</span></td><td class="right num muted">08:00:21</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="tfoot"><span>142 件中 1–6 を表示</span>
+              <div class="pager"><span class="pg">‹</span><span class="pg on">1</span><span class="pg">2</span><span class="pg">…</span><span class="pg">24</span><span class="pg">›</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右: 配信の条件・内容 -->
+        <div>
+          <div class="panel">
+            <div class="panel-head"><h3>この配信について</h3></div>
+            <div class="panel-body ledger">
+              <dl class="kv">
+                <dt>状態</dt><dd><span class="badge sent"><span class="dot"></span>送信済</span></dd>
+                <dt>配信トピック</dt><dd><span class="topic">税制改正ニュース</span></dd>
+                <dt>セグメント</dt><dd>顧問中（購読者）<br><span class="muted" style="font-size:12px;">＋ 同意なし・配信停止を自動除外</span></dd>
+                <dt>送信者</dt><dd>大吉会計事務所</dd>
+                <dt>返信先</dt><dd class="num" style="font-size:12.5px;">info@daikichi-kaikei.example.jp</dd>
+                <dt>作成者</dt><dd>山田 健太</dd>
+                <dt>送信日時</dt><dd class="num">2026/06/15 08:00</dd>
+                <dt>送信基盤</dt><dd>送信API（日次上限内でスロットル配信）</dd>
+              </dl>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><h3>本文プレビュー</h3></div>
+            <div class="panel-body" style="font-size:12.5px;color:var(--ink-2);line-height:1.7;">
+              <div class="b" style="color:var(--ink);">【6月】税制改正のポイントと今すぐできる節税</div>
+              <div class="muted" style="margin-top:8px;">株式会社 大吉商事<br>山田 健太 様<br><br>いつも大変お世話になっております。大吉会計事務所です。本月の税制改正のうち…</div>
+              <div class="muted" style="margin-top:12px;border-top:1px dashed var(--line-strong);padding-top:10px;font-size:11.5px;">
+                大吉会計事務所 ／ 〒000-0000 … ／ <a href="unsubscribe.html" target="_blank">配信を停止する</a></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

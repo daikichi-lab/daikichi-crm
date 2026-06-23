@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>マッチング・大吉CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  .match-layout{ display:grid; grid-template-columns:1fr 240px; gap:16px; align-items:start; }
+  @media (max-width:980px){ .match-layout{ grid-template-columns:1fr; } }
+  .match-filter{ position:sticky; top:76px; }
+  .match-filter .fgroup{ margin-bottom:14px; } .match-filter .lab{ font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px;display:block; }
+  .match-filter label.ck{ display:flex;align-items:center;gap:8px;font-size:13px;padding:3px 0;cursor:pointer; }
+
+  /* 紹介レコメンドカード */
+  .reco{ padding:16px 18px; }
+  .reco + .reco{ margin-top:14px; }
+  .reco.skipped{ opacity:.45; }
+  .reco-top{ display:flex; align-items:center; gap:10px; }
+  .fit{ display:inline-flex;align-items:center;gap:7px;height:25px;padding:0 11px;border-radius:999px;font-size:12px;font-weight:800;border:1px solid; }
+  .fit .dots{ font-size:9px;letter-spacing:1px;opacity:.9; }
+  .fit-hi{ color:var(--green-700);background:var(--green-50);border-color:#cce7d6; }
+  .fit-mid{ color:var(--brand-600);background:var(--brand-50);border-color:#cfe0ef; }
+  .kind{ font-size:11.5px;font-weight:700;color:var(--ink-3);border:1px solid var(--line);border-radius:5px;padding:1px 7px; }
+  .reco-top .actions{ margin-left:auto;display:flex;gap:8px; }
+  .reco-flow{ display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:17px;font-weight:800;margin:12px 0 8px; }
+  .reco-flow .nm{ color:var(--ink); }
+  .reco-flow .bring{ color:#fff;background:var(--brand-700);padding:2px 12px;border-radius:8px; }
+  .reco-flow .lk{ color:var(--ink-3);font-size:13px;font-weight:600; }
+  .reco-why{ color:var(--ink-2);font-size:13px;margin:0 0 12px; }
+  .reco-why b{ color:var(--ink); }
+  .reco-pairs{ display:flex;flex-direction:column;gap:7px;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px; }
+  .pp{ display:flex;align-items:center;gap:10px;font-size:12.5px; }
+  .pp .to{ color:var(--gold-600);font-weight:800; }
+  .pp .lb{ color:var(--ink-3);width:128px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" data-active="matching"></aside>
+  <div class="main">
+    <header class="topbar">
+      <button class="btn btn-icon hamb" data-icon="menu" aria-label="メニュー"></button>
+      <h1>マッチング</h1>
+      <div class="search"><span class="mag"></span><input placeholder="起点にする会社を検索…"></div>
+      <div class="spacer"></div>
+      <button class="btn btn-sm" data-icon="help" data-iw="15" onclick="openGuide('マッチングの使い方', document.getElementById('guide').innerHTML)">使い方</button>
+      <div class="user"><div class="avatar">山</div></div>
+    </header>
+
+    <div class="content">
+      <div id="guide" hidden>
+        <p>顧客どうしの <b>「紹介できる組み合わせ」</b> を、相性の高い順に表示します。</p>
+        <h4>見方</h4>
+        <ul>
+          <li>1件＝1つの紹介文「<b>A社 に B社 を紹介</b>」。下に「なぜ紹介できるか（求↔提のどのタグが一致したか）」が出ます。</li>
+          <li><b>相性 高い／中</b> は、一致したタグの数です。</li>
+          <li>協業先紹介＝相手を紹介してもらう／顧客紹介＝自社の顧客を紹介する。</li>
+        </ul>
+        <h4>操作</h4>
+        <ul>
+          <li>上で<b>起点の会社</b>を選ぶと、その会社に合う相手が出ます。</li>
+          <li><b>この紹介を起票</b>＝紹介履歴に登録。<b>見送り</b>＝候補から外す。</li>
+          <li>右の<b>絞り込み</b>で相性・紹介の向き・エリアを絞れます。</li>
+        </ul>
+      </div>
+      <div class="page-head">
+        <div>
+          <h2>紹介できる組み合わせ <span class="tag" style="font-size:11px;border:1px solid var(--line-strong);padding:1px 7px;border-radius:5px;color:var(--ink-3);vertical-align:middle;">Phase 2</span></h2>
+          <div class="sub">ある会社が「求めてること」を、別の会社が「提供できる」とき、紹介の候補になります。相性の高い順に並んでいます。</div>
+        </div>
+        <div class="actions">
+          <button class="btn" id="modeBtn" onclick="toggleMode()">事務所全体のおすすめ</button>
+        </div>
+      </div>
+
+      <div class="banner info" id="globalNote" style="display:none;margin-bottom:14px;">全顧客の「求めてること」↔「提供できること」から、いま成立しやすい組み合わせを上位表示しています。特定の会社を起点にしたいときは <a href="#" onclick="toggleMode();return false;">会社を選んで探す</a> へ。</div>
+
+      <!-- 起点会社 -->
+      <div class="panel" id="originPanel">
+        <div class="panel-body" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+          <div>
+            <div class="muted" style="font-size:12px;font-weight:700;">どの会社に合う紹介先を探す？</div>
+            <select class="select" style="min-width:260px;margin-top:6px;">
+              <option>株式会社 大吉商事（卸売・東京都）</option>
+              <option>みどり食堂（飲食・大阪府）</option>
+              <option>鈴木工務店（建設・愛知県）</option>
+              <option>テック合同会社（IT・東京都）</option>
+            </select>
+          </div>
+          <div style="align-self:stretch;width:1px;background:var(--line);"></div>
+          <div>
+            <div class="muted" style="font-size:12px;font-weight:700;margin-bottom:6px;">大吉商事 が求めてる</div>
+            <div class="chips"><span class="chip need"><span class="mk">求</span>販路拡大</span><span class="chip need"><span class="mk">求</span>EC強化</span><span class="chip need"><span class="mk">求</span>配送代行</span></div>
+          </div>
+          <div>
+            <div class="muted" style="font-size:12px;font-weight:700;margin-bottom:6px;">大吉商事 が提供できる</div>
+            <div class="chips"><span class="chip offer"><span class="mk">提</span>食材卸</span><span class="chip offer"><span class="mk">提</span>業務用パッケージ</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-head mt16" style="margin-bottom:10px;">
+        <div><h3 style="font-size:15px;">紹介の候補 <span class="num" id="candCount">4</span> 件</h3></div>
+      </div>
+
+      <div class="match-layout">
+        <div id="candList">
+
+          <!-- 1: 相性 高い -->
+          <div class="panel reco">
+            <div class="reco-top">
+              <span class="fit fit-hi">相性 高い <span class="dots">●●●</span></span>
+              <span class="muted" style="font-size:12px;">一致タグ 2件</span>
+              <span class="kind">協業先紹介（大吉商事の困りごとを解決）</span>
+              <div class="actions">
+                <button class="btn btn-sm btn-ghost" onclick="skipCand(this)">見送り</button>
+                <button class="btn btn-sm btn-primary" onclick="demoModal('この紹介を起票しますか？','「大吉商事 に テック合同会社 を紹介」（根拠: EC強化・販路拡大）を紹介履歴に登録します。','起票する')">この紹介を起票</button>
+              </div>
+            </div>
+            <div class="reco-flow"><span class="nm">大吉商事</span> <span class="lk">に</span> <span class="bring">テック合同会社</span> <span class="lk">を紹介</span></div>
+            <div class="reco-why">大吉商事が<b>求めてること</b>を、テック合同会社が<b>提供できる</b>から紹介できます。</div>
+            <div class="reco-pairs">
+              <div class="pp"><span class="lb">大吉商事の求めてる</span><span class="chip need"><span class="mk">求</span>EC強化</span><span class="to">→ 提供できる →</span><span class="chip offer"><span class="mk">提</span>EC強化</span><span class="muted">テック合同会社</span></div>
+              <div class="pp"><span class="lb">大吉商事の求めてる</span><span class="chip need"><span class="mk">求</span>販路拡大</span><span class="to">→ 提供できる →</span><span class="chip offer"><span class="mk">提</span>販路拡大</span><span class="muted">テック合同会社</span></div>
+            </div>
+          </div>
+
+          <!-- 2: 相性 中 -->
+          <div class="panel reco">
+            <div class="reco-top">
+              <span class="fit fit-mid">相性 中 <span class="dots">●●</span></span>
+              <span class="muted" style="font-size:12px;">一致タグ 1件</span>
+              <span class="kind">協業先紹介（大吉商事の困りごとを解決）</span>
+              <div class="actions">
+                <button class="btn btn-sm btn-ghost" onclick="skipCand(this)">見送り</button>
+                <button class="btn btn-sm btn-primary" onclick="demoModal('この紹介を起票しますか？','「大吉商事 に 北斗ロジ を紹介」（根拠: 配送代行）を紹介履歴に登録します。','起票する')">この紹介を起票</button>
+              </div>
+            </div>
+            <div class="reco-flow"><span class="nm">大吉商事</span> <span class="lk">に</span> <span class="bring">株式会社 北斗ロジ</span> <span class="lk">を紹介</span></div>
+            <div class="reco-why">大吉商事が探している「配送代行」を、北斗ロジが提供できます。</div>
+            <div class="reco-pairs">
+              <div class="pp"><span class="lb">大吉商事の求めてる</span><span class="chip need"><span class="mk">求</span>配送代行</span><span class="to">→ 提供できる →</span><span class="chip offer"><span class="mk">提</span>配送代行</span><span class="muted">北斗ロジ</span></div>
+            </div>
+          </div>
+
+          <!-- 3: 相性 中・逆方向（顧客紹介） -->
+          <div class="panel reco">
+            <div class="reco-top">
+              <span class="fit fit-mid">相性 中 <span class="dots">●●</span></span>
+              <span class="muted" style="font-size:12px;">一致タグ 1件</span>
+              <span class="kind">顧客紹介（大吉商事の強みが役立つ）</span>
+              <div class="actions">
+                <button class="btn btn-sm btn-ghost" onclick="skipCand(this)">見送り</button>
+                <button class="btn btn-sm btn-primary" onclick="demoModal('この紹介を起票しますか？','「みどり食堂 に 大吉商事 を紹介」（根拠: 食材卸）を紹介履歴に登録します。','起票する')">この紹介を起票</button>
+              </div>
+            </div>
+            <div class="reco-flow"><span class="nm">みどり食堂</span> <span class="lk">に</span> <span class="bring">大吉商事</span> <span class="lk">を紹介</span></div>
+            <div class="reco-why">みどり食堂が探している「食材卸」を、大吉商事が提供できます。大吉商事の顧客づくりにもつながります。</div>
+            <div class="reco-pairs">
+              <div class="pp"><span class="lb">みどり食堂の求めてる</span><span class="chip need"><span class="mk">求</span>食材卸</span><span class="to">→ 提供できる →</span><span class="chip offer"><span class="mk">提</span>食材卸</span><span class="muted">大吉商事</span></div>
+            </div>
+          </div>
+
+          <!-- 4: 相性 中 -->
+          <div class="panel reco">
+            <div class="reco-top">
+              <span class="fit fit-mid">相性 中 <span class="dots">●●</span></span>
+              <span class="muted" style="font-size:12px;">一致タグ 1件</span>
+              <span class="kind">協業先紹介（大吉商事の困りごとを解決）</span>
+              <div class="actions">
+                <button class="btn btn-sm btn-ghost" onclick="skipCand(this)">見送り</button>
+                <button class="btn btn-sm btn-primary" onclick="demoModal('この紹介を起票しますか？','「大吉商事 に 佐藤デザイン事務所 を紹介」（根拠: EC強化）を紹介履歴に登録します。','起票する')">この紹介を起票</button>
+              </div>
+            </div>
+            <div class="reco-flow"><span class="nm">大吉商事</span> <span class="lk">に</span> <span class="bring">佐藤デザイン事務所</span> <span class="lk">を紹介</span></div>
+            <div class="reco-why">大吉商事が進めたい「EC強化」を、佐藤デザイン事務所が提供できます。</div>
+            <div class="reco-pairs">
+              <div class="pp"><span class="lb">大吉商事の求めてる</span><span class="chip need"><span class="mk">求</span>EC強化</span><span class="to">→ 提供できる →</span><span class="chip offer"><span class="mk">提</span>EC強化</span><span class="muted">佐藤デザイン</span></div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 絞り込み -->
+        <aside class="panel match-filter">
+          <div class="panel-head"><h3 style="font-size:13.5px;">絞り込み</h3></div>
+          <div class="panel-body">
+            <div class="fgroup">
+              <span class="lab">相性</span>
+              <label class="ck"><input type="checkbox" checked> 高い</label>
+              <label class="ck"><input type="checkbox" checked> 中</label>
+            </div>
+            <div class="fgroup">
+              <span class="lab">紹介のしかた</span>
+              <label class="ck"><input type="checkbox" checked> 協業先を紹介する</label>
+              <label class="ck"><input type="checkbox" checked> 自社顧客を紹介する</label>
+            </div>
+            <div class="fgroup">
+              <span class="lab">エリア</span>
+              <label class="ck"><input type="checkbox"> 近いエリアだけ</label>
+            </div>
+            <button class="btn btn-sm btn-primary" style="width:100%;" onclick="toast('絞り込みました')">適用</button>
+          </div>
+        </aside>
+      </div>
+
+      <div class="muted mt16" style="font-size:12px;">※ 相性は「求めてること」と「提供できること」の一致数で決まります。同じ計算をブラウザと手元のClaude（MCP）が共有し、外部API課金はありません。</div>
+    </div>
+  </div>
+</div>
+<script src="assets/app.js"></script>
+<script>
+  function skipCand(btn){
+    const card = btn.closest('.reco'); card.classList.add('skipped');
+    const cnt = document.getElementById('candCount'); cnt.textContent = Math.max(0, parseInt(cnt.textContent,10) - 1);
+    toast('候補を見送りにしました');
+    setTimeout(() => { card.style.display = 'none'; }, 250);
+  }
+  // 「事務所全体のおすすめ」⇄「会社を選んで探す」を同じ画面でトグル（画面遷移しない）
+  let mmode = 'origin';
+  function toggleMode(){ setMode(mmode === 'origin' ? 'global' : 'origin'); }
+  function setMode(m){
+    mmode = m;
+    const isGlobal = m === 'global';
+    document.getElementById('originPanel').style.display = isGlobal ? 'none' : '';
+    document.getElementById('globalNote').style.display = isGlobal ? '' : 'none';
+    document.getElementById('modeBtn').textContent = isGlobal ? '会社を選んで探す' : '事務所全体のおすすめ';
+    toast(isGlobal ? '事務所全体のおすすめを表示中' : '起点の会社を選んで表示中');
+  }
+</script>
+</body>
+</html>

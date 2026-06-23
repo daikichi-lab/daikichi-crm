@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>紹介履歴・大吉CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  .badge.proposed{ color:var(--amber-600); background:var(--amber-50); border-color:#ecdcb4;}   /* 提案 */
+  .badge.talking{ color:var(--brand-600); background:var(--brand-50); border-color:#cfe0ef;}     /* 打診中 */
+  .badge.failed{ color:var(--red-700); background:var(--red-50); border-color:#e6c4c1;}          /* 不成立 */
+  .kind-pill{ display:inline-flex; align-items:center; height:22px; padding:0 9px; border-radius:6px; font-size:12px; font-weight:700; border:1px solid;}
+  .kind-pill.collab{ color:var(--brand-700); background:var(--brand-50); border-color:#cfe0ef;}
+  .kind-pill.intro{ color:var(--gold-700); background:var(--gold-50); border-color:#ecdcb4;}
+  .flow{ display:inline-flex; align-items:center; gap:6px;}
+  .flow .arr{ color:var(--ink-3);}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" data-active="referrals"></aside>
+  <div class="main">
+    <header class="topbar">
+      <button class="btn btn-icon hamb" data-icon="menu" aria-label="メニュー"></button>
+      <h1>紹介</h1>
+      <div class="search"><span class="mag"></span><input placeholder="企業名・根拠タグで検索…"></div>
+      <div class="spacer"></div>
+      <a class="btn btn-sm btn-primary" data-icon="link" data-iw="14" href="matching.html">マッチングから起票</a>
+      <div class="user"><div class="avatar">山</div></div>
+    </header>
+
+    <div class="content">
+      <div class="page-head">
+        <div>
+          <h2>紹介履歴 <span class="tag" style="font-size:11px;border:1px solid var(--line-strong);padding:1px 7px;border-radius:5px;color:var(--ink-3);vertical-align:middle;">Phase 2</span></h2>
+          <div class="sub">提案 → 打診中 → 成立 / 不成立。マッチング候補から起票した紹介を追跡します。</div>
+        </div>
+      </div>
+
+      <!-- ステータス別サマリ -->
+      <div class="stats" style="grid-template-columns:repeat(4,1fr);">
+        <div class="stat"><div class="k">提案</div><div class="v num">3</div></div>
+        <div class="stat"><div class="k">打診中</div><div class="v num">2</div><div class="d" style="color:var(--amber-600)">要フォロー 1</div></div>
+        <div class="stat gold"><div class="k">成立</div><div class="v num">8</div><div class="d">今月 +2</div></div>
+        <div class="stat"><div class="k">不成立</div><div class="v num">1</div></div>
+      </div>
+
+      <div class="panel mt16">
+        <div class="filterbar">
+          <select class="select"><option>ステータス: すべて</option><option>提案</option><option>打診中</option><option>成立</option><option>不成立</option></select>
+          <select class="select"><option>種別: すべて</option><option>協業先紹介</option><option>顧客紹介</option></select>
+          <select class="select"><option>起票者: すべて</option><option>山田 健太</option><option>佐藤 京子</option></select>
+          <span class="right"></span>
+          <span class="filter-pill">打診中 <span class="x">✕</span></span>
+          <a href="#" style="font-size:12.5px;">条件をクリア</a>
+        </div>
+
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>紹介（from → to）</th><th>種別</th><th>根拠タグ</th>
+                <th>ステータス</th><th>起票者</th><th class="right">起票日</th><th class="right">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="flow"><span class="name linkish">大吉商事</span><span class="arr">→</span><span class="name linkish">テック合同会社</span></span></td>
+                <td><span class="kind-pill collab">協業先紹介</span></td>
+                <td><div class="chips"><span class="chip need" style="height:20px;"><span class="mk">求</span>販路拡大</span><span class="chip need" style="height:20px;"><span class="mk">求</span>EC強化</span></div></td>
+                <td><span class="badge talking"><span class="dot"></span>打診中</span></td>
+                <td>山田 健太</td>
+                <td class="right num muted">06/15</td>
+                <td class="right"><button class="btn btn-sm" onclick="updateStatus('大吉商事 → テック合同会社')">状態を更新</button></td>
+              </tr>
+              <tr>
+                <td><span class="flow"><span class="name linkish">大吉商事</span><span class="arr">→</span><span class="name linkish">みどり食堂</span></span></td>
+                <td><span class="kind-pill intro">顧客紹介</span></td>
+                <td><div class="chips"><span class="chip offer" style="height:20px;"><span class="mk">提</span>食材卸</span></div></td>
+                <td><span class="badge active"><span class="dot"></span>成立</span></td>
+                <td>佐藤 京子</td>
+                <td class="right num muted">06/10</td>
+                <td class="right"><button class="btn btn-sm" onclick="updateStatus('大吉商事 → みどり食堂')">状態を更新</button></td>
+              </tr>
+              <tr>
+                <td><span class="flow"><span class="name linkish">佐藤デザイン事務所</span><span class="arr">→</span><span class="name linkish">鈴木工務店</span></span></td>
+                <td><span class="kind-pill collab">協業先紹介</span></td>
+                <td><div class="chips"><span class="chip offer" style="height:20px;"><span class="mk">提</span>Web広告</span></div></td>
+                <td><span class="badge proposed"><span class="dot"></span>提案</span></td>
+                <td>山田 健太</td>
+                <td class="right num muted">06/18</td>
+                <td class="right"><button class="btn btn-sm" onclick="updateStatus('佐藤デザイン事務所 → 鈴木工務店')">状態を更新</button></td>
+              </tr>
+              <tr>
+                <td><span class="flow"><span class="name linkish">北斗ロジ</span><span class="arr">→</span><span class="name linkish">大吉商事</span></span></td>
+                <td><span class="kind-pill collab">協業先紹介</span></td>
+                <td><div class="chips"><span class="chip offer" style="height:20px;"><span class="mk">提</span>配送代行</span></div></td>
+                <td><span class="badge talking"><span class="dot"></span>打診中</span></td>
+                <td>佐藤 京子</td>
+                <td class="right num muted">06/12</td>
+                <td class="right"><button class="btn btn-sm" onclick="updateStatus('北斗ロジ → 大吉商事')">状態を更新</button></td>
+              </tr>
+              <tr>
+                <td><span class="flow"><span class="name linkish">テック合同会社</span><span class="arr">→</span><span class="name linkish">カフェ・ひだまり</span></span></td>
+                <td><span class="kind-pill collab">協業先紹介</span></td>
+                <td><div class="chips"><span class="chip offer" style="height:20px;"><span class="mk">提</span>システム開発</span></div></td>
+                <td><span class="badge failed"><span class="dot"></span>不成立</span></td>
+                <td>山田 健太</td>
+                <td class="right num muted">05/28</td>
+                <td class="right"><button class="btn btn-sm" onclick="updateStatus('テック合同会社 → カフェ・ひだまり')">状態を更新</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="tfoot">
+          <span>14 件中 1–5 を表示</span>
+          <span class="legend"><span class="kind-pill collab" style="height:18px;">協業先紹介</span><span class="kind-pill intro" style="height:18px;">顧客紹介</span></span>
+          <div class="pager"><span class="pg">‹</span><span class="pg on">1</span><span class="pg">2</span><span class="pg">3</span><span class="pg">›</span></div>
+        </div>
+      </div>
+
+      <div class="muted mt16" style="font-size:12px;">※ 紹介レコードは <span class="b">referrals</span>（from_company / to_company / kind / matched_tags / status / created_by）。起票者を記録し、ステータスは 提案→打診中→成立/不成立 で追跡します（FR-R1〜R3）。</div>
+    </div>
+  </div>
+</div>
+<script src="assets/app.js"></script>
+<script>
+  // ステータス更新ダイアログ（モック）
+  function updateStatus(label){
+    const s = document.createElement('div');
+    s.className = 'scrim';
+    s.innerHTML = `<div class="modal">
+      <div class="m-head"><h3>ステータスを更新</h3></div>
+      <div class="m-body">
+        <div class="muted" style="font-size:12.5px;margin-bottom:10px;">${label}</div>
+        <div class="field"><label>ステータス</label>
+          <select class="select"><option>提案</option><option selected>打診中</option><option>成立</option><option>不成立</option></select></div>
+        <div class="field mt8"><label>メモ（任意）</label><textarea class="input" placeholder="打診の状況・次アクションなど"></textarea></div>
+      </div>
+      <div class="m-foot">
+        <button class="btn" onclick="closeModal(this)">キャンセル</button>
+        <button class="btn btn-primary" onclick="closeModal(this);toast('ステータスを更新しました')">更新</button>
+      </div></div>`;
+    s.addEventListener('click', e => { if (e.target === s) s.remove(); });
+    document.body.appendChild(s);
+  }
+</script>
+</body>
+</html>

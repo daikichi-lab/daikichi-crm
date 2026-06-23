@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>活動履歴・大吉CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  /* 種別タグ＝既存のセマンティック変数から導く */
+  .a-tag{ display:inline-flex; align-items:center; height:20px; padding:0 8px; border-radius:999px; font-size:11px; font-weight:700; border:1px solid; white-space:nowrap; }
+  .a-tag.c-blue{ color:var(--brand-700); background:var(--brand-50); border-color:#cfe0ef; }
+  .a-tag.c-gold{ color:var(--gold-700); background:var(--gold-50); border-color:#ecdcb4; }
+  .a-tag.c-green{ color:var(--green-700); background:var(--green-50); border-color:#cce7d6; }
+  .a-tag.c-dark{ color:var(--ink); background:var(--surface-3); border-color:var(--line-strong); }
+  .a-tag.c-gray{ color:var(--ink-2); background:var(--surface-3); border-color:var(--line); }
+
+  /* 日付グループ見出し */
+  .day{ display:flex; align-items:center; gap:10px; margin:0 0 12px; }
+  .day h4{ font-size:13.5px; } .day .c{ color:var(--ink-3); font-size:12px; } .day .ln{ flex:1; height:1px; background:var(--line); }
+  .day + .tl{ margin-bottom:22px; }
+
+  /* タイムライン */
+  .tl{ position:relative; }
+  .tl::before{ content:""; position:absolute; left:10px; top:4px; bottom:8px; width:2px; background:var(--line); }
+  .ev{ position:relative; padding-left:34px; padding-bottom:12px; }
+  .ev:last-child{ padding-bottom:0; }
+  .ev .nub{ position:absolute; left:0; top:2px; width:22px; height:22px; border-radius:50%; display:grid; place-items:center;
+    color:#fff; box-shadow:0 0 0 3px var(--surface); }
+  .ev .nub .ic{ width:12px; height:12px; }
+  .ev-card{ background:var(--surface-2); border:1px solid var(--line); border-radius:var(--radius); padding:10px 12px; }
+  .ev-card:hover{ background:#fff; box-shadow:var(--shadow-1); cursor:pointer; }
+  .ev-top{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .ev-co{ font-weight:700; color:var(--ink); } .ev-co:hover{ color:var(--brand-600); text-decoration:none; }
+  .ev-arr{ color:var(--gold-600); font-weight:800; }
+  .ev-when{ margin-left:auto; color:var(--ink-3); font-size:12px; }
+  .ev-body{ margin-top:5px; color:var(--ink-2); font-size:13px; }
+  .ev-foot{ margin-top:6px; font-size:12px; color:var(--ink-3); display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+
+  /* 右：今週の内訳バー */
+  .brk{ display:flex; flex-direction:column; gap:9px; }
+  .brk .r{ display:grid; grid-template-columns:78px 1fr 26px; gap:8px; align-items:center; font-size:12.5px; }
+  .brk .bar{ height:8px; border-radius:999px; background:var(--surface-3); overflow:hidden; }
+  .brk .bar > i{ display:block; height:100%; border-radius:999px; }
+  .brk .n{ text-align:right; color:var(--ink-2); font-weight:700; }
+  .leg{ display:flex; flex-direction:column; gap:8px; }
+  .leg .li{ display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--ink-2); }
+  .leg .sw{ width:10px; height:10px; border-radius:3px; flex:none; }
+  .side-col{ display:flex; flex-direction:column; gap:16px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" data-active="activities"></aside>
+  <div class="main">
+    <header class="topbar">
+      <button class="btn btn-icon hamb" data-icon="menu" aria-label="メニュー"></button>
+      <h1>活動履歴</h1>
+      <div class="search"><span class="mag"></span><input placeholder="企業・内容で絞り込み…"></div>
+      <div class="spacer"></div>
+      <button class="btn btn-sm btn-primary" onclick="demoModal('活動を記録','電話・訪問・メモなどの活動を手動で記録します（種別・企業・内容・担当）。','記録')">＋ 活動を記録</button>
+      <button class="btn btn-sm" data-icon="help" data-iw="15" onclick="openGuide('活動履歴の使い方', document.getElementById('guide').innerHTML)">使い方</button>
+      <div class="user"><div class="avatar">山</div></div>
+    </header>
+
+    <div class="content">
+      <div id="guide" hidden>
+        <p>顧客との<b>すべての接点（電話・訪問・面談・メール・議事録・紹介・メルマガ・フォーム・名刺）</b>を時系列で1か所にまとめた活動フィードです。</p>
+        <h4>記録のされ方</h4>
+        <ul>
+          <li>各画面の操作・連携から<b>自動で記録</b>（議事録の取込、紹介の打診、メルマガ送信、フォーム受信、名刺OCRなど）。</li>
+          <li>電話・訪問・メモは<b>「＋活動を記録」</b>で手動追加。</li>
+          <li>種別・担当・期間で絞り込み、<b>企業詳細</b>にはその会社だけのタイムラインを表示。</li>
+        </ul>
+        <h4>使いどころ</h4>
+        <ul>
+          <li>「最近この顧客に何をしたか」を即把握 → 休眠の兆候や<b>フォロー漏れ</b>を防ぐ。</li>
+        </ul>
+      </div>
+
+      <div class="page-head">
+        <div>
+          <h2>活動履歴</h2>
+          <div class="sub">顧客との接点を時系列で横断表示 — 2026年6月23日（火）時点</div>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="k">今週の活動</div><div class="v num">32 <small>件</small></div><div class="d">▲ 先週比 +6</div></div>
+        <div class="stat"><div class="k">今日</div><div class="v num">5 <small>件</small></div><div class="d muted" style="color:var(--ink-3)">電話・議事録・タスク</div></div>
+        <div class="stat"><div class="k">電話・面談（今週）</div><div class="v num">9 <small>件</small></div><div class="d muted" style="color:var(--ink-3)">直接接触</div></div>
+        <div class="stat gold"><div class="k">フォロー待ち</div><div class="v num">3 <small>件</small></div><div class="d" style="color:var(--gold-700)">未対応の接点</div></div>
+      </div>
+
+      <div class="grid-2 mt16">
+        <!-- 左：タイムライン -->
+        <div class="panel">
+          <div class="panel-head">
+            <h3>タイムライン</h3>
+            <span class="count">最近の活動</span>
+            <div class="actions">
+              <select class="select btn-sm" style="height:32px;">
+                <option>期間：今週</option><option>今日</option><option>今月</option>
+              </select>
+              <select class="select btn-sm" style="height:32px;">
+                <option>種別：すべて</option><option>電話</option><option>面談・訪問</option><option>メール</option><option>議事録</option><option>紹介</option><option>メルマガ</option><option>フォーム</option><option>名刺</option>
+              </select>
+              <select class="select btn-sm" style="height:32px;">
+                <option>担当：すべて</option><option>山田 健太</option><option>佐藤 京子</option><option>田中 一郎</option>
+              </select>
+            </div>
+          </div>
+          <div class="panel-body">
+
+            <div class="day"><h4>今日</h4><span class="c num">6/23（火）</span><span class="ln"></span></div>
+            <div class="tl">
+              <div class="ev">
+                <span class="nub" style="background:var(--green-600)" data-icon="check" data-iw="12"></span>
+                <div class="ev-card" onclick="location.href='company-detail.html'">
+                  <div class="ev-top"><span class="a-tag c-green">タスク完了</span><a class="ev-co" href="company-detail.html">合同会社 海風マリン</a><span class="ev-when num">14:00</span></div>
+                  <div class="ev-body">法人税・消費税 申告書ドラフトを作成完了。レビュー待ち。</div>
+                  <div class="ev-foot"><span>担当 佐藤 京子</span><span>· 期限・タスク連携</span></div>
+                </div>
+              </div>
+              <div class="ev">
+                <span class="nub" style="background:var(--ink-2)" data-icon="doc" data-iw="12"></span>
+                <div class="ev-card" onclick="location.href='note-detail.html'">
+                  <div class="ev-top"><span class="a-tag c-dark">議事録</span><a class="ev-co" href="company-detail.html">テック合同会社</a><span class="ev-when num">11:15</span></div>
+                  <div class="ev-body">「6月度 定例MTG」を Notta から取込・要約完了。次アクション3件を抽出。</div>
+                  <div class="ev-foot"><span>担当 田中 一郎</span><span>· <a href="note-detail.html">議事録を開く ›</a></span></div>
+                </div>
+              </div>
+              <div class="ev">
+                <span class="nub" style="background:var(--brand-600)" data-icon="phone" data-iw="12"></span>
+                <div class="ev-card" onclick="location.href='company-detail.html'">
+                  <div class="ev-top"><span class="a-tag c-blue">電話</span><a class="ev-co" href="company-detail.html">みどり食堂</a><span class="ev-when num">09:40</span></div>
+                  <div class="ev-body">緑川さんへ初回提案のフォロー。来週の対面打ち合わせで合意。</div>
+                  <div class="ev-foot"><span>担当 佐藤 京子</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="day"><h4>昨日</h4><span class="c num">6/22（月）</span><span class="ln"></span></div>
+            <div class="tl">
+              <div class="ev">
+                <span class="nub" style="background:var(--gold-600)" data-icon="users" data-iw="12"></span>
+                <div class="ev-card" onclick="location.href='company-detail.html'">
+                  <div class="ev-top"><span class="a-tag c-gold">訪問・面談</span><a class="ev-co" href="company-detail.html">鈴木工務店</a><span class="ev-when num">16:30</span></div>
+                  <div class="ev-body">現場訪問。採用の相談あり → needs に「人材採用」を追加。</div>
+                  <div class="ev-foot"><span>担当 田中 一郎</span><span>· <span class="chip need" style="height:18px;font-size:11px;"><span class="mk" style="width:13px;height:13px;">求</span>人材採用</span></span></div>
+                </div>
+              </div>
+              <div class="ev">
+                <span class="nub" style="background:var(--brand-500)" data-icon="mail" data-iw="12"></span>
+                <div class="ev-card" onclick="location.href='company-detail.html'">
+                  <div class="ev-top"><span class="a-tag c-blue">メール</span><a class="ev-co" href="company-detail.html">佐藤デザイン事務所</a><span class="ev-when num">10:05</span></div>
+                  <div class="ev-body">5月分の記帳資料の受領を確認し、返信。</div>
+                  <div class="ev-foot"><span>担当 山田 健太</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="day"><h4>6/20</h4><span class="c num">（金）</span><span class="ln"></span></div>
+            <div class="tl">
+              <div class="ev">
+                <span class="nub" style="background:var(--gold-700)" data-icon="handshake" data-iw="12"></span>
+                <div class="ev-card" onclick="location.href='referrals.html'">
+                  <div class="ev-top"><span class="a-tag c-gold">紹介</span><a class="ev-co" href="company-detail.html">株式会社 大吉商事</a><span class="ev-arr">→</span><a class="ev-co" href="company-detail.html">佐藤デザイン事務所</a><span class="ev-when num">15:20</span></div>
+                  <div class="ev-body">協業先紹介を打診（集客 / EC強化）。ステータス: 打診中。</div>
+                  <div class="ev-foot"><span>担当 山田 健太</span><span>· <a href="referrals.html">紹介を開く ›</a></span></div>
+                </div>
+              </div>
+              <div class="ev">
+                <span class="nub" style="background:var(--brand-700)" data-icon="send" data-iw="12"></span>
+                <div class="ev-card" onclick="location.href='newsletter-detail.html'">
+                  <div class="ev-top"><span class="a-tag c-blue">メルマガ</span><span class="ev-co">配信「税制改正ニュース 6月号」</span><span class="ev-when num">09:00</span></div>
+                  <div class="ev-body">対象 38 名へ送信（成功 36 / 配信停止スキップ 2）。</div>
+                  <div class="ev-foot"><span>担当 山田 健太</span><span>· <a href="newsletter-detail.html">結果を見る ›</a></span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="day"><h4>6/19</h4><span class="c num">（木）</span><span class="ln"></span></div>
+            <div class="tl">
+              <div class="ev">
+                <span class="nub" style="background:var(--green-600)" data-icon="inbox" data-iw="12"></span>
+                <div class="ev-card" onclick="location.href='form-inbox.html'">
+                  <div class="ev-top"><span class="a-tag c-green">フォーム</span><a class="ev-co" href="company-detail.html">カフェ・ひだまり</a><span class="ev-when num">17:45</span></div>
+                  <div class="ev-body">公開フォームから新規問い合わせを受信（未取込）。</div>
+                  <div class="ev-foot"><span class="badge dormant" style="height:18px;"><span class="dot"></span>未対応</span><span>· <a href="form-inbox.html">受信箱で確認 ›</a></span></div>
+                </div>
+              </div>
+              <div class="ev">
+                <span class="nub" style="background:var(--ink-3)" data-icon="card" data-iw="12"></span>
+                <div class="ev-card" onclick="location.href='company-detail.html'">
+                  <div class="ev-top"><span class="a-tag c-gray">名刺</span><a class="ev-co" href="company-detail.html">株式会社 北斗ロジ</a><span class="ev-when num">13:10</span></div>
+                  <div class="ev-body">北野さんの名刺を OCR 取込し、担当者に登録。</div>
+                  <div class="ev-foot"><span>担当 佐藤 京子</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="tfoot" style="padding:4px 0 0;">
+              <span>活動は各画面の操作・連携から自動記録（手動メモを含む）</span>
+              <div class="pager"><span class="pg">‹</span><span class="pg on">1</span><span class="pg">2</span><span class="pg">3</span><span class="pg">›</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右：今週の内訳＋凡例＋説明 -->
+        <div class="side-col">
+          <div class="panel">
+            <div class="panel-head"><h3>今週の内訳</h3><span class="count" style="margin-left:auto;">32 件</span></div>
+            <div class="panel-body">
+              <div class="brk">
+                <div class="r"><span>メール</span><span class="bar"><i style="width:90%;background:var(--brand-500)"></i></span><span class="n num">11</span></div>
+                <div class="r"><span>電話</span><span class="bar"><i style="width:66%;background:var(--brand-600)"></i></span><span class="n num">8</span></div>
+                <div class="r"><span>面談・訪問</span><span class="bar"><i style="width:42%;background:var(--gold-600)"></i></span><span class="n num">5</span></div>
+                <div class="r"><span>議事録</span><span class="bar"><i style="width:25%;background:var(--ink-2)"></i></span><span class="n num">3</span></div>
+                <div class="r"><span>紹介</span><span class="bar"><i style="width:17%;background:var(--gold-700)"></i></span><span class="n num">2</span></div>
+                <div class="r"><span>その他</span><span class="bar"><i style="width:25%;background:var(--ink-3)"></i></span><span class="n num">3</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><h3>種別</h3></div>
+            <div class="panel-body">
+              <div class="leg">
+                <div class="li"><span class="sw" style="background:var(--brand-600)"></span>電話・メール（連絡）</div>
+                <div class="li"><span class="sw" style="background:var(--gold-600)"></span>面談・訪問</div>
+                <div class="li"><span class="sw" style="background:var(--gold-700)"></span>紹介（協業先・顧客）</div>
+                <div class="li"><span class="sw" style="background:var(--ink-2)"></span>議事録（Notta連携）</div>
+                <div class="li"><span class="sw" style="background:var(--brand-700)"></span>メルマガ配信</div>
+                <div class="li"><span class="sw" style="background:var(--green-600)"></span>フォーム受信・タスク完了</div>
+                <div class="li"><span class="sw" style="background:var(--ink-3)"></span>名刺取込</div>
+              </div>
+              <div class="banner info mt16">
+                <span>ⓘ</span>
+                <div>活動は各操作・連携から<b>自動で記録</b>されます。<b>企業詳細</b>にはその会社だけのタイムラインを表示します（設計モック）。</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

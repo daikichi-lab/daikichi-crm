@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>資料（全社横断）・大吉CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  .ft{ display:inline-grid;place-items:center;width:34px;height:34px;border-radius:7px;font-size:9.5px;font-weight:800;color:#fff;flex:none;letter-spacing:.02em; }
+  .ft-pdf{ background:#c0392f; } .ft-img{ background:var(--brand-600); } .ft-xls{ background:#2f8056; } .ft-doc{ background:#216396; } .ft-etc{ background:var(--ink-3); }
+  .fname{ display:flex;align-items:center;gap:11px;min-width:0; } .fname .nm{ font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+  .cat{ display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border-radius:999px;font-size:11.5px;font-weight:600;border:1px solid var(--line);background:var(--surface-3);color:var(--ink-2);white-space:nowrap; }
+  .cat .d{ width:6px;height:6px;border-radius:50%;flex:none; }
+  .co-link{ font-weight:600; } .co-link:hover{ color:var(--brand-600); }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" data-active="documents"></aside>
+  <div class="main">
+    <header class="topbar">
+      <button class="btn btn-icon hamb" data-icon="menu" aria-label="メニュー"></button>
+      <h1>資料（全社横断）</h1>
+      <div class="search"><span class="mag"></span><input placeholder="ファイル名で検索…（例: 商品カタログ / 決算書）"></div>
+      <div class="spacer"></div>
+      <button class="btn btn-sm" data-icon="help" data-iw="15" onclick="openGuide('資料（全社横断）の使い方', document.getElementById('guide').innerHTML)">使い方</button>
+      <div class="user"><div class="avatar">山</div></div>
+    </header>
+
+    <div class="content">
+      <div id="guide" hidden>
+        <p>全社の保管資料（PDF・商品資料・契約書・決算書など）を<b>会社をまたいで横断検索</b>します。</p>
+        <ul>
+          <li><b>ファイル名・種別・会社・登録者</b>で絞り込み。例:「全社の“商品カタログ”を一覧」。</li>
+          <li><b>アップロード・削除は各企業の詳細</b>（資料タブ）から。ここは検索・閲覧の入口。</li>
+          <li>閲覧・ダウンロードは<b>有効期限つき署名URL</b>で安全に（非公開バケット）。</li>
+          <li>同じ検索は手元の <b>Claude（MCP: search_documents）</b> からも実行でき、結果は一致します（メタデータのみ）。</li>
+        </ul>
+      </div>
+
+      <div class="page-head">
+        <div>
+          <h2>資料（全社横断）</h2>
+          <div class="sub">会社をまたいで保管資料を検索・閲覧 — UIからもClaude（MCP）からも同じ結果</div>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="k">総資料数</div><div class="v num">19 <small>件</small></div><div class="d muted" style="color:var(--ink-3)">8 社に保管</div></div>
+        <div class="stat gold"><div class="k">合計容量</div><div class="v num">約24 <small>MB / 1GB</small></div><div class="progress" style="margin-top:9px;"><i style="width:2.4%"></i></div></div>
+        <div class="stat"><div class="k">今月の追加</div><div class="v num">8 <small>件</small></div><div class="d">▲ 6月</div></div>
+        <div class="stat"><div class="k">種別</div><div class="v num">5 <small>分類</small></div><div class="d muted" style="color:var(--ink-3)">契約/決算/商品/提案/他</div></div>
+      </div>
+
+      <div class="banner info mt16">
+        <span>ⓘ</span>
+        <div>検索ロジックは1か所（DB側RPC）に集約し、<b>この画面</b>と<b>Claude（MCP <code>search_documents</code>）</b>が同じ結果を返します。Claude にはメタデータのみ（ファイル本体・署名URLは渡さない＝SEC-12）。アップロード/削除は各企業の<b>資料タブ</b>から。</div>
+      </div>
+
+      <div class="panel mt16">
+        <div class="panel-head"><h3>検索結果</h3><span class="count num">19 件 ・ 約24 MB</span></div>
+        <div class="filterbar">
+          <input class="input" placeholder="ファイル名で検索…" style="min-width:220px;">
+          <select class="select">
+            <option>種別：すべて</option><option>契約書</option><option>決算書</option><option>商品・サービス資料</option><option>提案資料</option><option>その他</option>
+          </select>
+          <select class="select">
+            <option>会社：すべて</option><option>株式会社 大吉商事</option><option>テック合同会社</option><option>佐藤デザイン事務所</option><option>合同会社 海風マリン</option><option>株式会社 北斗ロジ</option><option>鈴木工務店</option><option>みどり食堂</option><option>さくら美容室</option>
+          </select>
+          <select class="select">
+            <option>登録者：すべて</option><option>山田 健太</option><option>佐藤 京子</option><option>田中 一郎</option>
+          </select>
+          <select class="select">
+            <option>並び替え：新しい順</option><option>古い順</option><option>サイズが大きい順</option><option>会社順</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>ファイル</th><th>会社</th><th>種別</th><th class="right">サイズ</th><th>登録日</th><th>登録者</th><th class="right">操作</th></tr></thead>
+            <tbody>
+              <tr onclick="filePreview('商品カタログ_海産物_2026.pdf')">
+                <td><div class="fname"><span class="ft ft-pdf">PDF</span><span class="nm">商品カタログ_海産物_2026.pdf</span></div></td>
+                <td><a class="co-link" href="company-detail.html#files">合同会社 海風マリン</a></td>
+                <td><span class="cat"><span class="d" style="background:var(--green-600)"></span>商品・サービス資料</span></td>
+                <td class="right num">2.8 MB</td><td class="num muted">2026/06/18</td><td class="muted">佐藤 京子</td>
+                <td class="right" style="white-space:nowrap;"><button class="btn btn-sm" onclick="event.stopPropagation();filePreview('商品カタログ_海産物_2026.pdf')">プレビュー</button><button class="btn btn-sm btn-icon" title="ダウンロード" onclick="event.stopPropagation();toast('署名URLを発行しました')">⤓</button></td>
+              </tr>
+              <tr onclick="filePreview('決算書_2025年4月期.xlsx')">
+                <td><div class="fname"><span class="ft ft-xls">XLS</span><span class="nm">決算書_2025年4月期.xlsx</span></div></td>
+                <td><a class="co-link" href="company-detail.html#files">合同会社 海風マリン</a></td>
+                <td><span class="cat"><span class="d" style="background:var(--brand-600)"></span>決算書</span></td>
+                <td class="right num">240 KB</td><td class="num muted">2026/06/15</td><td class="muted">佐藤 京子</td>
+                <td class="right" style="white-space:nowrap;"><button class="btn btn-sm" onclick="event.stopPropagation();filePreview('決算書_2025年4月期.xlsx')">プレビュー</button><button class="btn btn-sm btn-icon" title="ダウンロード" onclick="event.stopPropagation();toast('署名URLを発行しました')">⤓</button></td>
+              </tr>
+              <tr onclick="filePreview('御見積書_EC構築_2026.pdf')">
+                <td><div class="fname"><span class="ft ft-pdf">PDF</span><span class="nm">御見積書_EC構築_2026.pdf</span></div></td>
+                <td><a class="co-link" href="company-detail.html#files">株式会社 大吉商事</a></td>
+                <td><span class="cat"><span class="d" style="background:var(--brand-500)"></span>提案資料</span></td>
+                <td class="right num">480 KB</td><td class="num muted">2026/06/12</td><td class="muted">山田 健太</td>
+                <td class="right" style="white-space:nowrap;"><button class="btn btn-sm" onclick="event.stopPropagation();filePreview('御見積書_EC構築_2026.pdf')">プレビュー</button><button class="btn btn-sm btn-icon" title="ダウンロード" onclick="event.stopPropagation();toast('署名URLを発行しました')">⤓</button></td>
+              </tr>
+              <tr onclick="filePreview('システム開発_提案書_v2.pdf')">
+                <td><div class="fname"><span class="ft ft-pdf">PDF</span><span class="nm">システム開発_提案書_v2.pdf</span></div></td>
+                <td><a class="co-link" href="company-detail.html#files">テック合同会社</a></td>
+                <td><span class="cat"><span class="d" style="background:var(--brand-500)"></span>提案資料</span></td>
+                <td class="right num">780 KB</td><td class="num muted">2026/06/10</td><td class="muted">山田 健太</td>
+                <td class="right" style="white-space:nowrap;"><button class="btn btn-sm" onclick="event.stopPropagation();filePreview('システム開発_提案書_v2.pdf')">プレビュー</button><button class="btn btn-sm btn-icon" title="ダウンロード" onclick="event.stopPropagation();toast('署名URLを発行しました')">⤓</button></td>
+              </tr>
+              <tr onclick="filePreview('Web広告_提案資料.pdf')">
+                <td><div class="fname"><span class="ft ft-pdf">PDF</span><span class="nm">Web広告_提案資料.pdf</span></div></td>
+                <td><a class="co-link" href="company-detail.html#files">佐藤デザイン事務所</a></td>
+                <td><span class="cat"><span class="d" style="background:var(--brand-500)"></span>提案資料</span></td>
+                <td class="right num">900 KB</td><td class="num muted">2026/06/08</td><td class="muted">山田 健太</td>
+                <td class="right" style="white-space:nowrap;"><button class="btn btn-sm" onclick="event.stopPropagation();filePreview('Web広告_提案資料.pdf')">プレビュー</button><button class="btn btn-sm btn-icon" title="ダウンロード" onclick="event.stopPropagation();toast('署名URLを発行しました')">⤓</button></td>
+              </tr>
+              <tr onclick="filePreview('サービスメニュー_料金表.pdf')">
+                <td><div class="fname"><span class="ft ft-pdf">PDF</span><span class="nm">サービスメニュー_料金表.pdf</span></div></td>
+                <td><a class="co-link" href="company-detail.html#files">さくら美容室</a></td>
+                <td><span class="cat"><span class="d" style="background:var(--green-600)"></span>商品・サービス資料</span></td>
+                <td class="right num">420 KB</td><td class="num muted">2026/06/05</td><td class="muted">山田 健太</td>
+                <td class="right" style="white-space:nowrap;"><button class="btn btn-sm" onclick="event.stopPropagation();filePreview('サービスメニュー_料金表.pdf')">プレビュー</button><button class="btn btn-sm btn-icon" title="ダウンロード" onclick="event.stopPropagation();toast('署名URLを発行しました')">⤓</button></td>
+              </tr>
+              <tr onclick="filePreview('商品カタログ_業務用パッケージ_2026春.pdf')">
+                <td><div class="fname"><span class="ft ft-pdf">PDF</span><span class="nm">商品カタログ_業務用パッケージ_2026春.pdf</span></div></td>
+                <td><a class="co-link" href="company-detail.html#files">株式会社 大吉商事</a></td>
+                <td><span class="cat"><span class="d" style="background:var(--green-600)"></span>商品・サービス資料</span></td>
+                <td class="right num">3.2 MB</td><td class="num muted">2026/06/01</td><td class="muted">佐藤 京子</td>
+                <td class="right" style="white-space:nowrap;"><button class="btn btn-sm" onclick="event.stopPropagation();filePreview('商品カタログ_業務用パッケージ_2026春.pdf')">プレビュー</button><button class="btn btn-sm btn-icon" title="ダウンロード" onclick="event.stopPropagation();toast('署名URLを発行しました')">⤓</button></td>
+              </tr>
+              <tr onclick="filePreview('会社案内_パンフ.jpg')">
+                <td><div class="fname"><span class="ft ft-img">JPG</span><span class="nm">会社案内_パンフ.jpg</span></div></td>
+                <td><a class="co-link" href="company-detail.html#files">株式会社 大吉商事</a></td>
+                <td><span class="cat"><span class="d" style="background:var(--green-600)"></span>商品・サービス資料</span></td>
+                <td class="right num">1.1 MB</td><td class="num muted">2026/05/20</td><td class="muted">佐藤 京子</td>
+                <td class="right" style="white-space:nowrap;"><button class="btn btn-sm" onclick="event.stopPropagation();filePreview('会社案内_パンフ.jpg')">プレビュー</button><button class="btn btn-sm btn-icon" title="ダウンロード" onclick="event.stopPropagation();toast('署名URLを発行しました')">⤓</button></td>
+              </tr>
+              <tr onclick="filePreview('サービス紹介資料_SaaS.pdf')">
+                <td><div class="fname"><span class="ft ft-pdf">PDF</span><span class="nm">サービス紹介資料_SaaS.pdf</span></div></td>
+                <td><a class="co-link" href="company-detail.html#files">テック合同会社</a></td>
+                <td><span class="cat"><span class="d" style="background:var(--green-600)"></span>商品・サービス資料</span></td>
+                <td class="right num">1.4 MB</td><td class="num muted">2026/05/15</td><td class="muted">田中 一郎</td>
+                <td class="right" style="white-space:nowrap;"><button class="btn btn-sm" onclick="event.stopPropagation();filePreview('サービス紹介資料_SaaS.pdf')">プレビュー</button><button class="btn btn-sm btn-icon" title="ダウンロード" onclick="event.stopPropagation();toast('署名URLを発行しました')">⤓</button></td>
+              </tr>
+              <tr onclick="filePreview('施工事例集.pdf')">
+                <td><div class="fname"><span class="ft ft-pdf">PDF</span><span class="nm">施工事例集.pdf</span></div></td>
+                <td><a class="co-link" href="company-detail.html#files">鈴木工務店</a></td>
+                <td><span class="cat"><span class="d" style="background:var(--green-600)"></span>商品・サービス資料</span></td>
+                <td class="right num">4.1 MB</td><td class="num muted">2026/02/10</td><td class="muted">田中 一郎</td>
+                <td class="right" style="white-space:nowrap;"><button class="btn btn-sm" onclick="event.stopPropagation();filePreview('施工事例集.pdf')">プレビュー</button><button class="btn btn-sm btn-icon" title="ダウンロード" onclick="event.stopPropagation();toast('署名URLを発行しました')">⤓</button></td>
+              </tr>
+              <tr onclick="filePreview('顧問契約書_締結済.pdf')">
+                <td><div class="fname"><span class="ft ft-pdf">PDF</span><span class="nm">顧問契約書_締結済.pdf</span></div></td>
+                <td><a class="co-link" href="company-detail.html#files">株式会社 大吉商事</a></td>
+                <td><span class="cat"><span class="d" style="background:var(--gold-600)"></span>契約書</span></td>
+                <td class="right num">640 KB</td><td class="num muted">2025/11/02</td><td class="muted">山田 健太</td>
+                <td class="right" style="white-space:nowrap;"><button class="btn btn-sm" onclick="event.stopPropagation();filePreview('顧問契約書_締結済.pdf')">プレビュー</button><button class="btn btn-sm btn-icon" title="ダウンロード" onclick="event.stopPropagation();toast('署名URLを発行しました')">⤓</button></td>
+              </tr>
+              <tr onclick="filePreview('業務フロー説明資料.docx')">
+                <td><div class="fname"><span class="ft ft-doc">DOC</span><span class="nm">業務フロー説明資料.docx</span></div></td>
+                <td><a class="co-link" href="company-detail.html#files">株式会社 大吉商事</a></td>
+                <td><span class="cat"><span class="d" style="background:var(--ink-3)"></span>その他</span></td>
+                <td class="right num">95 KB</td><td class="num muted">2026/04/10</td><td class="muted">田中 一郎</td>
+                <td class="right" style="white-space:nowrap;"><button class="btn btn-sm" onclick="event.stopPropagation();filePreview('業務フロー説明資料.docx')">プレビュー</button><button class="btn btn-sm btn-icon" title="ダウンロード" onclick="event.stopPropagation();toast('署名URLを発行しました')">⤓</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tfoot">
+          <span>全 19 件中 1–12 を表示 ・ アップロード/削除は各企業の資料タブから</span>
+          <div class="pager"><span class="pg">‹</span><span class="pg on">1</span><span class="pg">2</span><span class="pg">›</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="assets/app.js"></script>
+<script>
+  function filePreview(name){
+    demoModal('プレビュー: ' + name, '署名URL（短い有効期限）で取得したファイルをビューア表示します（PDF・画像）。デモのため本文プレビューは省略しています。', 'ダウンロード');
+  }
+</script>
+</body>
+</html>

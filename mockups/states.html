@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>共通UI・状態カタログ・大吉CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  /* スケルトン（読込中） */
+  .sk{ background:linear-gradient(90deg,var(--surface-3) 25%,#e4eaf1 37%,var(--surface-3) 63%); background-size:400% 100%;
+    animation:sh 1.3s ease infinite; border-radius:6px; height:12px;}
+  @keyframes sh{ 0%{background-position:100% 0} 100%{background-position:0 0} }
+  .state-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:16px; align-items:start;}
+  .state-box .panel-head .count{ font-weight:700; color:var(--brand-600);}
+  .big-state{ text-align:center; padding:40px 20px; color:var(--ink-3);}
+  .big-state .code{ font-size:46px; font-weight:800; color:var(--brand-700); letter-spacing:.02em;}
+  .big-state .code.warn{ color:var(--gold-600);}
+  @media (max-width:880px){ .state-grid{ grid-template-columns:1fr; } }
+  /* 名刺ビューア */
+  .card-viewer{ width:100%; max-width:560px;}
+  .card-viewer .shot{ aspect-ratio:91/55; border-radius:8px; overflow:hidden; box-shadow:var(--shadow-2); background:#33414f;}
+  .card-viewer .face-tabs{ display:flex; gap:6px; margin-bottom:12px;}
+  .card-viewer .face-tabs .btn.on{ background:var(--brand-700); border-color:var(--brand-700); color:#fff;}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" data-active=""></aside>
+  <div class="main">
+    <header class="topbar">
+      <button class="btn btn-icon hamb" data-icon="menu" aria-label="メニュー"></button>
+      <h1>共通UI / 状態カタログ</h1>
+      <div class="spacer"></div>
+      <div class="user"><div class="avatar">山</div></div>
+    </header>
+
+    <div class="content">
+      <div class="page-head">
+        <div><h2>共通UI・状態</h2><div class="sub">全画面で使い回す「空 / 読込中 / エラー / 403 / 404」と、名刺ビューア・確認ダイアログ・トースト（FR-U2 / G-19 / SEC-9）。</div></div>
+      </div>
+
+      <div class="state-grid">
+
+        <!-- 空（全体0）-->
+        <div class="panel state-box">
+          <div class="panel-head"><h3>空（全体が 0 件）</h3><span class="count">オンボーディング誘導</span></div>
+          <div class="empty">
+            <div class="ic" data-icon="building" data-iw="34"></div>
+            <h3>まだ顧客が登録されていません</h3>
+            <p>最初の顧客を登録するか、名刺をスキャンして始めましょう。</p>
+            <div class="row" style="justify-content:center;margin-top:12px;">
+              <a class="btn btn-primary" href="company-form.html">＋ 企業を登録</a>
+              <a class="btn" data-icon="card" href="scan.html">名刺スキャン</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- 空（条件ヒット0）-->
+        <div class="panel state-box">
+          <div class="panel-head"><h3>空（条件にヒット 0 件）</h3><span class="count">絞り込みクリア導線</span></div>
+          <div class="empty">
+            <div class="ic" data-icon="search" data-iw="34"></div>
+            <h3>条件に一致する顧客がありません</h3>
+            <p>絞り込み条件を見直すか、クリアしてください。</p>
+            <div class="row" style="justify-content:center;margin-top:12px;">
+              <button class="btn" onclick="toast('絞り込みをクリアしました')">条件をクリア</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 読込中（スケルトン）-->
+        <div class="panel state-box">
+          <div class="panel-head"><h3>読込中</h3><span class="count">スケルトン</span></div>
+          <div class="panel-body" style="display:flex;flex-direction:column;gap:14px;">
+            <div class="sk" style="width:40%;height:16px;"></div>
+            <div class="sk" style="width:100%;"></div>
+            <div class="sk" style="width:92%;"></div>
+            <div class="sk" style="width:96%;"></div>
+            <div class="sk" style="width:60%;"></div>
+            <div class="row" style="gap:10px;"><div class="sk" style="width:84px;height:51px;"></div><div style="flex:1;display:flex;flex-direction:column;gap:8px;"><div class="sk" style="width:50%;"></div><div class="sk" style="width:70%;"></div></div></div>
+          </div>
+        </div>
+
+        <!-- エラー -->
+        <div class="panel state-box">
+          <div class="panel-head"><h3>エラー</h3><span class="count">原因＋再試行</span></div>
+          <div class="panel-body">
+            <div class="banner warn" style="margin-bottom:14px;"><span class="b">読み込みに失敗しました。</span> 通信状態を確認して、もう一度お試しください。</div>
+            <div class="muted" style="font-size:12px;margin-bottom:12px;">保存系の操作では入力値を保持したまま再試行できます（フォームは破棄しません）。</div>
+            <button class="btn" onclick="toast('再読み込みしました')">再試行</button>
+          </div>
+        </div>
+
+        <!-- 403 -->
+        <div class="panel state-box">
+          <div class="panel-head"><h3>403 権限なし</h3><span class="count">admin専用ページ等</span></div>
+          <div class="big-state">
+            <div class="code warn num">403</div>
+            <h3 style="margin:8px 0 4px;">このページにアクセスする権限がありません</h3>
+            <p>管理機能は管理者（admin）のみ利用できます。強制力は RLS ＋ サーバー側DAL（SEC-11）。</p>
+            <a class="btn mt8" href="dashboard.html">ホームへ戻る</a>
+          </div>
+        </div>
+
+        <!-- 404 -->
+        <div class="panel state-box">
+          <div class="panel-head"><h3>404 / 削除済み</h3><span class="count">存在しない・論理削除</span></div>
+          <div class="big-state">
+            <div class="code num">404</div>
+            <h3 style="margin:8px 0 4px;">お探しの企業が見つかりません</h3>
+            <p>URLが変更されたか、ゴミ箱へ移動された可能性があります。</p>
+            <div class="row" style="justify-content:center;margin-top:8px;">
+              <a class="btn" href="companies.html">顧客一覧へ</a>
+              <a class="btn btn-ghost" href="trash.html">ゴミ箱を確認</a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 横断インタラクション -->
+      <div class="panel mt16">
+        <div class="panel-head"><h3>横断インタラクション</h3><span class="count">クリックで挙動を確認</span></div>
+        <div class="panel-body row" style="gap:10px;">
+          <button class="btn" data-icon="card" data-iw="15" onclick="openCardViewer()">名刺ビューア（表/裏切替・署名URL）</button>
+          <button class="btn btn-danger" onclick="demoModal('ゴミ箱へ移動しますか？','「株式会社 大吉商事」と配下の担当者・名刺を非表示にします。ゴミ箱からいつでも復元できます。','ゴミ箱へ移動',true)">確認ダイアログ（破壊的操作）</button>
+          <button class="btn btn-primary" onclick="toast('保存しました')">トースト通知</button>
+        </div>
+        <div class="panel-body" style="border-top:1px solid var(--line);">
+          <div class="muted" style="font-size:12px;">名刺画像は非公開バケットに保存し、閲覧は<span class="b">有効期限付き署名URL</span>を都度発行。期限切れはサーバー経由で再発行します（SEC-9 / G-15）。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="assets/app.js"></script>
+<script>
+  function openCardViewer(){
+    const s = document.createElement('div');
+    s.className = 'scrim';
+    s.innerHTML = `<div class="modal card-viewer">
+      <div class="m-head"><h3>名刺 — 佐藤 太郎（株式会社 大吉商事）</h3></div>
+      <div class="m-body">
+        <div class="face-tabs">
+          <button class="btn btn-sm on" onclick="flipFace(this,'front')">表面</button>
+          <button class="btn btn-sm" onclick="flipFace(this,'back')">裏面</button>
+          <span class="right"></span>
+          <span class="muted" style="font-size:11.5px;align-self:center;">署名URL（残り 9:42）</span>
+        </div>
+        <div class="shot" id="cardShot">
+          <div class="fakecard" style="width:100%;height:100%;"><div class="lines" style="padding:18px 22px;">
+            <div style="font-weight:800;font-size:15px;">株式会社 大吉商事</div>
+            <div style="margin-top:6px;font-size:13px;">営業部 部長</div>
+            <div style="font-size:16px;font-weight:700;">佐藤 太郎</div>
+            <div style="margin-top:10px;font-size:11px;color:#5a6b7d;">〒100-0001 東京都千代田区… ／ 03-1234-5678 ／ sato@daikichi-shoji.co.jp</div>
+          </div></div>
+        </div>
+      </div>
+      <div class="m-foot">
+        <button class="btn" onclick="toast('署名URLを再発行しました')">URL再発行</button>
+        <button class="btn btn-primary" onclick="closeModal(this)">閉じる</button>
+      </div></div>`;
+    s.addEventListener('click', e => { if (e.target === s) s.remove(); });
+    document.body.appendChild(s);
+  }
+  function flipFace(btn, face){
+    btn.parentElement.querySelectorAll('.btn').forEach(b=>b.classList.remove('on'));
+    btn.classList.add('on');
+    const shot = document.getElementById('cardShot');
+    if(face==='back'){
+      shot.innerHTML = `<div class="fakecard" style="width:100%;height:100%;"><div class="lines" style="padding:18px 22px;color:#5a6b7d;font-size:12px;">
+        <div style="font-weight:700;color:#33414f;">事業内容</div>
+        <div style="margin-top:6px;">食材卸 ／ 業務用パッケージ ／ EC支援</div>
+        <div style="margin-top:12px;">https://daikichi-shoji.co.jp</div></div></div>`;
+    } else {
+      shot.innerHTML = `<div class="fakecard" style="width:100%;height:100%;"><div class="lines" style="padding:18px 22px;">
+        <div style="font-weight:800;font-size:15px;">株式会社 大吉商事</div>
+        <div style="margin-top:6px;font-size:13px;">営業部 部長</div>
+        <div style="font-size:16px;font-weight:700;">佐藤 太郎</div>
+        <div style="margin-top:10px;font-size:11px;color:#5a6b7d;">〒100-0001 東京都千代田区… ／ 03-1234-5678 ／ sato@daikichi-shoji.co.jp</div></div></div>`;
+    }
+  }
+</script>
+</body>
+</html>

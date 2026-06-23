@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>株式会社 大吉商事・大吉CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  .tabs{ display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:16px;flex-wrap:wrap; }
+  .tabs button{ background:none;border:none;font-family:inherit;padding:11px 18px;font-size:14px;font-weight:700;color:var(--ink-3);border-bottom:2px solid transparent;cursor:pointer; }
+  .tabs button:hover{ color:var(--brand-600); }
+  .tabs button.on{ color:var(--brand-700);border-bottom-color:var(--brand-700); }
+  .tabs button .ct{ color:var(--ink-2);font-weight:700;margin-left:6px;background:var(--surface-3);padding:0 8px;border-radius:999px;font-size:11.5px; }
+  .tabs button.on .ct{ background:var(--brand-50);color:var(--brand-700); }
+  .tabpane{ display:none; } .tabpane.on{ display:block; }
+  /* 議事録ミニリスト */
+  .nrow{ display:flex;gap:12px;padding:13px 16px;border-bottom:1px solid var(--line);cursor:pointer; align-items:flex-start; }
+  .nrow:last-child{ border-bottom:0; } .nrow:hover{ background:var(--brand-tint); }
+  .nrow .ic{ width:32px;height:32px;border-radius:8px;display:grid;place-items:center;font-size:15px;flex:none; }
+  .nrow .ic.auto{ background:var(--brand-50);color:var(--brand-700); } .nrow .ic.manual{ background:var(--surface-3);color:var(--ink-2); }
+  .nrow .sum{ color:var(--ink-2);font-size:12.5px;margin-top:3px;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden; }
+  .nrow .foot{ display:flex;gap:10px;margin-top:5px;font-size:11.5px;color:var(--ink-3);align-items:center; }
+  .kind-pill{ display:inline-flex;align-items:center;height:21px;padding:0 8px;border-radius:6px;font-size:11.5px;font-weight:700;border:1px solid; }
+  .kind-pill.collab{ color:var(--brand-700);background:var(--brand-50);border-color:#cfe0ef; }
+  .kind-pill.intro{ color:var(--gold-700);background:var(--gold-50);border-color:#ecdcb4; }
+  .badge.talking{ color:var(--brand-600);background:var(--brand-50);border-color:#cfe0ef; }
+  .flow{ display:inline-flex;align-items:center;gap:6px; } .flow .me{ font-weight:800; } .flow .arr{ color:var(--ink-3); }
+  /* 資料・ファイルタブ */
+  .dropzone{ display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;text-align:center;
+    border:1.5px dashed var(--line-strong);border-radius:var(--radius);background:var(--surface-2);padding:20px;color:var(--ink-3);cursor:pointer;margin-bottom:14px; }
+  .dropzone:hover{ border-color:var(--brand-500);background:var(--brand-tint);color:var(--brand-600); }
+  .dropzone .big{ font-size:24px;line-height:1; } .dropzone b{ color:var(--ink); }
+  .catfilter{ display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px; }
+  .catfilter .cf{ height:30px;padding:0 11px;border:1px solid var(--line-strong);background:#fff;border-radius:999px;font-family:inherit;font-size:12.5px;font-weight:600;color:var(--ink-2);cursor:pointer; }
+  .catfilter .cf:hover{ background:var(--surface-2); } .catfilter .cf.on{ background:var(--brand-700);border-color:var(--brand-700);color:#fff; }
+  .catfilter .cf .num{ opacity:.65;margin-left:3px; }
+  .ft{ display:inline-grid;place-items:center;width:34px;height:34px;border-radius:7px;font-size:9.5px;font-weight:800;color:#fff;flex:none;letter-spacing:.02em; }
+  .ft-pdf{ background:#c0392f; } .ft-img{ background:var(--brand-600); } .ft-xls{ background:#2f8056; } .ft-doc{ background:#216396; } .ft-etc{ background:var(--ink-3); }
+  .fname{ display:flex;align-items:center;gap:11px; } .fname .nm{ font-weight:600;color:var(--ink); }
+  .cat{ display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border-radius:999px;font-size:11.5px;font-weight:600;border:1px solid var(--line);background:var(--surface-3);color:var(--ink-2);white-space:nowrap; }
+  .cat .d{ width:6px;height:6px;border-radius:50%;flex:none; }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" data-active="companies"></aside>
+  <div class="main">
+    <header class="topbar">
+      <button class="btn btn-icon hamb" data-icon="menu" aria-label="メニュー"></button>
+      <div class="crumb"><a href="companies.html">顧客</a> / <b>株式会社 大吉商事</b></div>
+      <div class="spacer"></div>
+      <a class="btn btn-sm" data-icon="link" data-iw="14" href="matching.html">紹介候補を見る</a>
+      <a class="btn btn-sm" href="company-form.html">編集</a>
+      <button class="btn btn-sm btn-danger" onclick="demoModal('ゴミ箱へ移動しますか？','「株式会社 大吉商事」と配下の担当者・名刺を非表示にします。ゴミ箱からいつでも復元できます。','ゴミ箱へ移動',true)">削除</button>
+      <button class="btn btn-sm" data-icon="help" data-iw="15" onclick="openGuide('企業詳細の使い方', document.getElementById('guide').innerHTML)">使い方</button>
+      <div class="user"><div class="avatar">山</div></div>
+    </header>
+
+    <div class="content">
+      <div id="guide" hidden>
+        <p>1社の「カルテ」です。タブで情報を切り替えます。</p>
+        <ul>
+          <li><b>概要／担当者／資料／議事録／紹介履歴</b> をタブで切替（開いていたタブは記憶され、戻ると復帰します）。</li>
+          <li>担当者タブで <b>★主担当の変更</b>、名刺やSNSの確認。</li>
+          <li><b>資料</b>タブで PDF・商品資料・契約書・決算書などをアップロード/プレビュー（非公開バケット＋署名URLで安全に保管）。</li>
+          <li>議事録・紹介履歴タブで、この会社の打ち合わせ記録・紹介のやり取りを確認。</li>
+        </ul>
+      </div>
+      <div class="page-head">
+        <div class="row">
+          <h2>株式会社 大吉商事</h2>
+          <span class="badge type lg">法人</span>
+          <span class="badge active lg"><span class="dot"></span>顧問中</span>
+        </div>
+        <div class="actions">
+          <a class="btn btn-sm" data-icon="card" data-iw="14" href="contact-form.html">担当者を追加</a>
+          <a class="btn btn-sm btn-primary" data-icon="doc" data-iw="14" href="notes.html">議事録を取り込む</a>
+        </div>
+      </div>
+
+      <!-- タブ -->
+      <nav class="tabs">
+        <button class="on" data-tabname="overview" onclick="showTab('overview')">概要</button>
+        <button data-tabname="contacts" onclick="showTab('contacts')">担当者 <span class="ct num">3</span></button>
+        <button data-tabname="files" onclick="showTab('files')">資料 <span class="ct num">6</span></button>
+        <button data-tabname="notes" onclick="showTab('notes')">議事録 <span class="ct num">3</span></button>
+        <button data-tabname="referrals" onclick="showTab('referrals')">紹介履歴 <span class="ct num">3</span></button>
+      </nav>
+
+      <!-- 概要 -->
+      <div class="tabpane on" data-tab="overview">
+        <div class="grid-2">
+          <div>
+            <div class="panel">
+              <div class="panel-head"><h3>企業情報</h3><span class="count num">ID 000248</span></div>
+              <div class="panel-body">
+                <div class="ledger">
+                  <dl class="kv">
+                    <dt>業種</dt><dd>卸売</dd>
+                    <dt>エリア</dt><dd>東京都</dd>
+                    <dt>規模</dt><dd class="num">1億〜10億</dd>
+                    <dt>社内担当</dt><dd>山田 健太</dd>
+                    <dt>ステータス</dt><dd><span class="badge active"><span class="dot"></span>顧問中</span></dd>
+                  </dl>
+                  <div class="mt16">
+                    <div class="muted" style="font-size:12px;font-weight:700;margin-bottom:6px;">求めてること / 提供できること</div>
+                    <div class="chips">
+                      <span class="chip need"><span class="mk">求</span>販路拡大</span>
+                      <span class="chip need"><span class="mk">求</span>EC強化</span>
+                      <span class="chip need"><span class="mk">求</span>配送代行</span>
+                      <span class="chip offer"><span class="mk">提</span>食材卸</span>
+                      <span class="chip offer"><span class="mk">提</span>業務用パッケージ</span>
+                    </div>
+                  </div>
+                  <div class="mt16">
+                    <div class="muted" style="font-size:12px;font-weight:700;margin-bottom:4px;">メモ</div>
+                    <div>地方の生産者ネットワークが強み。EC・物販の協業先を探している。次回訪問は7月上旬。</div>
+                  </div>
+                  <div class="mt16">
+                    <div class="muted" style="font-size:12px;font-weight:700;margin-bottom:6px;">Web・SNS</div>
+                    <div class="row" style="gap:8px;">
+                      <a class="btn btn-sm" href="https://daikichi-shoji.co.jp" target="_blank" rel="noopener">🌐 公式サイト</a>
+                      <a class="btn btn-sm" href="#" target="_blank" rel="noopener">𝕏 @daikichi_shoji</a>
+                      <a class="btn btn-sm" href="#" target="_blank" rel="noopener">📷 Instagram</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="panel">
+              <div class="panel-head"><h3>サマリ</h3></div>
+              <div class="panel-body">
+                <dl class="kv">
+                  <dt>担当者</dt><dd class="num">3 名</dd>
+                  <dt>名刺</dt><dd class="num">2 枚</dd>
+                  <dt>資料</dt><dd class="num">6 件 <span class="muted">/ 5.7MB</span></dd>
+                  <dt>議事録</dt><dd class="num">3 件</dd>
+                  <dt>紹介履歴</dt><dd class="num">3 件</dd>
+                  <dt>登録日</dt><dd class="num">2025/11/02</dd>
+                  <dt>最終更新</dt><dd class="num">2026/06/19</dd>
+                </dl>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h3>期限・タスク</h3><a class="right" href="schedule.html">すべて見る</a></div>
+              <div class="panel-body" style="display:flex;flex-direction:column;gap:10px;font-size:13px;">
+                <div class="row" style="gap:8px;align-items:flex-start;flex-wrap:nowrap;">
+                  <span class="badge" style="background:var(--red-50);color:var(--red-700);border-color:#f0c9c4;flex:none;">遅延</span>
+                  <span style="flex:1;min-width:0;"><span class="b">試算表の確認・送付</span><br><span class="muted" style="font-size:12px;">期日 6/15 ・ 担当 山田 健太（手動タスク）</span></span>
+                </div>
+                <div class="row" style="gap:8px;align-items:flex-start;flex-wrap:nowrap;">
+                  <span class="badge prospect" style="flex:none;"><span class="dot"></span>今週</span>
+                  <span style="flex:1;min-width:0;"><span class="b">決算書の回収フォロー</span><br><span class="muted" style="font-size:12px;">期日 6/20 ・ 担当 山田 健太</span></span>
+                </div>
+                <div class="row" style="gap:8px;align-items:flex-start;flex-wrap:nowrap;">
+                  <span class="badge dormant" style="flex:none;"><span class="dot"></span>予定</span>
+                  <span style="flex:1;min-width:0;"><span class="b">消費税 中間申告・納付</span><br><span class="muted" style="font-size:12px;">期日 8/31（自動生成・決算月3月）</span></span>
+                </div>
+                <button class="btn btn-sm btn-ghost" onclick="demoModal('タスクを追加','この企業に紐づく手動タスク（内容・期日・担当）を追加します。','追加')">＋ タスクを追加</button>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h3>追加項目（extra）</h3></div>
+              <div class="panel-body">
+                <dl class="kv">
+                  <dt>取引銀行</dt><dd>みずほ銀行</dd>
+                  <dt>決算月</dt><dd class="num">3月</dd>
+                  <dt>紹介元</dt><dd>鈴木工務店</dd>
+                </dl>
+                <button class="btn btn-sm btn-ghost mt8">＋ 項目を追加</button>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h3>次回の打ち合わせ</h3></div>
+              <div class="panel-body" style="font-size:13px;">
+                <div class="row" style="gap:8px;"><span class="num b">6/19 10:00</span><span>🎥 Google Meet</span></div>
+                <div class="muted" style="font-size:12px;margin-top:4px;">EC協業の打ち合わせ ・ 佐藤 太郎</div>
+                <a class="btn btn-sm mt8" href="meetings.html">打ち合わせを開く</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 担当者 -->
+      <div class="tabpane" data-tab="contacts">
+        <div class="panel">
+          <div class="panel-head"><h3>担当者</h3><span class="count num">3名</span>
+            <div class="actions"><a class="btn btn-sm btn-primary" data-icon="user" data-iw="14" href="contact-form.html">＋ 担当者を追加</a></div>
+          </div>
+          <div class="panel-body" style="display:flex;flex-direction:column;gap:10px;">
+            <div class="contact-card">
+              <div class="thumb"><div class="fakecard"><div class="lines" style="padding:8px 10px;font-size:8px;line-height:1.5;"><div style="font-weight:700;">株式会社 大吉商事</div><div>営業部長 佐藤 太郎</div><div>03-1234-5678</div></div></div></div>
+              <div>
+                <div class="who"><a href="contact-detail.html">佐藤 太郎</a> <span class="badge prospect" style="height:18px;font-size:10px;">主担当</span></div>
+                <div class="role">営業部 部長</div>
+                <div class="meta"><span>✉ sato@daikichi-shoji.co.jp</span><span class="num">☎ 03-1234-5678</span></div>
+                <div class="meta" style="margin-top:3px;"><a href="#" target="_blank" rel="noopener">𝕏 @sato_taro</a><a href="#" target="_blank" rel="noopener">in LinkedIn</a></div>
+              </div>
+              <div class="ops">
+                <a class="btn btn-sm" href="contact-detail.html">詳細</a>
+                <a class="btn btn-sm" href="contact-form.html">編集</a>
+              </div>
+            </div>
+            <div class="contact-card">
+              <div class="thumb"><div class="fakecard"><div class="lines" style="padding:8px 10px;font-size:8px;line-height:1.5;"><div style="font-weight:700;">株式会社 大吉商事</div><div>EC事業部 鈴木 花子</div><div>080-9876-5432</div></div></div></div>
+              <div>
+                <div class="who"><a href="contact-detail.html">鈴木 花子</a></div>
+                <div class="role">EC事業部 マネージャー</div>
+                <div class="meta"><span>✉ suzuki@daikichi-shoji.co.jp</span><span class="num">☎ 080-9876-5432</span></div>
+              </div>
+              <div class="ops">
+                <button class="btn btn-sm" onclick="toast('主担当を 鈴木 花子 に変更しました')">★ 主担当にする</button>
+                <a class="btn btn-sm" href="contact-detail.html">詳細</a>
+                <a class="btn btn-sm" href="contact-form.html">編集</a>
+              </div>
+            </div>
+            <div class="contact-card">
+              <div class="thumb" style="background:var(--surface-3);display:grid;place-items:center;color:var(--ink-3);font-size:11px;">名刺なし</div>
+              <div>
+                <div class="who"><a href="contact-detail.html">田中 一郎</a></div>
+                <div class="role">管理部</div>
+                <div class="meta"><span>✉ tanaka@daikichi-shoji.co.jp</span></div>
+              </div>
+              <div class="ops">
+                <button class="btn btn-sm" onclick="toast('主担当を 田中 一郎 に変更しました')">★ 主担当にする</button>
+                <a class="btn btn-sm" href="contact-detail.html">詳細</a>
+                <a class="btn btn-sm" href="contact-form.html">名刺を追加</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 資料・ファイル -->
+      <div class="tabpane" data-tab="files">
+        <div class="panel">
+          <div class="panel-head"><h3>資料・ファイル</h3><span class="count num">6件 ・ 5.7MB</span>
+            <div class="actions"><button class="btn btn-sm btn-primary" data-icon="doc" data-iw="14" onclick="toast('ファイルを選択してアップロード（デモ）')">＋ アップロード</button></div>
+          </div>
+          <div class="panel-body">
+            <label class="dropzone" onclick="toast('ファイル選択ダイアログ（デモ）')">
+              <div class="big">⤓</div>
+              <div><b>ファイルをドラッグ＆ドロップ</b> または クリックして選択</div>
+              <div class="muted" style="font-size:12px;">PDF / JPG / PNG / Excel / Word ・ 1ファイル最大 20MB</div>
+            </label>
+
+            <div class="catfilter">
+              <button class="cf on">すべて <span class="num">6</span></button>
+              <button class="cf">契約書 <span class="num">1</span></button>
+              <button class="cf">決算書 <span class="num">1</span></button>
+              <button class="cf">商品・サービス資料 <span class="num">2</span></button>
+              <button class="cf">提案資料 <span class="num">1</span></button>
+              <button class="cf">その他 <span class="num">1</span></button>
+            </div>
+
+            <div class="table-wrap">
+              <table class="table">
+                <thead><tr><th>ファイル</th><th>種別</th><th class="right">サイズ</th><th>登録日</th><th>登録者</th><th class="right">操作</th></tr></thead>
+                <tbody>
+                  <tr onclick="filePreview('御見積書_EC構築_2026.pdf')">
+                    <td><div class="fname"><span class="ft ft-pdf">PDF</span><span class="nm">御見積書_EC構築_2026.pdf</span></div></td>
+                    <td><span class="cat"><span class="d" style="background:var(--brand-500)"></span>提案資料</span></td>
+                    <td class="right num">480 KB</td><td class="num muted">2026/06/12</td><td class="muted">山田 健太</td>
+                    <td class="right" style="white-space:nowrap;">
+                      <button class="btn btn-sm" onclick="event.stopPropagation();filePreview('御見積書_EC構築_2026.pdf')">プレビュー</button>
+                      <button class="btn btn-sm btn-icon" title="ダウンロード" onclick="event.stopPropagation();toast('署名URLを発行しました（ダウンロード開始）')">⤓</button>
+                      <button class="btn btn-sm btn-icon btn-danger" title="削除" onclick="event.stopPropagation();demoModal('資料を削除しますか？','「御見積書_EC構築_2026.pdf」をゴミ箱へ移動します。発行済みの署名URLは無効化されます。','削除',true)">🗑</button>
+                    </td>
+                  </tr>
+                  <tr onclick="filePreview('商品カタログ_業務用パッケージ_2026春.pdf')">
+                    <td><div class="fname"><span class="ft ft-pdf">PDF</span><span class="nm">商品カタログ_業務用パッケージ_2026春.pdf</span></div></td>
+                    <td><span class="cat"><span class="d" style="background:var(--green-600)"></span>商品・サービス資料</span></td>
+                    <td class="right num">3.2 MB</td><td class="num muted">2026/06/01</td><td class="muted">佐藤 京子</td>
+                    <td class="right" style="white-space:nowrap;">
+                      <button class="btn btn-sm" onclick="event.stopPropagation();filePreview('商品カタログ_業務用パッケージ_2026春.pdf')">プレビュー</button>
+                      <button class="btn btn-sm btn-icon" title="ダウンロード" onclick="event.stopPropagation();toast('署名URLを発行しました（ダウンロード開始）')">⤓</button>
+                      <button class="btn btn-sm btn-icon btn-danger" title="削除" onclick="event.stopPropagation();demoModal('資料を削除しますか？','「商品カタログ_業務用パッケージ_2026春.pdf」をゴミ箱へ移動します。','削除',true)">🗑</button>
+                    </td>
+                  </tr>
+                  <tr onclick="filePreview('会社案内_パンフ.jpg')">
+                    <td><div class="fname"><span class="ft ft-img">JPG</span><span class="nm">会社案内_パンフ.jpg</span></div></td>
+                    <td><span class="cat"><span class="d" style="background:var(--green-600)"></span>商品・サービス資料</span></td>
+                    <td class="right num">1.1 MB</td><td class="num muted">2026/05/20</td><td class="muted">佐藤 京子</td>
+                    <td class="right" style="white-space:nowrap;">
+                      <button class="btn btn-sm" onclick="event.stopPropagation();filePreview('会社案内_パンフ.jpg')">プレビュー</button>
+                      <button class="btn btn-sm btn-icon" title="ダウンロード" onclick="event.stopPropagation();toast('署名URLを発行しました（ダウンロード開始）')">⤓</button>
+                      <button class="btn btn-sm btn-icon btn-danger" title="削除" onclick="event.stopPropagation();demoModal('資料を削除しますか？','「会社案内_パンフ.jpg」をゴミ箱へ移動します。','削除',true)">🗑</button>
+                    </td>
+                  </tr>
+                  <tr onclick="filePreview('決算書_2025年3月期.xlsx')">
+                    <td><div class="fname"><span class="ft ft-xls">XLS</span><span class="nm">決算書_2025年3月期.xlsx</span></div></td>
+                    <td><span class="cat"><span class="d" style="background:var(--brand-600)"></span>決算書</span></td>
+                    <td class="right num">220 KB</td><td class="num muted">2025/11/05</td><td class="muted">田中 一郎</td>
+                    <td class="right" style="white-space:nowrap;">
+                      <button class="btn btn-sm" onclick="event.stopPropagation();filePreview('決算書_2025年3月期.xlsx')">プレビュー</button>
+                      <button class="btn btn-sm btn-icon" title="ダウンロード" onclick="event.stopPropagation();toast('署名URLを発行しました（ダウンロード開始）')">⤓</button>
+                      <button class="btn btn-sm btn-icon btn-danger" title="削除" onclick="event.stopPropagation();demoModal('資料を削除しますか？','「決算書_2025年3月期.xlsx」をゴミ箱へ移動します。','削除',true)">🗑</button>
+                    </td>
+                  </tr>
+                  <tr onclick="filePreview('顧問契約書_締結済.pdf')">
+                    <td><div class="fname"><span class="ft ft-pdf">PDF</span><span class="nm">顧問契約書_締結済.pdf</span></div></td>
+                    <td><span class="cat"><span class="d" style="background:var(--gold-600)"></span>契約書</span></td>
+                    <td class="right num">640 KB</td><td class="num muted">2025/11/02</td><td class="muted">山田 健太</td>
+                    <td class="right" style="white-space:nowrap;">
+                      <button class="btn btn-sm" onclick="event.stopPropagation();filePreview('顧問契約書_締結済.pdf')">プレビュー</button>
+                      <button class="btn btn-sm btn-icon" title="ダウンロード" onclick="event.stopPropagation();toast('署名URLを発行しました（ダウンロード開始）')">⤓</button>
+                      <button class="btn btn-sm btn-icon btn-danger" title="削除" onclick="event.stopPropagation();demoModal('資料を削除しますか？','「顧問契約書_締結済.pdf」をゴミ箱へ移動します。','削除',true)">🗑</button>
+                    </td>
+                  </tr>
+                  <tr onclick="filePreview('業務フロー説明資料.docx')">
+                    <td><div class="fname"><span class="ft ft-doc">DOC</span><span class="nm">業務フロー説明資料.docx</span></div></td>
+                    <td><span class="cat"><span class="d" style="background:var(--ink-3)"></span>その他</span></td>
+                    <td class="right num">95 KB</td><td class="num muted">2026/04/10</td><td class="muted">田中 一郎</td>
+                    <td class="right" style="white-space:nowrap;">
+                      <button class="btn btn-sm" onclick="event.stopPropagation();filePreview('業務フロー説明資料.docx')">プレビュー</button>
+                      <button class="btn btn-sm btn-icon" title="ダウンロード" onclick="event.stopPropagation();toast('署名URLを発行しました（ダウンロード開始）')">⤓</button>
+                      <button class="btn btn-sm btn-icon btn-danger" title="削除" onclick="event.stopPropagation();demoModal('資料を削除しますか？','「業務フロー説明資料.docx」をゴミ箱へ移動します。','削除',true)">🗑</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="banner info mt16"><span>ⓘ</span><div>資料は<b>非公開バケット</b>に保存し、閲覧・ダウンロードは<b>有効期限つき署名URL</b>でのみ取得します（名刺画像と同じ仕組み・SEC-9/12）。企業を削除すると配下の資料も非表示になります。ストレージは無料枠（約1GB）で運用し、上限接近時に警告します。</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 議事録 -->
+      <div class="tabpane" data-tab="notes">
+        <div class="panel">
+          <div class="panel-head"><h3>議事録</h3><span class="count num">3件</span>
+            <div class="actions"><a class="btn btn-sm" href="notes.html">議事録一覧へ</a><a class="btn btn-sm btn-primary" data-icon="doc" data-iw="14" href="notes.html">＋ 取り込む</a></div>
+          </div>
+          <div class="nrow" onclick="location.href='note-detail.html'">
+            <div class="ic manual">📋</div>
+            <div style="flex:1;min-width:0;">
+              <div class="b">EC協業キックオフ</div>
+              <div class="sum">ECサイト構築をテック合同会社に依頼する方向。販路拡大の打ち手として受発注をオンライン化。次回までに出荷量データを共有…</div>
+              <div class="foot"><span class="num">2026/06/12</span><span>・ 52分</span><span class="muted">次にやること 2件</span><span>・ 手で取込</span></div>
+            </div>
+            <span class="muted" style="align-self:center;">›</span>
+          </div>
+          <div class="nrow" onclick="location.href='note-detail.html'">
+            <div class="ic auto">⚡</div>
+            <div style="flex:1;min-width:0;">
+              <div class="b">配送協業の事前すり合わせ</div>
+              <div class="sum">北斗ロジへの配送委託を検討。チルド便 週3便で対応可能との感触。出荷量を共有して見積もりを取る…</div>
+              <div class="foot"><span class="num">2026/06/05</span><span>・ 24分</span><span class="muted">次にやること 1件</span><span>・ 自動保存</span></div>
+            </div>
+            <span class="muted" style="align-self:center;">›</span>
+          </div>
+          <div class="nrow" onclick="location.href='note-detail.html'">
+            <div class="ic auto">⚡</div>
+            <div style="flex:1;min-width:0;">
+              <div class="b">月次定例（5月）</div>
+              <div class="sum">5月の売上と仕入の振り返り。EC化に向けた準備状況を確認。決算に向けた書類の段取り…</div>
+              <div class="foot"><span class="num">2026/05/20</span><span>・ 40分</span><span>・ 自動保存</span></div>
+            </div>
+            <span class="muted" style="align-self:center;">›</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 紹介履歴 -->
+      <div class="tabpane" data-tab="referrals">
+        <div class="panel">
+          <div class="panel-head"><h3>紹介履歴</h3><span class="count num">3件</span>
+            <div class="actions"><a class="btn btn-sm" href="referrals.html">紹介一覧へ</a><a class="btn btn-sm btn-primary" data-icon="link" data-iw="14" href="matching.html">マッチングから起票</a></div>
+          </div>
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th>紹介（from → to）</th><th>種別</th><th>根拠タグ</th><th>ステータス</th><th>起票者</th><th class="right">起票日</th></tr></thead>
+              <tbody>
+                <tr onclick="location.href='referrals.html'">
+                  <td><span class="flow"><span class="me">大吉商事</span><span class="arr">→</span><span class="linkish">テック合同会社</span></span></td>
+                  <td><span class="kind-pill collab">協業先紹介</span></td>
+                  <td><div class="chips"><span class="chip need" style="height:20px;"><span class="mk">求</span>EC強化</span></div></td>
+                  <td><span class="badge talking"><span class="dot"></span>打診中</span></td>
+                  <td>山田 健太</td><td class="right num muted">06/15</td>
+                </tr>
+                <tr onclick="location.href='referrals.html'">
+                  <td><span class="flow"><span class="me">大吉商事</span><span class="arr">→</span><span class="linkish">みどり食堂</span></span></td>
+                  <td><span class="kind-pill intro">顧客紹介</span></td>
+                  <td><div class="chips"><span class="chip offer" style="height:20px;"><span class="mk">提</span>食材卸</span></div></td>
+                  <td><span class="badge active"><span class="dot"></span>成立</span></td>
+                  <td>佐藤 京子</td><td class="right num muted">06/10</td>
+                </tr>
+                <tr onclick="location.href='referrals.html'">
+                  <td><span class="flow"><span class="linkish">北斗ロジ</span><span class="arr">→</span><span class="me">大吉商事</span></span></td>
+                  <td><span class="kind-pill collab">協業先紹介</span></td>
+                  <td><div class="chips"><span class="chip offer" style="height:20px;"><span class="mk">提</span>配送代行</span></div></td>
+                  <td><span class="badge talking"><span class="dot"></span>打診中</span></td>
+                  <td>佐藤 京子</td><td class="right num muted">06/12</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="tfoot"><span class="legend"><span class="kind-pill collab" style="height:18px;">協業先紹介＝相手を紹介してもらう</span><span class="kind-pill intro" style="height:18px;">顧客紹介＝自社の顧客を紹介する</span></span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<script src="assets/app.js"></script>
+<script>
+  function showTab(name){
+    document.querySelectorAll('.tabpane').forEach(p => p.classList.toggle('on', p.dataset.tab === name));
+    document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tabname === name));
+    try { history.replaceState(null, '', '#' + name); } catch(e){}
+  }
+  function filePreview(name){
+    demoModal('プレビュー: ' + name, '署名URL（短い有効期限）で取得したファイルをビューア表示します（PDF・画像）。デモのため本文プレビューは省略しています。', 'ダウンロード');
+  }
+  // タブ位置を記憶: 深い遷移・編集から戻ったとき、開いていたタブに復帰する
+  function initTab(){
+    let name = (location.hash || '').replace('#','') || 'overview';
+    if (!document.querySelector('.tabpane[data-tab="' + name + '"]')) name = 'overview';
+    showTab(name);
+  }
+  window.addEventListener('DOMContentLoaded', initTab);
+  window.addEventListener('pageshow', initTab);
+</script>
+</body>
+</html>

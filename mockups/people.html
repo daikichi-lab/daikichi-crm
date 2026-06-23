@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>会った人・大吉CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  /* 会った人＝マスター/詳細（2ペイン） */
+  .people{ display:grid; grid-template-columns: 348px 1fr; gap:16px; align-items:start; }
+  .plist{ overflow:hidden; }
+  .plist .list-scroll{ max-height: calc(100vh - 230px); overflow-y:auto; }
+  /* 一覧行 */
+  .prow{ display:flex; gap:11px; align-items:center; padding:11px 14px; border-bottom:1px solid var(--line); cursor:pointer; }
+  .prow:hover{ background:var(--brand-tint); }
+  .prow.on{ background:var(--brand-tint); box-shadow: inset 3px 0 0 var(--gold-500); }
+  .prow .who{ min-width:0; flex:1; }
+  .prow .nm{ font-weight:700; color:var(--ink); }
+  .prow .nm .kana{ font-weight:500; color:var(--ink-3); font-size:11px; margin-left:6px; }
+  .prow .meta{ color:var(--ink-3); font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .prow .when{ color:var(--ink-3); font-size:11px; text-align:right; flex:none; }
+  /* アバター・モノグラム（人物のシグネチャ） */
+  .pav{ width:38px; height:38px; border-radius:50%; display:grid; place-items:center; color:#fff; font-weight:700; font-size:15px; flex:none; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); }
+  .pav.lg{ width:60px; height:60px; font-size:23px; }
+  .pin{ color:var(--gold-600); font-size:11px; font-weight:800; }
+  /* 詳細ペイン */
+  .pdetail{ position:sticky; top:76px; }
+  .phero{ display:flex; gap:15px; align-items:center; }
+  .phero .nm{ font-size:21px; font-weight:800; color:var(--ink); }
+  .phero .role{ color:var(--ink-2); font-size:13px; margin-top:2px; }
+  .biz{ width:210px; max-width:100%; }
+  .biz .lbl{ font-size:11px;color:var(--ink-3);font-weight:700;margin-bottom:5px; }
+  .biz .card{ aspect-ratio:91/55; border-radius:8px; overflow:hidden; box-shadow:var(--shadow-2); cursor:pointer; }
+  .biz .card .fakecard{ width:100%;height:100%; }
+  .timeline a{ display:flex; gap:12px; align-items:center; padding:12px 16px; color:inherit; border-bottom:1px solid var(--line); }
+  .timeline a:last-child{ border-bottom:0; }
+  .timeline .ic2{ width:32px;height:32px;border-radius:8px;background:var(--surface-3);color:var(--ink-2);display:grid;place-items:center;font-size:15px;flex:none; }
+  @media (max-width: 980px){
+    .people{ grid-template-columns:1fr; }
+    .pdetail{ position:static; }
+    .plist .list-scroll{ max-height:none; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" data-active="people"></aside>
+  <div class="main">
+    <header class="topbar">
+      <button class="btn btn-icon hamb" data-icon="menu" aria-label="メニュー"></button>
+      <h1>会った人</h1>
+      <div class="search"><span class="mag"></span><input id="q" placeholder="名前・会社・フリガナで検索…"></div>
+      <div class="spacer"></div>
+      <a class="btn btn-sm" data-icon="card" data-iw="15" href="scan.html">名刺スキャン</a>
+      <button class="btn btn-sm" data-icon="help" data-iw="15" onclick="openGuide('会った人の使い方', document.getElementById('guide').innerHTML)">使い方</button>
+      <div class="user"><div class="avatar">山</div></div>
+    </header>
+
+    <div class="content">
+      <div id="guide" hidden>
+        <p>名刺交換・打ち合わせで<b>会った人（先方の担当者）</b>を、会社をまたいで一覧する画面です。</p>
+        <ul>
+          <li>左の一覧から人を選ぶと、<b>右に詳細</b>（連絡先・名刺・所属企業・最近の接点）が表示されます。</li>
+          <li>検索（名前・会社・フリガナ）と、<b>主担当のみ</b>・並び替えで絞り込み。</li>
+          <li>各担当者の編集や、所属企業の詳細へ移動できます。</li>
+        </ul>
+      </div>
+      <div class="page-head">
+        <div>
+          <h2>会った人</h2>
+          <div class="sub">名刺・打ち合わせで会った先方の担当者を、会社をまたいで一覧。選ぶと右に詳細が出ます。</div>
+        </div>
+        <div class="actions">
+          <span class="legend"><span class="pav" style="width:18px;height:18px;font-size:10px;background:var(--brand-600)">主</span> = 主担当</span>
+        </div>
+      </div>
+
+      <div class="people">
+        <!-- マスター：一覧 -->
+        <div class="panel plist">
+          <div class="filterbar">
+            <select class="select btn-sm" style="height:32px;"><option>すべての会社</option><option>顧問中の会社</option><option>見込みの会社</option></select>
+            <select class="select btn-sm" style="height:32px;" id="sort"><option value="recent">最近会った順</option><option value="kana">名前順（フリガナ）</option></select>
+            <label class="row" style="gap:6px;font-size:12px;color:var(--ink-2);margin-left:auto;"><input type="checkbox" id="primaryOnly"> 主担当のみ</label>
+          </div>
+          <div class="panel-head" style="background:var(--surface-2);">
+            <span class="count"><b id="count">7</b> 名 <span class="muted">/ 全 48名</span></span>
+          </div>
+          <div class="list-scroll" id="list"><!-- rows injected --></div>
+        </div>
+
+        <!-- 詳細 -->
+        <div class="pdetail" id="detail"><!-- detail injected --></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="assets/app.js"></script>
+<script>
+/* 会った人＝担当者（contacts）。会社をまたいだ人物ディレクトリのデモデータ。 */
+const C = { brand:'var(--brand-600)', gold:'var(--gold-600)', green:'var(--green-600)', navy:'var(--brand-800)', ink:'var(--ink-2)' };
+const PEOPLE = [
+  { name:'緑川 みどり', kana:'ミドリカワ ミドリ', color:C.green, primary:true, role:'代表（個人事業主）', type:'個人事業主',
+    company:'みどり食堂', industry:'飲食', area:'大阪府', status:'見込み',
+    email:'midori@midori-shokudo.jp', phone:'06-6543-2100', mobile:'080-3333-4444',
+    sns:['𝕏 @midori_shokudo'], cards:1, since:'2026/06/20', updated:'2026/06/20',
+    met:[{t:'みどり食堂 新規ご相談',d:'2026/06/20',k:'meetings.html',ic:'🗓'}] },
+  { name:'高橋 結衣', kana:'タカハシ ユイ', color:C.gold, primary:true, role:'店長', type:'法人',
+    company:'さくら美容室', industry:'美容・理容', area:'京都府', status:'見込み',
+    email:'yui@sakura-bes.jp', phone:'075-222-1188', mobile:'090-5555-6666',
+    sns:['Instagram @sakura_bes'], cards:1, since:'2026/06/18', updated:'2026/06/18',
+    met:[{t:'さくら美容室 ご来社',d:'2026/06/18',k:'meetings.html',ic:'🗓'}] },
+  { name:'鈴木 大輔', kana:'スズキ ダイスケ', color:C.navy, primary:true, role:'専務取締役', type:'法人',
+    company:'鈴木工務店', industry:'建設', area:'愛知県', status:'顧問中',
+    email:'suzuki@suzuki-koumuten.jp', phone:'052-700-3300', mobile:'090-7777-8888',
+    sns:[], cards:2, since:'2025/09/14', updated:'2026/06/15',
+    met:[{t:'鈴木様 ご相談（来社）',d:'2026/06/15',k:'meetings.html',ic:'🗓'},{t:'期末対策の打ち合わせ',d:'2026/05/22',k:'note-detail.html',ic:'📋'}] },
+  { name:'田中 啓介', kana:'タナカ ケイスケ', color:C.brand, primary:false, role:'CTO / 技術部', type:'法人',
+    company:'テック合同会社', industry:'IT・情報通信', area:'東京都', status:'顧問中',
+    email:'tanaka@tech-llc.jp', phone:'03-4000-5500', mobile:'080-1212-3434',
+    sns:['in LinkedIn','𝕏 @tanaka_dev'], cards:1, since:'2025/12/03', updated:'2026/06/14',
+    met:[{t:'システム連携の打ち合わせ',d:'2026/06/14',k:'note-detail.html',ic:'📋'}] },
+  { name:'佐藤 太郎', kana:'サトウ タロウ', color:C.brand, primary:true, role:'営業部 部長', type:'法人',
+    company:'株式会社 大吉商事', industry:'卸売', area:'東京都', status:'顧問中',
+    email:'sato@daikichi-shoji.co.jp', phone:'03-1234-5678', mobile:'090-1111-2222',
+    sns:['𝕏 @sato_taro','in LinkedIn'], cards:2, since:'2025/11/02', updated:'2026/06/12',
+    met:[{t:'EC協業キックオフ',d:'2026/06/12',k:'note-detail.html',ic:'📋'}] },
+  { name:'岡田 司', kana:'オカダ ツカサ', color:C.green, primary:true, role:'院長（個人事業主）', type:'個人事業主',
+    company:'フィット鍼灸院', industry:'医療・福祉', area:'東京都', status:'顧問中',
+    email:'okada@fit-shinkyu.jp', phone:'03-9090-1010', mobile:'090-2323-4545',
+    sns:[], cards:1, since:'2026/01/20', updated:'2026/06/01',
+    met:[{t:'開業1年目の決算ご相談',d:'2026/06/01',k:'meetings.html',ic:'🗓'}] },
+  { name:'大島 涼', kana:'オオシマ リョウ', color:C.gold, primary:false, role:'仕入課 課長', type:'法人',
+    company:'合同会社 海風マリン', industry:'卸売', area:'福岡県', status:'見込み',
+    email:'oshima@umikaze.jp', phone:'092-300-7700', mobile:'080-9999-0000',
+    sns:[], cards:1, since:'2026/05/28', updated:'2026/05/30',
+    met:[{t:'海産物卸のご紹介',d:'2026/05/30',k:'meetings.html',ic:'🗓'}] },
+];
+
+const STATUS_CLASS = { '顧問中':'active', '見込み':'prospect', '休眠':'dormant' };
+const $ = s => document.querySelector(s);
+let sel = 0;
+
+function avatar(p, lg){ return `<span class="pav ${lg?'lg':''}" style="background:${p.color}">${p.name.charAt(0)}</span>`; }
+function statusBadge(s){ return `<span class="badge ${STATUS_CLASS[s]||'type'}"><span class="dot"></span>${s}</span>`; }
+function mmdd(d){ return d.slice(5).replace('/','/'); }
+
+function rowHTML(p, i){
+  return `<div class="prow ${i===sel?'on':''}" onclick="selectPerson(${i})">
+    ${avatar(p)}
+    <div class="who">
+      <div class="nm">${p.name}${p.primary?' <span class="pin">主</span>':''}<span class="kana">${p.kana}</span></div>
+      <div class="meta">${p.company} ・ ${p.role}</div>
+    </div>
+    <div class="when">${mmdd(p.met[0].d)}<br><span class="muted">に接点</span></div>
+  </div>`;
+}
+
+function detailHTML(p){
+  const companyHref = 'company-detail.html';
+  return `
+  <div class="panel">
+    <div class="panel-body">
+      <div class="phero">
+        ${avatar(p, true)}
+        <div style="flex:1;min-width:0;">
+          <div class="row" style="gap:10px;">
+            <span class="nm">${p.name}</span>
+            ${p.primary?'<span class="badge prospect lg"><span class="dot"></span>主担当</span>':''}
+          </div>
+          <div class="role"><a href="${companyHref}">${p.company}</a> ・ ${p.role} ・ <span class="muted">${p.kana}</span></div>
+        </div>
+        <div class="row" style="gap:6px;">
+          <a class="btn btn-sm" href="contact-form.html">編集</a>
+          <a class="btn btn-sm btn-ghost" href="${companyHref}">会社を開く</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <div class="panel">
+        <div class="panel-head"><h3>連絡先</h3>
+          <div class="actions"><a class="btn btn-sm" href="mailto:${p.email}">メール</a></div>
+        </div>
+        <div class="panel-body">
+          <dl class="kv">
+            <dt>メール</dt><dd><a href="mailto:${p.email}">${p.email}</a></dd>
+            <dt>電話</dt><dd class="num">${p.phone}</dd>
+            <dt>携帯</dt><dd class="num">${p.mobile}</dd>
+            <dt>役職</dt><dd>${p.role}</dd>
+          </dl>
+          ${p.sns.length?`<div class="mt16"><div class="muted" style="font-size:12px;font-weight:700;margin-bottom:6px;">個人のSNS</div>
+            <div class="row" style="gap:8px;">${p.sns.map(s=>`<a class="btn btn-sm" href="#" target="_blank" rel="noopener">${s}</a>`).join('')}</div></div>`:''}
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>名刺</h3><span class="count">表 / 裏</span>
+          <div class="actions"><button class="btn btn-sm" data-icon="card" data-iw="14" onclick="toast('名刺を撮影/差し替え')">差し替え</button></div>
+        </div>
+        <div class="panel-body">
+          <div class="row" style="gap:12px;align-items:flex-start;">
+            <div class="biz"><div class="lbl">表面</div>
+              <div class="card" onclick="toast('名刺を拡大（署名URL・期限付き）')"><div class="fakecard"><div class="lines" style="padding:13px 15px;">
+                <div style="font-weight:800;font-size:12px;">${p.company}</div>
+                <div style="margin-top:4px;font-size:10px;color:#5a6b7d;">${p.role}</div>
+                <div style="font-size:13px;font-weight:700;">${p.name}</div>
+                <div class="num" style="margin-top:7px;font-size:8.5px;color:#5a6b7d;">${p.phone} ／ ${p.email}</div>
+              </div></div></div>
+            </div>
+            ${p.cards>1?`<div class="biz"><div class="lbl">裏面</div>
+              <div class="card" onclick="toast('名刺を拡大（署名URL・期限付き）')"><div class="fakecard"><div class="lines" style="padding:13px 15px;color:#5a6b7d;font-size:9.5px;">
+                <div style="font-weight:700;color:#33414f;">事業内容</div><div style="margin-top:4px;">${p.industry}</div></div></div></div>
+            </div>`:'<div class="biz"><div class="lbl">裏面</div><div class="card-slot" style="aspect-ratio:91/55;"><span class="big">＋</span><span style="font-size:11px;">裏面を追加</span></div></div>'}
+          </div>
+          <div class="muted mt16" style="font-size:11.5px;">名刺画像は非公開バケットに保管し、閲覧は<b>署名URL</b>のみ。</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel ledger" style="border-radius:0 var(--radius) var(--radius) 0;">
+        <div class="panel-head" style="border-left:0;"><h3>所属企業</h3></div>
+        <div class="panel-body">
+          <dl class="kv">
+            <dt>会社</dt><dd><a href="company-detail.html">${p.company}</a></dd>
+            <dt>種別</dt><dd><span class="badge type">${p.type}</span></dd>
+            <dt>業種</dt><dd>${p.industry}</dd>
+            <dt>エリア</dt><dd>${p.area}</dd>
+            <dt>ステータス</dt><dd>${statusBadge(p.status)}</dd>
+          </dl>
+          <a class="btn btn-sm mt16" href="company-detail.html">会社の詳細を開く</a>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>最近の接点</h3><span class="count num">${p.met.length}件</span></div>
+        <div class="panel-body" style="padding:0;" class="timeline">
+          <div class="timeline">
+            ${p.met.map(m=>`<a href="${m.k}"><span class="ic2">${m.ic}</span>
+              <span style="flex:1;"><span class="b">${m.t}</span><br><span class="muted" style="font-size:12px;">${m.d}</span></span>
+              <span class="muted">›</span></a>`).join('')}
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>この担当者</h3></div>
+        <div class="panel-body">
+          <dl class="kv">
+            <dt>名刺</dt><dd class="num">${p.cards} 枚</dd>
+            <dt>登録日</dt><dd class="num">${p.since}</dd>
+            <dt>最終更新</dt><dd class="num">${p.updated}</dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderList(){
+  const onlyPrimary = $('#primaryOnly').checked;
+  const q = $('#q').value.trim();
+  const sort = $('#sort').value;
+  let items = PEOPLE.map((p,i)=>({p,i}));
+  if(onlyPrimary) items = items.filter(x=>x.p.primary);
+  if(q) items = items.filter(x=> (x.p.name+x.p.kana+x.p.company).includes(q));
+  if(sort==='kana') items.sort((a,b)=> a.p.kana.localeCompare(b.p.kana,'ja'));
+  $('#count').textContent = items.length;
+  $('#list').innerHTML = items.map(x=> rowHTML(x.p, x.i)).join('') || '<div class="empty"><div class="ic">🔍</div><h3>該当なし</h3><div>条件を変えてください。</div></div>';
+  document.querySelectorAll('#list [data-icon]').forEach(el=> el.insertAdjacentHTML('afterbegin', window.icon(window.ICONS[el.dataset.icon])));
+}
+
+window.selectPerson = function(i){
+  sel = i;
+  document.querySelectorAll('.prow').forEach(el=>el.classList.remove('on'));
+  const row = document.querySelector(`.prow[onclick="selectPerson(${i})"]`);
+  if(row) row.classList.add('on');
+  $('#detail').innerHTML = detailHTML(PEOPLE[i]);
+  // 詳細内の data-icon を描画
+  document.querySelectorAll('#detail [data-icon]').forEach(el=> el.insertAdjacentHTML('afterbegin', window.icon(window.ICONS[el.dataset.icon], el.dataset.iw||16)));
+};
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  renderList();
+  selectPerson(0);
+  $('#q').addEventListener('input', renderList);
+  $('#sort').addEventListener('change', renderList);
+  $('#primaryOnly').addEventListener('change', renderList);
+});
+</script>
+</body>
+</html>

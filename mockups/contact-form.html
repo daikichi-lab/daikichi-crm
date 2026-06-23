@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>担当者を追加・大吉CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" data-active="companies"></aside>
+  <div class="main">
+    <header class="topbar">
+      <button class="btn btn-icon hamb" data-icon="menu" aria-label="メニュー"></button>
+      <div class="crumb"><a href="companies.html">顧客</a> / <a href="company-detail.html#contacts">株式会社 大吉商事</a> / <b>担当者を追加</b></div>
+      <div class="spacer"></div>
+      <a class="btn btn-sm" href="company-detail.html#contacts">キャンセル</a>
+      <button class="btn btn-sm btn-primary" onclick="toast('担当者を保存しました');setTimeout(()=>location.href='company-detail.html#contacts',700)">保存</button>
+      <div class="user"><div class="avatar">山</div></div>
+    </header>
+
+    <div class="content" style="max-width:1120px;">
+      <div class="page-head">
+        <div><h2>担当者を追加</h2><div class="sub">株式会社 大吉商事</div></div>
+        <div class="actions"><a class="btn" data-icon="card" href="scan.html">名刺から自動入力（OCR）</a></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-head"><h3>担当者情報</h3></div>
+          <div class="panel-body">
+            <div class="form-grid">
+              <div class="field">
+                <label>氏名 <span class="req">*</span></label>
+                <input class="input" placeholder="佐藤 太郎">
+              </div>
+              <div class="field">
+                <label>フリガナ</label>
+                <input class="input" placeholder="サトウ タロウ">
+              </div>
+              <div class="field">
+                <label>役職</label>
+                <input class="input" placeholder="営業部 部長">
+              </div>
+              <div class="field">
+                <label>部署</label>
+                <input class="input" placeholder="営業部">
+              </div>
+              <div class="field col-2">
+                <label>メール</label>
+                <input class="input" type="email" placeholder="sato@daikichi-shoji.co.jp">
+              </div>
+              <div class="field">
+                <label>電話</label>
+                <input class="input num" placeholder="03-1234-5678">
+              </div>
+              <div class="field">
+                <label>携帯</label>
+                <input class="input num" placeholder="080-9876-5432">
+              </div>
+              <div class="field col-2">
+                <label>個人のSNS・リンク</label>
+                <div class="form-grid" style="gap:10px 12px;">
+                  <input class="input" placeholder="X（旧Twitter） https://x.com/…">
+                  <input class="input" placeholder="LinkedIn https://linkedin.com/in/…">
+                  <input class="input" placeholder="Instagram https://instagram.com/…">
+                  <input class="input" placeholder="Facebook / その他">
+                </div>
+                <span class="hint">担当者<b>個人</b>のSNS。企業のSNS（企業編集）とは別に保存します（当面は extra(JSONB)）。</span>
+              </div>
+              <div class="field col-2">
+                <label style="display:flex;align-items:center;gap:8px;font-weight:600;"><input type="checkbox"> この企業の主担当にする</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h3>名刺画像</h3><span class="count">表 / 裏</span></div>
+          <div class="panel-body" style="display:flex;flex-direction:column;gap:14px;">
+            <div>
+              <div class="muted" style="font-size:12px;font-weight:700;margin-bottom:6px;">表面</div>
+              <div class="card-slot filled">
+                <span class="face-tag">表</span>
+                <div class="fakecard"><div class="lines"><div style="font-weight:700;font-size:13px;">株式会社 大吉商事</div><div style="font-size:11px;margin-top:6px;">営業部 部長</div><div style="font-size:14px;font-weight:700;">佐藤 太郎</div><div class="num" style="font-size:10px;margin-top:8px;">TEL 03-1234-5678 ／ sato@daikichi-shoji.co.jp</div></div></div>
+              </div>
+              <div class="row mt8"><button class="btn btn-sm" data-icon="card" onclick="toast('カメラを起動しました')">撮影</button><button class="btn btn-sm">差し替え</button><button class="btn btn-sm btn-danger">削除</button></div>
+            </div>
+            <div>
+              <div class="muted" style="font-size:12px;font-weight:700;margin-bottom:6px;">裏面（任意）</div>
+              <div class="card-slot">
+                <span class="big">＋</span>
+                <div>タップして撮影 / ファイルを選択</div>
+              </div>
+            </div>
+            <div class="banner ok" style="font-size:12px;"><span>名刺画像は<b>非公開で保管</b>し、閲覧は署名URLのみ。外部OCRには送りません。</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row mt16" style="justify-content:flex-end;">
+        <a class="btn" href="company-detail.html#contacts">キャンセル</a>
+        <button class="btn btn-primary" onclick="toast('担当者を保存しました');setTimeout(()=>location.href='company-detail.html#contacts',700)">保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

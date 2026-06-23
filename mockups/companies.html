@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>顧客（企業）一覧・大吉CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  /* 行頭アバター */
+  .co{ display:flex; align-items:center; gap:9px; }
+  .co-av{ width:26px; height:26px; border-radius:7px; background:var(--brand-600); color:#fff;
+    display:inline-grid; place-items:center; font-weight:700; font-size:12px; flex:none; }
+  .co-av.indiv{ background:var(--gold-600); }
+  /* 右ピークパネル（folk風プレビュー） */
+  .peek-scrim{ position:fixed; inset:0; background:rgba(14,30,48,.26); z-index:45; }
+  .peek{ position:fixed; top:0; right:0; height:100vh; width:392px; max-width:92vw; background:#fff;
+    box-shadow:var(--shadow-pop); z-index:46; display:flex; flex-direction:column; animation:slidein .18s ease; }
+  @keyframes slidein{ from{ transform:translateX(24px); opacity:.3; } to{ transform:none; opacity:1; } }
+  .peek .ph{ padding:18px 18px 14px; border-bottom:1px solid var(--line); display:flex; gap:12px; align-items:center; }
+  .peek .ph .co-av{ width:42px; height:42px; border-radius:11px; font-size:17px; }
+  .peek .pb{ padding:16px 18px; overflow-y:auto; flex:1; }
+  .peek .pf{ padding:14px 18px; border-top:1px solid var(--line); display:flex; gap:8px; background:var(--surface-2); }
+  .peek .xclose{ margin-left:auto; cursor:pointer; color:var(--ink-3); font-size:18px; width:30px; height:30px; display:grid; place-items:center; border-radius:7px; }
+  .peek .xclose:hover{ background:var(--surface-3); color:var(--ink); }
+  /* 求/提 が複数のとき、一覧は1行に省略（先頭数件＋"+N"）。全件はピーク/詳細で表示 */
+  .tagcell{ display:flex; gap:6px; align-items:center; flex-wrap:nowrap; overflow:hidden; max-width:300px; }
+  .tagcell .chip{ flex:none; }
+  .chip.more{ background:var(--surface-3); color:var(--ink-2); border:1px solid var(--line-strong); height:24px; padding:0 8px; cursor:help; font-weight:700; }
+  .chip.more:hover{ background:var(--brand-tint); color:var(--brand-700); border-color:var(--brand-500); }
+  .tsep{ width:1px; height:16px; background:var(--line-strong); margin:0 3px; flex:none; }
+  .tagfull{ display:none; }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" data-active="companies"></aside>
+  <div class="main">
+    <header class="topbar">
+      <button class="btn btn-icon hamb" data-icon="menu" aria-label="メニュー"></button>
+      <h1>顧客（企業）</h1>
+      <div class="search"><span class="mag"></span><input placeholder="社名・メモを検索…"></div>
+      <div class="spacer"></div>
+      <a class="btn btn-sm" data-icon="card" href="scan.html">名刺スキャン</a>
+      <button class="btn btn-sm" data-icon="help" data-iw="15" onclick="openGuide('顧客一覧の使い方', document.getElementById('guide').innerHTML)">使い方</button>
+      <div class="user"><div class="avatar">山</div></div>
+    </header>
+
+    <div class="content">
+      <div id="guide" hidden>
+        <p>顧客（会社）の一覧です。条件で絞り込み、行から詳細へ進みます。</p>
+        <ul>
+          <li>上の<b>フィルタ</b>で 種別／業種／エリア／規模／ステータス／社内担当（複数条件はAND）。</li>
+          <li>求/提タグは<b>先頭2件＋"+N"</b>表示。<b>"+N" にマウスを乗せると残り</b>が出ます。</li>
+          <li><b>行をクリックで右にプレビュー</b>、そこから詳細へ。</li>
+          <li>右上から<b>CSV取込・書き出し</b>、新規登録。</li>
+        </ul>
+      </div>
+      <div class="page-head">
+        <div><h2>顧客（企業）一覧</h2><div class="sub"><span class="num">248</span> 社 ・ うち顧問中 <span class="num">130</span></div></div>
+        <div class="actions">
+          <a class="btn" data-icon="home" href="import.html">CSV取込</a>
+          <button class="btn" onclick="openExport()">CSV書き出し</button>
+          <a class="btn btn-primary" href="company-form.html">＋ 企業を登録</a>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="filterbar">
+          <select class="select"><option>種別: すべて</option><option>法人</option><option>個人事業主</option></select>
+          <select class="select"><option>業種: すべて</option><option>飲食</option><option>建設</option><option>卸売</option><option>IT・情報通信</option></select>
+          <select class="select"><option>エリア: すべて</option><option>東京都</option><option>大阪府</option><option>愛知県</option></select>
+          <select class="select"><option>規模: すべて</option><option>〜1千万</option><option>1千万〜5千万</option><option>1億〜10億</option></select>
+          <select class="select"><option>ステータス: すべて</option><option>顧問中</option><option>見込み</option><option>休眠</option></select>
+          <select class="select"><option>社内担当: すべて</option><option>山田 健太</option><option>佐藤 京子</option><option>田中 一郎</option></select>
+          <span class="chip-add chip" style="height:30px;">＋ 求/提タグで絞り込み</span>
+          <span class="right"></span>
+          <span class="filter-pill">ステータス: 見込み <span class="x">✕</span></span>
+          <span class="filter-pill">エリア: 東京都 <span class="x">✕</span></span>
+          <a href="#" style="font-size:12.5px;">条件をクリア</a>
+        </div>
+
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th class="check"><input type="checkbox"></th>
+                <th>社名</th><th>種別</th><th>業種</th><th>エリア</th><th>規模</th>
+                <th>ステータス</th><th>求 / 提（needs / offers）</th><th>社内担当</th><th class="right">更新日</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr onclick="openPeek(this)">
+                <td class="check"><input type="checkbox" onclick="event.stopPropagation()"></td>
+                <td><div class="co"><span class="co-av">大</span><span class="name linkish">株式会社 大吉商事</span></div></td><td><span class="badge type">法人</span></td>
+                <td>卸売</td><td>東京都</td><td class="num">1億〜10億</td>
+                <td><span class="badge active"><span class="dot"></span>顧問中</span></td>
+                <td><div class="tagcell"><span class="chip need"><span class="mk">求</span>販路拡大</span><span class="chip more" title="ほか 求: EC強化, 配送代行">+2</span><span class="tsep"></span><span class="chip offer"><span class="mk">提</span>食材卸</span><span class="chip more" title="ほか 提: 業務用パッケージ">+1</span></div><div class="tagfull"><div class="chips"><span class="chip need"><span class="mk">求</span>販路拡大</span><span class="chip need"><span class="mk">求</span>EC強化</span><span class="chip need"><span class="mk">求</span>配送代行</span><span class="chip offer"><span class="mk">提</span>食材卸</span><span class="chip offer"><span class="mk">提</span>業務用パッケージ</span></div></div></td>
+                <td class="muted">山田 健太</td>
+                <td class="right num muted">06/19</td>
+              </tr>
+              <tr onclick="openPeek(this)">
+                <td class="check"><input type="checkbox" onclick="event.stopPropagation()"></td>
+                <td><div class="co"><span class="co-av indiv">み</span><span class="name linkish">みどり食堂</span></div></td><td><span class="badge type">個人</span></td>
+                <td>飲食</td><td>大阪府</td><td class="num">〜1千万</td>
+                <td><span class="badge prospect"><span class="dot"></span>見込み</span></td>
+                <td><div class="tagcell"><span class="chip need"><span class="mk">求</span>集客</span><span class="chip more" title="ほか 求: 仕入先">+1</span></div><div class="tagfull"><div class="chips"><span class="chip need"><span class="mk">求</span>集客</span><span class="chip need"><span class="mk">求</span>仕入先</span></div></div></td>
+                <td class="muted">佐藤 京子</td>
+                <td class="right num muted">06/19</td>
+              </tr>
+              <tr onclick="openPeek(this)">
+                <td class="check"><input type="checkbox" onclick="event.stopPropagation()"></td>
+                <td><div class="co"><span class="co-av indiv">佐</span><span class="name linkish">佐藤デザイン事務所</span></div></td><td><span class="badge type">個人</span></td>
+                <td>広告・メディア</td><td>福岡県</td><td class="num">〜1千万</td>
+                <td><span class="badge active"><span class="dot"></span>顧問中</span></td>
+                <td><div class="tagcell"><span class="chip offer"><span class="mk">提</span>Web広告</span><span class="chip more" title="ほか 提: ブランディング">+1</span></div><div class="tagfull"><div class="chips"><span class="chip offer"><span class="mk">提</span>Web広告</span><span class="chip offer"><span class="mk">提</span>ブランディング</span></div></div></td>
+                <td class="muted">山田 健太</td>
+                <td class="right num muted">06/18</td>
+              </tr>
+              <tr onclick="openPeek(this)">
+                <td class="check"><input type="checkbox" onclick="event.stopPropagation()"></td>
+                <td><div class="co"><span class="co-av">鈴</span><span class="name linkish">鈴木工務店</span></div></td><td><span class="badge type">法人</span></td>
+                <td>建設</td><td>愛知県</td><td class="num">5千万〜1億</td>
+                <td><span class="badge active"><span class="dot"></span>顧問中</span></td>
+                <td><div class="tagcell"><span class="chip need"><span class="mk">求</span>人材採用</span><span class="tsep"></span><span class="chip offer"><span class="mk">提</span>店舗内装</span></div></td>
+                <td class="muted">田中 一郎</td>
+                <td class="right num muted">06/18</td>
+              </tr>
+              <tr onclick="openPeek(this)">
+                <td class="check"><input type="checkbox" onclick="event.stopPropagation()"></td>
+                <td><div class="co"><span class="co-av">北</span><span class="name linkish">株式会社 北斗ロジ</span></div></td><td><span class="badge type">法人</span></td>
+                <td>運輸・物流</td><td>北海道</td><td class="num">1億〜10億</td>
+                <td><span class="badge active"><span class="dot"></span>顧問中</span></td>
+                <td><div class="tagcell"><span class="chip need"><span class="mk">求</span>資金調達</span><span class="tsep"></span><span class="chip offer"><span class="mk">提</span>配送代行</span></div></td>
+                <td class="muted">佐藤 京子</td>
+                <td class="right num muted">06/17</td>
+              </tr>
+              <tr onclick="openPeek(this)">
+                <td class="check"><input type="checkbox" onclick="event.stopPropagation()"></td>
+                <td><div class="co"><span class="co-av indiv">山</span><span class="name linkish">山本会計サポート</span></div></td><td><span class="badge type">個人</span></td>
+                <td>専門サービス</td><td>東京都</td><td class="num">不明</td>
+                <td><span class="badge dormant"><span class="dot"></span>休眠</span></td>
+                <td><div class="tagcell"><span class="chip offer"><span class="mk">提</span>記帳代行</span></div></td>
+                <td class="muted">田中 一郎</td>
+                <td class="right num muted">06/15</td>
+              </tr>
+              <tr onclick="openPeek(this)">
+                <td class="check"><input type="checkbox" onclick="event.stopPropagation()"></td>
+                <td><div class="co"><span class="co-av indiv">カ</span><span class="name linkish">カフェ・ひだまり</span></div></td><td><span class="badge type">個人</span></td>
+                <td>飲食</td><td>京都府</td><td class="num">〜1千万</td>
+                <td><span class="badge prospect"><span class="dot"></span>見込み</span></td>
+                <td><div class="tagcell"><span class="chip need"><span class="mk">求</span>集客</span><span class="chip more" title="ほか 求: 資金調達">+1</span></div><div class="tagfull"><div class="chips"><span class="chip need"><span class="mk">求</span>集客</span><span class="chip need"><span class="mk">求</span>資金調達</span></div></div></td>
+                <td class="muted">佐藤 京子</td>
+                <td class="right num muted">06/14</td>
+              </tr>
+              <tr onclick="openPeek(this)">
+                <td class="check"><input type="checkbox" onclick="event.stopPropagation()"></td>
+                <td><div class="co"><span class="co-av">テ</span><span class="name linkish">テック合同会社</span></div></td><td><span class="badge type">法人</span></td>
+                <td>IT・情報通信</td><td>東京都</td><td class="num">1千万〜5千万</td>
+                <td><span class="badge active"><span class="dot"></span>顧問中</span></td>
+                <td><div class="tagcell"><span class="chip need"><span class="mk">求</span>販路拡大</span><span class="chip more" title="ほか 求: 人材採用">+1</span><span class="tsep"></span><span class="chip offer"><span class="mk">提</span>システム開発</span><span class="chip more" title="ほか 提: EC強化, 業務効率化">+2</span></div><div class="tagfull"><div class="chips"><span class="chip need"><span class="mk">求</span>販路拡大</span><span class="chip need"><span class="mk">求</span>人材採用</span><span class="chip offer"><span class="mk">提</span>システム開発</span><span class="chip offer"><span class="mk">提</span>EC強化</span><span class="chip offer"><span class="mk">提</span>業務効率化</span></div></div></td>
+                <td class="muted">山田 健太</td>
+                <td class="right num muted">06/13</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="tfoot">
+          <span>248 件中 1–8 を表示</span>
+          <span class="legend"><span class="chip need" style="height:20px;"><span class="mk">求</span>求めてる</span><span class="chip offer" style="height:20px;"><span class="mk">提</span>提供できる</span></span>
+          <div class="pager">
+            <span class="pg">‹</span><span class="pg on">1</span><span class="pg">2</span><span class="pg">3</span><span class="pg">…</span><span class="pg">31</span><span class="pg">›</span>
+          </div>
+        </div>
+      </div>
+      <div class="muted mt8" style="font-size:12px;">行をクリックすると右側にプレビューが開きます。</div>
+    </div>
+  </div>
+</div>
+<script src="assets/app.js"></script>
+<script>
+  // 行クリックで右ピークパネル（folk風プレビュー）。行の各セルから値を読み取る。
+  function openPeek(tr){
+    const av = tr.querySelector('.co-av');
+    const name = tr.querySelector('.name').textContent;
+    const c = tr.cells; // 0:check 1:社名 2:種別 3:業種 4:エリア 5:規模 6:ステータス 7:求/提 8:社内担当 9:更新日
+    const _full = tr.querySelector('.tagfull');           // 省略行は全タグを別持ち
+    const tagsHTML = _full ? _full.innerHTML : (tr.querySelector('.tagcell') ? tr.querySelector('.tagcell').innerHTML : c[7].innerHTML);
+    const scrim = document.createElement('div'); scrim.className = 'peek-scrim';
+    const panel = document.createElement('div'); panel.className = 'peek';
+    panel.innerHTML = `
+      <div class="ph">
+        <span class="co-av ${av.classList.contains('indiv')?'indiv':''}">${av.textContent}</span>
+        <div><h3 style="font-size:16px;">${name}</h3>
+          <div class="row" style="gap:6px;margin-top:4px;">${c[2].innerHTML} ${c[6].innerHTML}</div></div>
+        <span class="xclose" onclick="closePeek(this)">✕</span>
+      </div>
+      <div class="pb">
+        <div class="ledger">
+          <dl class="kv">
+            <dt>業種</dt><dd>${c[3].textContent}</dd>
+            <dt>エリア</dt><dd>${c[4].textContent}</dd>
+            <dt>規模</dt><dd class="num">${c[5].textContent}</dd>
+            <dt>社内担当</dt><dd>${c[8].textContent}</dd>
+            <dt>更新日</dt><dd class="num">${c[9].textContent}</dd>
+          </dl>
+        </div>
+        <div class="mt16">
+          <div class="muted" style="font-size:12px;font-weight:700;margin-bottom:6px;">求めてること / 提供できること</div>
+          ${tagsHTML}
+        </div>
+        <div class="mt16">
+          <div class="muted" style="font-size:12px;font-weight:700;margin-bottom:4px;">担当者</div>
+          <div class="muted" style="font-size:12.5px;">名刺登録済み 2名（詳細で表/裏を確認できます）</div>
+        </div>
+      </div>
+      <div class="pf">
+        <a class="btn btn-primary" href="company-detail.html" style="flex:1;justify-content:center;">詳細を開く</a>
+        <a class="btn" href="company-form.html">編集</a>
+      </div>`;
+    scrim.addEventListener('click', () => { scrim.remove(); panel.remove(); });
+    document.body.appendChild(scrim);
+    document.body.appendChild(panel);
+  }
+  function closePeek(el){
+    document.querySelectorAll('.peek, .peek-scrim').forEach(n => n.remove());
+  }
+
+  // S-08 CSV書き出しダイアログ（S-02内）
+  function openExport(){
+    const s = document.createElement('div');
+    s.className = 'scrim';
+    s.innerHTML = `<div class="modal" style="max-width:480px;">
+      <div class="m-head"><h3>CSVで書き出し</h3></div>
+      <div class="m-body">
+        <div class="field"><label>範囲</label>
+          <label class="row" style="font-weight:500;gap:8px;"><input type="radio" name="exrange" checked> 現在の絞り込み結果（<span class="num">36</span> 社）</label>
+          <label class="row" style="font-weight:500;gap:8px;"><input type="radio" name="exrange"> 全件（<span class="num">248</span> 社）</label>
+        </div>
+        <div class="field mt8"><label>文字コード</label>
+          <select class="select"><option>UTF-8（BOM付き・Excel向け）</option><option>UTF-8（BOMなし）</option></select></div>
+        <div class="field mt8"><label>列</label>
+          <div class="muted" style="font-size:12px;">ID / 種別 / 名称 / 業種 / エリア / 規模 / 求めてること / 提供できること / ステータス / メモ / 登録日</div></div>
+        <div class="banner ok mt16" style="font-size:12px;"><span class="b">安全対策あり：</span> <span class="num">= + - @</span> で始まるセルは先頭に <span class="num">'</span> を付けてエスケープ（フォーミュラインジェクション対策）。論理削除済みの行は除外します。</div>
+      </div>
+      <div class="m-foot">
+        <button class="btn" onclick="closeModal(this)">キャンセル</button>
+        <button class="btn btn-primary" onclick="closeModal(this);toast('CSVを書き出しました（36社・フォーミュラ対策済み）')">書き出す</button>
+      </div></div>`;
+    s.addEventListener('click', e => { if (e.target === s) s.remove(); });
+    document.body.appendChild(s);
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>管理: タグ・業種マスタ・大吉CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  .admin-tabs{ display:flex; gap:4px; border-bottom:1px solid var(--line); margin-bottom:18px;}
+  .admin-tabs a{ padding:10px 16px; font-size:13.5px; font-weight:700; color:var(--ink-3); border-bottom:2px solid transparent;}
+  .admin-tabs a:hover{ text-decoration:none; color:var(--brand-600);}
+  .admin-tabs a.on{ color:var(--brand-700); border-bottom-color:var(--brand-700);}
+  .master-list{ display:flex; flex-wrap:wrap; gap:8px;}
+  .master-item{ display:inline-flex; align-items:center; gap:8px; height:32px; padding:0 6px 0 12px; border-radius:999px;
+    background:var(--surface-2); border:1px solid var(--line-strong); font-size:13px; font-weight:600;}
+  .master-item .x{ cursor:pointer; color:var(--ink-3); width:20px; height:20px; display:grid; place-items:center; border-radius:50%;}
+  .master-item .x:hover{ background:var(--red-50); color:var(--red-600);}
+  .fixed-note{ display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 12px; border-radius:999px;
+    background:var(--surface-3); color:var(--ink-3); font-size:12.5px; font-weight:600;}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" data-active="admin"></aside>
+  <div class="main">
+    <header class="topbar">
+      <button class="btn btn-icon hamb" data-icon="menu" aria-label="メニュー"></button>
+      <div class="crumb"><b>管理</b> / タグ・業種マスタ</div>
+      <div class="spacer"></div>
+      <button class="btn btn-sm" data-icon="help" data-iw="15" onclick="openGuide('管理（マスタ）の使い方', document.getElementById('guide').innerHTML)">使い方</button>
+      <div class="user"><div class="avatar">山</div></div>
+    </header>
+
+    <div class="content">
+      <div id="guide" hidden>
+        <p>タグや業種マスタを管理します（管理者のみ）。表記ゆれを防ぎ、マッチング精度を保ちます。</p>
+        <ul>
+          <li>タグの<b>リネーム・統合（名寄せ）</b>。似たタグは黄色で警告。</li>
+          <li><b>業種マスタ</b>の追加・編集。エリア・規模は固定です。</li>
+        </ul>
+      </div>
+      <div class="page-head">
+        <div><h2>管理</h2><div class="sub">表記ゆれを排除し、マッチング精度を保つためのマスタ管理（admin）。</div></div>
+      </div>
+
+      <nav class="admin-tabs">
+        <a href="admin-users.html">ユーザー</a>
+        <a href="admin-masters.html" class="on">タグ・業種マスタ</a>
+      </nav>
+
+      <!-- タグ管理 -->
+      <div class="panel">
+        <div class="panel-head">
+          <h3>タグ（求 / 提 の共通語彙）</h3><span class="count num">42 タグ</span>
+          <div class="actions">
+            <button class="btn btn-sm" onclick="toast('2つのタグを統合（名寄せ）します')">＋ 別名を統合</button>
+            <button class="btn btn-sm btn-primary" onclick="toast('タグを追加しました')">＋ タグを追加</button>
+          </div>
+        </div>
+        <div class="filterbar"><input class="input" placeholder="タグを検索…" style="min-width:220px;">
+          <span class="right"></span>
+          <span class="muted" style="font-size:12px;">needs / offers は<b>同一語彙</b>を共有（FR-T3）。使用件数が多いタグは要注意で名寄せ。</span>
+        </div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>タグ</th><th class="right">求で使用</th><th class="right">提で使用</th><th class="right">企業数</th><th class="right">操作</th></tr></thead>
+            <tbody>
+              <tr style="cursor:default;">
+                <td><span class="chip need" style="height:22px;"><span class="mk">求</span>販路拡大</span></td>
+                <td class="right num">18</td><td class="right num">2</td><td class="right num">20</td>
+                <td class="right"><button class="btn btn-sm" onclick="toast('リネーム')">リネーム</button>
+                  <button class="btn btn-sm" onclick="toast('統合')">統合</button></td>
+              </tr>
+              <tr style="cursor:default;">
+                <td><span class="chip offer" style="height:22px;"><span class="mk">提</span>食材卸</span></td>
+                <td class="right num">3</td><td class="right num">9</td><td class="right num">11</td>
+                <td class="right"><button class="btn btn-sm" onclick="toast('リネーム')">リネーム</button>
+                  <button class="btn btn-sm" onclick="toast('統合')">統合</button></td>
+              </tr>
+              <tr style="cursor:default;background:var(--amber-50);">
+                <td><span class="chip need" style="height:22px;"><span class="mk">求</span>集客</span>
+                  <span class="muted" style="font-size:11.5px;margin-left:8px;">≈「販路拡大」と表記ゆれの可能性</span></td>
+                <td class="right num">14</td><td class="right num">1</td><td class="right num">15</td>
+                <td class="right"><button class="btn btn-sm" onclick="toast('リネーム')">リネーム</button>
+                  <button class="btn btn-sm btn-gold" onclick="demoModal('タグを統合しますか？','「集客」を「販路拡大」に名寄せします。集客 を使う 15 社の値が 販路拡大 に置換されます。','統合する')">統合</button></td>
+              </tr>
+              <tr style="cursor:default;">
+                <td><span class="chip offer" style="height:22px;"><span class="mk">提</span>Web広告</span></td>
+                <td class="right num">2</td><td class="right num">6</td><td class="right num">8</td>
+                <td class="right"><button class="btn btn-sm" onclick="toast('リネーム')">リネーム</button>
+                  <button class="btn btn-sm" onclick="toast('統合')">統合</button></td>
+              </tr>
+              <tr style="cursor:default;">
+                <td><span class="chip need" style="height:22px;"><span class="mk">求</span>資金調達</span></td>
+                <td class="right num">12</td><td class="right num">0</td><td class="right num">12</td>
+                <td class="right"><button class="btn btn-sm" onclick="toast('リネーム')">リネーム</button>
+                  <button class="btn btn-sm" onclick="toast('統合')">統合</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 業種マスタ -->
+      <div class="panel mt16">
+        <div class="panel-head">
+          <h3>業種マスタ</h3><span class="count num">18 業種</span>
+          <div class="actions"><button class="btn btn-sm btn-primary" onclick="toast('業種を追加しました')">＋ 業種を追加</button></div>
+        </div>
+        <div class="panel-body">
+          <div class="muted" style="font-size:12px;margin-bottom:10px;">日本標準産業分類の大分類をベースに、会計事務所の顧客向け実用粒度へ整理（§8.6）。運用しながら admin が増減。</div>
+          <div class="master-list">
+            <span class="master-item">農林漁業 <span class="x">✕</span></span>
+            <span class="master-item">建設 <span class="x">✕</span></span>
+            <span class="master-item">製造 <span class="x">✕</span></span>
+            <span class="master-item">卸売 <span class="x">✕</span></span>
+            <span class="master-item">小売 <span class="x">✕</span></span>
+            <span class="master-item">飲食 <span class="x">✕</span></span>
+            <span class="master-item">宿泊・観光 <span class="x">✕</span></span>
+            <span class="master-item">運輸・物流 <span class="x">✕</span></span>
+            <span class="master-item">IT・情報通信 <span class="x">✕</span></span>
+            <span class="master-item">不動産 <span class="x">✕</span></span>
+            <span class="master-item">金融・保険 <span class="x">✕</span></span>
+            <span class="master-item">専門サービス <span class="x">✕</span></span>
+            <span class="master-item">医療・福祉 <span class="x">✕</span></span>
+            <span class="master-item">教育・学習支援 <span class="x">✕</span></span>
+            <span class="master-item">美容・理容 <span class="x">✕</span></span>
+            <span class="master-item">生活関連サービス <span class="x">✕</span></span>
+            <span class="master-item">広告・メディア <span class="x">✕</span></span>
+            <span class="master-item">その他 <span class="x">✕</span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- メルマガ属性（配信トピック）マスタ -->
+      <div class="panel mt16" id="topics">
+        <div class="panel-head">
+          <h3>メルマガ属性（配信トピック）</h3><span class="count num">5 トピック</span>
+          <div class="actions"><button class="btn btn-sm btn-primary" onclick="toast('配信トピックを追加しました')">＋ トピックを追加</button></div>
+        </div>
+        <div class="filterbar">
+          <span class="muted" style="font-size:12px;">担当者（個人）ごとに購読を管理。メルマガ作成時はここから選んだトピックの<b>購読者かつ配信同意あり</b>の人が宛先になります。</span>
+        </div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>トピック</th><th>説明</th><th class="right">購読者</th><th>状態</th><th class="right">操作</th></tr></thead>
+            <tbody>
+              <tr style="cursor:default;">
+                <td><span class="chip need" style="height:22px;background:var(--brand-tint);color:var(--brand-700);border-color:#cfe0ef;">税制改正ニュース</span></td>
+                <td class="muted">税制改正・申告の最新トピック</td>
+                <td class="right num">153</td>
+                <td><span class="badge active"><span class="dot"></span>有効</span></td>
+                <td class="right"><button class="btn btn-sm" onclick="toast('リネーム')">リネーム</button>
+                  <button class="btn btn-sm" onclick="toast('無効化')">無効化</button></td>
+              </tr>
+              <tr style="cursor:default;">
+                <td><span class="chip need" style="height:22px;background:var(--brand-tint);color:var(--brand-700);border-color:#cfe0ef;">セミナー・勉強会案内</span></td>
+                <td class="muted">セミナーや勉強会のご案内</td>
+                <td class="right num">96</td>
+                <td><span class="badge active"><span class="dot"></span>有効</span></td>
+                <td class="right"><button class="btn btn-sm" onclick="toast('リネーム')">リネーム</button>
+                  <button class="btn btn-sm" onclick="toast('無効化')">無効化</button></td>
+              </tr>
+              <tr style="cursor:default;">
+                <td><span class="chip need" style="height:22px;background:var(--brand-tint);color:var(--brand-700);border-color:#cfe0ef;">経営お役立ち情報</span></td>
+                <td class="muted">資金繰り・補助金など経営のヒント</td>
+                <td class="right num">120</td>
+                <td><span class="badge active"><span class="dot"></span>有効</span></td>
+                <td class="right"><button class="btn btn-sm" onclick="toast('リネーム')">リネーム</button>
+                  <button class="btn btn-sm" onclick="toast('無効化')">無効化</button></td>
+              </tr>
+              <tr style="cursor:default;">
+                <td><span class="chip need" style="height:22px;background:var(--brand-tint);color:var(--brand-700);border-color:#cfe0ef;">年末調整のお知らせ</span></td>
+                <td class="muted">年末調整・季節手続きのリマインド</td>
+                <td class="right num">130</td>
+                <td><span class="badge active"><span class="dot"></span>有効</span></td>
+                <td class="right"><button class="btn btn-sm" onclick="toast('リネーム')">リネーム</button>
+                  <button class="btn btn-sm" onclick="toast('無効化')">無効化</button></td>
+              </tr>
+              <tr style="cursor:default;">
+                <td><span class="chip need" style="height:22px;background:var(--surface-3);color:var(--ink-3);border-color:var(--line);">決算前リマインド</span></td>
+                <td class="muted">決算月に向けた早めの対策案内</td>
+                <td class="right num">88</td>
+                <td><span class="badge dormant"><span class="dot"></span>無効</span></td>
+                <td class="right"><button class="btn btn-sm" onclick="toast('リネーム')">リネーム</button>
+                  <button class="btn btn-sm" onclick="toast('有効化')">有効化</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 固定マスタ（参考） -->
+      <div class="panel mt16">
+        <div class="panel-head"><h3>固定マスタ（編集不可）</h3></div>
+        <div class="panel-body" style="display:flex;flex-direction:column;gap:14px;">
+          <div>
+            <div class="muted" style="font-size:12px;font-weight:700;margin-bottom:6px;">エリア（47都道府県・地方区分付き）</div>
+            <div class="row">
+              <span class="fixed-note">北海道・東北</span><span class="fixed-note">関東</span><span class="fixed-note">中部</span>
+              <span class="fixed-note">近畿</span><span class="fixed-note">中国・四国</span><span class="fixed-note">九州・沖縄</span>
+              <span class="muted" style="font-size:12px;">近接重み付け（v2）に利用</span>
+            </div>
+          </div>
+          <div>
+            <div class="muted" style="font-size:12px;font-weight:700;margin-bottom:6px;">規模区分（売上ベース）</div>
+            <div class="row">
+              <span class="fixed-note num">〜1千万</span><span class="fixed-note num">1千万〜5千万</span><span class="fixed-note num">5千万〜1億</span>
+              <span class="fixed-note num">1億〜10億</span><span class="fixed-note num">10億〜</span><span class="fixed-note">不明</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>打ち合わせ・大吉CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  .mtg{ display:flex; gap:14px; padding:14px 16px; border-bottom:1px solid var(--line); }
+  .mtg:last-child{ border-bottom:0; }
+  .mtg .when{ flex:none; width:78px; text-align:center; }
+  .mtg .when .t{ font-size:16px; font-weight:800; } .mtg .when .dur{ font-size:11px; color:var(--ink-3); }
+  .mtg .body{ flex:1; min-width:0; }
+  .mtg .title{ font-weight:700; }
+  .mtg .meta{ color:var(--ink-3); font-size:12.5px; margin-top:2px; display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+  .attendee{ display:inline-flex; align-items:center; gap:6px; height:24px; padding:0 8px 0 4px; border-radius:999px; border:1px solid var(--line-strong); background:#fff; font-size:12px; margin:4px 6px 0 0; }
+  .attendee .a{ width:18px; height:18px; border-radius:50%; background:var(--brand-600); color:#fff; display:grid; place-items:center; font-size:10px; font-weight:700; }
+  .attendee.linked{ border-color:#cfe0ef; background:var(--brand-50); }
+  .attendee.unlinked{ border-style:dashed; color:var(--ink-3); }
+  .platform{ display:inline-flex; align-items:center; gap:5px; font-weight:600; }
+  .mtg .side{ flex:none; display:flex; flex-direction:column; gap:6px; align-items:flex-end; }
+  .rec-badge{ display:inline-flex; align-items:center; gap:6px; height:22px; padding:0 9px; border-radius:999px; font-size:11.5px; font-weight:700; border:1px solid; }
+  .rec-badge.done{ color:var(--green-700); background:var(--green-50); border-color:#cce7d6; }
+  .rec-badge.wait{ color:var(--amber-600); background:var(--amber-50); border-color:#ecdcb4; }
+  .cust-pill{ display:inline-flex; align-items:center; gap:5px; }
+  .pick-row{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid var(--line); cursor:pointer; }
+  .pick-row:last-child{ border-bottom:0; } .pick-row:hover{ background:var(--brand-tint); }
+  .pick-row .av{ width:26px; height:26px; border-radius:7px; background:var(--brand-600); color:#fff; display:grid; place-items:center; font-size:12px; font-weight:700; flex:none; }
+  /* スタッフ切替フィルタ */
+  .staff-bar{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .staff-chip{ display:inline-flex; align-items:center; gap:7px; height:32px; padding:0 13px 0 7px; border-radius:999px; border:1px solid var(--line-strong); background:#fff; font-size:12.5px; font-weight:600; cursor:pointer; color:var(--ink); font-family:inherit; }
+  .staff-chip.allchip{ padding:0 14px; }
+  .staff-chip.on{ border-color:var(--brand-500); background:var(--brand-50); color:var(--brand-700); }
+  .staff-chip .oav, .owner .oav{ width:20px; height:20px; border-radius:50%; color:#fff; display:grid; place-items:center; font-size:10px; font-weight:700; flex:none; }
+  .owner{ display:inline-flex; align-items:center; gap:6px; font-weight:600; color:var(--ink-2); }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" data-active="meetings"></aside>
+  <div class="main">
+    <header class="topbar">
+      <button class="btn btn-icon hamb" data-icon="menu" aria-label="メニュー"></button>
+      <h1>打ち合わせ</h1>
+      <div class="search"><span class="mag"></span><input placeholder="打ち合わせ・出席者を検索…"></div>
+      <div class="spacer"></div>
+      <button class="btn btn-sm" data-icon="help" data-iw="15" onclick="openGuide('打ち合わせの使い方', document.getElementById('guide').innerHTML)">使い方</button>
+      <div class="user"><div class="avatar">山</div></div>
+    </header>
+
+    <div class="content">
+      <div id="guide" hidden>
+        <p>Google カレンダーと連携し、<b>打ち合わせの相手を顧客（CRM）につなげる</b>画面です。</p>
+        <h4>見方</h4>
+        <ul>
+          <li>今日／今後の予定が並びます。出席者のメールが一致すると、会社・担当者に<b>自動でリンク</b>。</li>
+          <li>カレンダーに<b>名前しか無いとき</b>は「顧客を指定」で既存顧客に手動で紐付け（または新規作成）。</li>
+        </ul>
+        <h4>会議のあと</h4>
+        <ul>
+          <li>Notta の議事録が自動で保存され、この打ち合わせ・顧客に紐付きます（<a href="notes.html">議事録</a>）。</li>
+        </ul>
+      </div>
+      <div class="page-head">
+        <div>
+          <h2>打ち合わせ <span class="tag" style="font-size:11px;border:1px solid var(--line-strong);padding:1px 7px;border-radius:5px;color:var(--ink-3);vertical-align:middle;">Phase 2-3</span></h2>
+          <div class="sub">Google カレンダーと連携し、打ち合わせの相手を顧客（CRM）につなげます。<b>カレンダーに名前しか無い予定は、ここから顧客を手動で指定</b>できます。終了後の議事録は <a href="notes.html">議事録</a> に残ります。</div>
+        </div>
+        <div class="actions">
+          <button class="btn" onclick="toast('カレンダーを再同期しました')">再同期</button>
+        </div>
+      </div>
+
+      <!-- 連携状態 -->
+      <div class="banner ok">
+        <span data-icon="user" data-iw="16"></span>
+        <div><span class="b">スタッフ3名が Google カレンダーを連携中</span>（山田・佐藤・田中）。事務所はチームで動くので、<b>自分以外の予定も見られます</b>。出席者メールを担当者と突合し、会社・担当者へ自動リンク。<a href="#" onclick="demoModal('自分のカレンダー連携を解除しますか？','あなたの予定の取り込みを停止します（他スタッフの予定は影響しません）。','解除する',true);return false;">自分の連携を解除</a></div>
+      </div>
+
+      <!-- スタッフ切替（誰の予定を見るか） -->
+      <div class="panel mt16">
+        <div class="panel-body staff-bar" style="padding:11px 14px;">
+          <span class="b" style="font-size:12.5px;color:var(--ink-2);">予定を見る</span>
+          <button class="staff-chip allchip on" onclick="filterStaff('all',this)">全員</button>
+          <button class="staff-chip" onclick="filterStaff('yamada',this)"><span class="oav" style="background:var(--brand-600)">山</span>山田 健太（自分）</button>
+          <button class="staff-chip" onclick="filterStaff('sato',this)"><span class="oav" style="background:var(--gold-600)">佐</span>佐藤 京子</button>
+          <button class="staff-chip" onclick="filterStaff('tanaka',this)"><span class="oav" style="background:var(--green-600)">田</span>田中 一郎</button>
+          <span class="right"></span>
+          <span class="muted" style="font-size:11.5px;" id="staffCount">全員の予定を表示中</span>
+        </div>
+      </div>
+
+      <div class="grid-2 mt16">
+        <div>
+          <div class="panel">
+            <div class="panel-head"><h3>今日の打ち合わせ</h3><span class="count num" id="todayCount">4件 ・ 6月19日(金)</span></div>
+
+            <div class="mtg" data-owner="yamada">
+              <div class="when"><div class="t num">10:00</div><div class="dur num">60分</div></div>
+              <div class="body">
+                <div class="title">大吉商事 EC協業の打ち合わせ</div>
+                <div class="meta"><span class="platform">🎥 Google Meet</span><span class="owner"><span class="oav" style="background:var(--brand-600)">山</span>山田 健太（自分）</span></div>
+                <div class="meta" style="margin-top:3px;"><span class="cust-pill">顧客: <b style="color:var(--ink)">株式会社 大吉商事</b> <span class="muted">（メールから自動リンク）</span></span>
+                  <a href="#" onclick="pickCustomer('大吉商事 EC協業の打ち合わせ');return false;" style="font-size:11px;">変更</a></div>
+                <div style="margin-top:4px;">
+                  <span class="attendee linked"><span class="a">佐</span>佐藤 太郎 <span class="muted">· 株式会社 大吉商事</span></span>
+                  <span class="attendee"><span class="a">山</span>山田 健太（自分）</span>
+                </div>
+              </div>
+              <div class="side">
+                <a class="btn btn-sm btn-primary" href="#" onclick="return false;">会議に参加</a>
+                <span class="rec-badge wait">議事録: 終了後に自動保存</span>
+                <a class="btn btn-sm btn-ghost" href="company-detail.html">顧客を開く</a>
+              </div>
+            </div>
+
+            <div class="mtg" data-owner="sato">
+              <div class="when"><div class="t num">11:30</div><div class="dur num">45分</div></div>
+              <div class="body">
+                <div class="title">さくら美容室 確定申告のご相談</div>
+                <div class="meta"><span class="platform">🏢 来社</span><span class="owner"><span class="oav" style="background:var(--gold-600)">佐</span>佐藤 京子</span></div>
+                <div class="meta" style="margin-top:3px;"><span class="cust-pill">顧客: <b style="color:var(--ink)">さくら美容室</b> <span class="muted">（個人事業主）</span></span></div>
+                <div style="margin-top:4px;"><span class="attendee linked"><span class="a" style="background:var(--gold-600)">高</span>高橋 結衣 <span class="muted">· さくら美容室</span></span></div>
+              </div>
+              <div class="side">
+                <span class="rec-badge wait">議事録: 終了後に自動保存</span>
+                <a class="btn btn-sm btn-ghost" href="company-detail.html">顧客を開く</a>
+              </div>
+            </div>
+
+            <div class="mtg" data-owner="sato">
+              <div class="when"><div class="t num">14:00</div><div class="dur num">45分</div></div>
+              <div class="body">
+                <div class="title">みどり食堂 新規ご相談</div>
+                <div class="meta"><span class="platform">🎥 Zoom</span><span class="owner"><span class="oav" style="background:var(--gold-600)">佐</span>佐藤 京子</span></div>
+                <div class="meta" style="margin-top:3px;"><span class="cust-pill">顧客: <span class="muted">未指定</span></span>
+                  <span style="color:var(--amber-600);font-size:11px;">⚠ カレンダーは名前のみ</span>
+                  <a href="#" onclick="pickCustomer('みどり食堂 新規ご相談');return false;" style="font-size:11px;font-weight:700;">顧客を指定</a></div>
+                <div style="margin-top:4px;">
+                  <span class="attendee unlinked"><span class="a" style="background:var(--ink-3);">緑</span>緑川 みどり <span>· 未リンク</span>
+                    <a href="#" onclick="pickCustomer('みどり食堂 新規ご相談');return false;" style="margin-left:4px;font-size:11px;">指定</a></span>
+                </div>
+              </div>
+              <div class="side">
+                <a class="btn btn-sm btn-primary" href="#" onclick="return false;">会議に参加</a>
+                <span class="rec-badge wait">議事録: 終了後に自動保存</span>
+                <button class="btn btn-sm" onclick="pickCustomer('みどり食堂 新規ご相談')">顧客を指定</button>
+              </div>
+            </div>
+
+            <div class="mtg" data-owner="tanaka">
+              <div class="when"><div class="t num">15:30</div><div class="dur num">60分</div></div>
+              <div class="body">
+                <div class="title">鈴木工務店 月次訪問</div>
+                <div class="meta"><span class="platform">🏢 来社</span><span class="owner"><span class="oav" style="background:var(--green-600)">田</span>田中 一郎</span></div>
+                <div class="meta" style="margin-top:3px;"><span class="cust-pill">顧客: <b style="color:var(--ink)">鈴木工務店</b></span></div>
+                <div style="margin-top:4px;"><span class="attendee linked"><span class="a" style="background:var(--green-600)">鈴</span>鈴木 大輔 <span class="muted">· 鈴木工務店</span></span></div>
+              </div>
+              <div class="side">
+                <span class="rec-badge wait">議事録: 終了後に自動保存</span>
+                <a class="btn btn-sm btn-ghost" href="company-detail.html">顧客を開く</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><h3>今後の予定</h3></div>
+            <div class="mtg" data-owner="yamada">
+              <div class="when"><div class="t num">明日</div><div class="dur num">11:00</div></div>
+              <div class="body">
+                <div class="title">テック合同会社 定例</div>
+                <div class="meta"><span class="platform">🎥 Google Meet</span><span class="owner"><span class="oav" style="background:var(--brand-600)">山</span>山田 健太</span><span class="cust-pill">顧客: <b style="color:var(--ink)">テック合同会社</b></span></div>
+                <div style="margin-top:4px;"><span class="attendee linked"><span class="a">田</span>田中 啓介 <span class="muted">· テック合同会社</span></span></div>
+              </div>
+              <div class="side"><a class="btn btn-sm btn-ghost" href="company-detail.html">顧客を開く</a></div>
+            </div>
+            <div class="mtg" data-owner="tanaka">
+              <div class="when"><div class="t num">6/23</div><div class="dur num">15:00</div></div>
+              <div class="body">
+                <div class="title">鈴木様 ご相談（来社）</div>
+                <div class="meta"><span class="platform">🏢 来社</span><span class="owner"><span class="oav" style="background:var(--green-600)">田</span>田中 一郎</span>
+                  <span class="cust-pill">顧客: <span class="muted">未指定</span></span>
+                  <span style="color:var(--amber-600);font-size:11px;">⚠ 名前のみ</span>
+                  <a href="#" onclick="pickCustomer('鈴木様 ご相談（来社）');return false;" style="font-size:11px;font-weight:700;">顧客を指定</a></div>
+                <div style="margin-top:4px;"><span class="attendee unlinked"><span class="a" style="background:var(--ink-3);">鈴</span>鈴木 様 <span>· 未リンク</span></span></div>
+              </div>
+              <div class="side"><button class="btn btn-sm" onclick="pickCustomer('鈴木様 ご相談（来社）')">顧客を指定</button></div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="panel">
+            <div class="panel-head"><h3>連携の仕組み</h3></div>
+            <div class="panel-body" style="font-size:13px;color:var(--ink-2);">
+              <ol style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px;">
+                <li>Google カレンダーの予定を読み取り（無料・Calendar API）。</li>
+                <li>出席者メールを <span class="b">contacts.email</span> と突合し、会社・担当者に自動リンク。</li>
+                <li><span class="b">カレンダーに名前しか無い／メール不一致の場合は、「顧客を指定」で手動リンク</span>（既存から選ぶ or 新規作成）。</li>
+                <li>会議終了 → <a href="notes.html">議事録</a>（Notta）を自動保存し、この打ち合わせ・顧客に紐付け。</li>
+              </ol>
+              <div class="banner info mt16" style="font-size:12px;">トークンはサーバー側のみで保持（ブラウザに出さない）。出席者メール＝個人情報は Tokyo リージョン保管（C-7）。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="assets/app.js"></script>
+<script>
+  // 打ち合わせに顧客を手動指定（既存から選ぶ / 新規作成）
+  function pickCustomer(label){
+    const cos = ['みどり食堂（個人事業主・飲食・大阪府）','株式会社 大吉商事（法人・卸売・東京都）','鈴木工務店（法人・建設・愛知県）','カフェ・ひだまり（個人事業主・飲食・京都府）'];
+    const s = document.createElement('div'); s.className = 'scrim';
+    s.innerHTML = `<div class="modal" style="max-width:480px;">
+      <div class="m-head"><h3>この打ち合わせの顧客を指定</h3>
+        <div class="muted" style="font-size:12.5px;margin-top:2px;">${label}</div></div>
+      <div class="m-body">
+        <div class="field"><label>顧客（会社・屋号）を検索</label><input class="input" placeholder="会社名・屋号で検索…" autofocus></div>
+        <div class="mt8" style="border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;">
+          ${cos.map(c => `<div class="pick-row" onclick="closeModal(this);toast('この打ち合わせに『${c.split('（')[0]}』を指定しました')">
+              <span class="av">${c[0]}</span><span style="flex:1;">${c}</span><span class="muted">指定 ›</span></div>`).join('')}
+        </div>
+        <div class="banner info mt16" style="font-size:12px;">該当が無ければ <a href="contact-form.html">新規に企業＋担当者を作成</a> して紐付けできます。</div>
+      </div>
+      <div class="m-foot"><button class="btn" onclick="closeModal(this)">キャンセル</button></div>
+    </div>`;
+    s.addEventListener('click', e => { if (e.target === s) s.remove(); });
+    document.body.appendChild(s);
+  }
+  // 誰の予定を見るか（全員 / 各スタッフ）。組織で動くため他人の予定も閲覧できる
+  const STAFF_LABEL = { all:'全員', yamada:'山田 健太（自分）', sato:'佐藤 京子', tanaka:'田中 一郎' };
+  function filterStaff(owner, btn){
+    document.querySelectorAll('.staff-chip').forEach(c => c.classList.remove('on'));
+    btn.classList.add('on');
+    let shown = 0;
+    document.querySelectorAll('.mtg').forEach(m => {
+      const vis = (owner === 'all' || m.dataset.owner === owner);
+      m.style.display = vis ? '' : 'none';
+      if (vis) shown++;
+    });
+    document.getElementById('staffCount').textContent = STAFF_LABEL[owner] + ' の予定 ' + shown + ' 件を表示中';
+    // 空になった日付パネルは見出しだけ残す（簡易）
+  }
+</script>
+</body>
+</html>
