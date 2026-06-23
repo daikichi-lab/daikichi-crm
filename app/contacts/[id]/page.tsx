@@ -1,6 +1,6 @@
 import './contact-detail.css';
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
+import { redirect, notFound } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth/session';
 import { getContact } from '@/lib/data/dal';
 import { AppShell } from '@/components/AppShell';
@@ -13,6 +13,7 @@ export default async function ContactDetailPage({ params }: { params: Promise<{ 
   if (!user) redirect('/login');
   const { id } = await params;
   const c = await getContact(id, true);
+  if (!c || c.error || !c.id) notFound();
 
   // 所属企業・名刺・SNS は返り値に含まれない可能性があるため防御的に読む
   const company = c.company ?? c.companies ?? {};

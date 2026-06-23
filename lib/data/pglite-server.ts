@@ -3,9 +3,12 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import type { PGlite } from '@electric-sql/pglite';
 
-// dev/test 用の埋め込み Postgres（PGlite）。プロセス内シングルトン。
+// dev/test 用の埋め込み Postgres（PGlite）。**プロセス内シングルトン**。
+// Next の本番ビルドでは route セグメント／サーバーアクションが別モジュールグラフに
+// なり得るため、globalThis にキャッシュして同一プロセス内で1インスタンスを共有する
+// （別インスタンスだと書き込みが読み取りに反映されない）。
 // bootstrap（Supabase互換shim）→ migrations → seed を一度だけ適用する。
-let ready: Promise<PGlite> | null = null;
+const globalForPg = globalThis as unknown as { __daikichiPg?: Promise<PGlite> };
 
 function dir(...p: string[]) {
   return join(process.cwd(), 'supabase', ...p);
@@ -28,5 +31,5 @@ async function init(): Promise<PGlite> {
 }
 
 export function getPg(): Promise<PGlite> {
-  return (ready ??= init());
+  return (globalForPg.__daikichiPg ??= init());
 }
