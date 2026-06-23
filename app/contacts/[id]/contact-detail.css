@@ -1,0 +1,5 @@
+.bizset{ display:flex; gap:12px; flex-wrap:wrap; }
+.biz{ width:230px; max-width:100%; }
+.biz .lbl{ font-size:11.5px; color:var(--ink-3); font-weight:700; margin-bottom:5px; }
+.biz .card{ aspect-ratio:91/55; border-radius:8px; overflow:hidden; box-shadow:var(--shadow-2); cursor:pointer; }
+.biz .card .fakecard{ width:100%; height:100%; }

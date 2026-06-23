@@ -14,7 +14,7 @@ async function authedCtx() {
 // ===== 読み取り（crm-demo MCP と同一ロジックの共有RPC） =====
 export async function searchCompanies(f: CompanyFilters = {}): Promise<SearchCompaniesResult> {
   return callRpc('search_companies', {
-    p_type: f.type, p_industry: f.industry, p_area: f.area, p_status: f.status,
+    p_type: f.type, p_industry: f.industry, p_area: f.area, p_status: f.status, p_size: f.size,
     p_needs: f.needs, p_offers: f.offers, p_keyword: f.keyword, p_limit: f.limit,
   }, await authedCtx());
 }

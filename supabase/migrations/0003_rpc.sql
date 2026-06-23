@@ -46,7 +46,7 @@ $$;
 create or replace function search_companies(
   p_type text default null, p_industry text default null, p_area text default null,
   p_status text default null, p_needs text default null, p_offers text default null,
-  p_keyword text default null, p_limit int default 20
+  p_keyword text default null, p_limit int default 20, p_size text default null
 ) returns jsonb language sql stable as $$
   with f as (
     select c.*, u.name as owner_name
@@ -56,6 +56,7 @@ create or replace function search_companies(
       and (p_industry is null or c.industry = p_industry)
       and (p_area is null or c.area = p_area)
       and (p_status is null or c.status = p_status)
+      and (p_size is null or c.size = p_size)
       and (p_needs is null or p_needs = any (c.needs))
       and (p_offers is null or p_offers = any (c.offers))
       and (p_keyword is null or (coalesce(c.name,'') || ' ' || coalesce(c.notes,'')) ilike '%' || p_keyword || '%')

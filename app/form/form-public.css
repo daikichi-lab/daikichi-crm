@@ -1,0 +1,10 @@
+/* 公開フォーム 固有スタイル（mockups/form-public.html より移植） */
+body{ background:var(--app-bg); }
+.pub-wrap{ max-width:680px; margin:0 auto; padding:28px 20px 60px; }
+.pub-head{ display:flex; align-items:center; gap:12px; padding:18px 0 22px; }
+.pub-head .seal{ width:42px; height:42px; border-radius:11px; background:var(--gold-500); color:#2a1c05; display:grid; place-items:center; font-weight:800; font-size:22px; }
+.pub-head h1{ font-size:20px; } .pub-head .sub{ color:var(--ink-3); font-size:12.5px; }
+.pub-hero{ background:linear-gradient(180deg,var(--brand-900),var(--brand-700)); color:#fff; border-radius:var(--radius-lg); padding:22px 22px; margin-bottom:18px; }
+.pub-hero h2{ color:#fff; font-size:18px; } .pub-hero p{ color:#bcd2e4; margin:6px 0 0; font-size:13px; }
+.done-card{ text-align:center; padding:46px 24px; }
+.done-card .ic{ width:56px; height:56px; border-radius:50%; background:var(--green-50); color:var(--green-600); display:grid; place-items:center; font-size:30px; margin:0 auto 14px; }

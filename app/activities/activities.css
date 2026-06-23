@@ -1,0 +1,40 @@
+/* 種別タグ＝既存のセマンティック変数から導く */
+.a-tag{ display:inline-flex; align-items:center; height:20px; padding:0 8px; border-radius:999px; font-size:11px; font-weight:700; border:1px solid; white-space:nowrap; }
+.a-tag.c-blue{ color:var(--brand-700); background:var(--brand-50); border-color:#cfe0ef; }
+.a-tag.c-gold{ color:var(--gold-700); background:var(--gold-50); border-color:#ecdcb4; }
+.a-tag.c-green{ color:var(--green-700); background:var(--green-50); border-color:#cce7d6; }
+.a-tag.c-dark{ color:var(--ink); background:var(--surface-3); border-color:var(--line-strong); }
+.a-tag.c-gray{ color:var(--ink-2); background:var(--surface-3); border-color:var(--line); }
+
+/* 日付グループ見出し */
+.day{ display:flex; align-items:center; gap:10px; margin:0 0 12px; }
+.day h4{ font-size:13.5px; } .day .c{ color:var(--ink-3); font-size:12px; } .day .ln{ flex:1; height:1px; background:var(--line); }
+.day + .tl{ margin-bottom:22px; }
+
+/* タイムライン */
+.tl{ position:relative; }
+.tl::before{ content:""; position:absolute; left:10px; top:4px; bottom:8px; width:2px; background:var(--line); }
+.ev{ position:relative; padding-left:34px; padding-bottom:12px; }
+.ev:last-child{ padding-bottom:0; }
+.ev .nub{ position:absolute; left:0; top:2px; width:22px; height:22px; border-radius:50%; display:grid; place-items:center;
+  color:#fff; box-shadow:0 0 0 3px var(--surface); }
+.ev .nub .ic{ width:12px; height:12px; }
+.ev-card{ background:var(--surface-2); border:1px solid var(--line); border-radius:var(--radius); padding:10px 12px; }
+.ev-card:hover{ background:#fff; box-shadow:var(--shadow-1); cursor:pointer; }
+.ev-top{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.ev-co{ font-weight:700; color:var(--ink); } .ev-co:hover{ color:var(--brand-600); text-decoration:none; }
+.ev-arr{ color:var(--gold-600); font-weight:800; }
+.ev-when{ margin-left:auto; color:var(--ink-3); font-size:12px; }
+.ev-body{ margin-top:5px; color:var(--ink-2); font-size:13px; }
+.ev-foot{ margin-top:6px; font-size:12px; color:var(--ink-3); display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+
+/* 右：今週の内訳バー */
+.brk{ display:flex; flex-direction:column; gap:9px; }
+.brk .r{ display:grid; grid-template-columns:78px 1fr 26px; gap:8px; align-items:center; font-size:12.5px; }
+.brk .bar{ height:8px; border-radius:999px; background:var(--surface-3); overflow:hidden; }
+.brk .bar > i{ display:block; height:100%; border-radius:999px; }
+.brk .n{ text-align:right; color:var(--ink-2); font-weight:700; }
+.leg{ display:flex; flex-direction:column; gap:8px; }
+.leg .li{ display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--ink-2); }
+.leg .sw{ width:10px; height:10px; border-radius:3px; flex:none; }
+.side-col{ display:flex; flex-direction:column; gap:16px; }

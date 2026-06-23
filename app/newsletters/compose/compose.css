@@ -1,0 +1,14 @@
+.topic{ display:inline-flex; align-items:center; gap:5px; height:30px; padding:0 12px; border-radius:999px;
+  font-size:12.5px; font-weight:600; color:var(--ink-2); background:#fff; border:1px solid var(--line-strong); cursor:pointer; user-select:none; }
+.topic:hover{ border-color:var(--brand-500); color:var(--brand-600); }
+.topic.on{ color:#fff; background:var(--brand-700); border-color:var(--brand-700); }
+.topic.on::before{ content:"✓ "; }
+.merge{ display:inline-flex; align-items:center; height:22px; padding:0 8px; border-radius:5px; font-size:12px; font-weight:700;
+  background:var(--gold-50); color:var(--gold-700); border:1px dashed #ecdcb4; cursor:pointer; }
+.merge.link{ background:var(--brand-tint); color:var(--brand-700); border:1px solid #cfe0ef; }
+.merge:hover{ filter:brightness(.97); }
+.target-num{ font-size:34px; font-weight:800; color:var(--brand-800); letter-spacing:-.01em; }
+.mail-foot{ margin-top:12px; padding:12px 14px; border-top:1px dashed var(--line-strong); background:var(--surface-2);
+  border-radius:0 0 var(--radius) var(--radius); font-size:12px; color:var(--ink-3); }
+.sticky-side{ position:sticky; top:78px; }
+textarea.body-input{ min-height:280px; font-size:13.5px; line-height:1.7; }

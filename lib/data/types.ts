@@ -104,6 +104,7 @@ export type CompanyFilters = {
   type?: string;
   industry?: string;
   area?: string;
+  size?: string;
   status?: string;
   needs?: string;
   offers?: string;

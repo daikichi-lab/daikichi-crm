@@ -1,0 +1,17 @@
+.mtg{ display:flex; gap:14px; padding:14px 16px; border-bottom:1px solid var(--line); }
+.mtg:last-child{ border-bottom:0; }
+.mtg .when{ flex:none; width:78px; text-align:center; }
+.mtg .when .t{ font-size:16px; font-weight:800; } .mtg .when .dur{ font-size:11px; color:var(--ink-3); }
+.mtg .body{ flex:1; min-width:0; }
+.mtg .title{ font-weight:700; }
+.mtg .meta{ color:var(--ink-3); font-size:12.5px; margin-top:2px; display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+.attendee{ display:inline-flex; align-items:center; gap:6px; height:24px; padding:0 8px 0 4px; border-radius:999px; border:1px solid var(--line-strong); background:#fff; font-size:12px; margin:4px 6px 0 0; }
+.attendee .a{ width:18px; height:18px; border-radius:50%; background:var(--brand-600); color:#fff; display:grid; place-items:center; font-size:10px; font-weight:700; }
+.attendee.linked{ border-color:#cfe0ef; background:var(--brand-50); }
+.attendee.unlinked{ border-style:dashed; color:var(--ink-3); }
+.platform{ display:inline-flex; align-items:center; gap:5px; font-weight:600; }
+.mtg .side{ flex:none; display:flex; flex-direction:column; gap:6px; align-items:flex-end; }
+.rec-badge{ display:inline-flex; align-items:center; gap:6px; height:22px; padding:0 9px; border-radius:999px; font-size:11.5px; font-weight:700; border:1px solid; }
+.rec-badge.done{ color:var(--green-700); background:var(--green-50); border-color:#cce7d6; }
+.rec-badge.wait{ color:var(--amber-600); background:var(--amber-50); border-color:#ecdcb4; }
+.cust-pill{ display:inline-flex; align-items:center; gap:5px; }
