@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ホーム・大吉CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  /* 対応が必要(8) : クイック操作(2) の横並び */
+  .dash-row{ display:grid; grid-template-columns:4fr 1fr; gap:16px; align-items:start; }
+  @media (max-width:880px){ .dash-row{ grid-template-columns:1fr; } }
+  .todo-card{ display:flex; align-items:center; gap:12px; padding:12px 14px; border:1px solid var(--line); border-radius:var(--radius); color:inherit; }
+  .todo-card:hover{ background:var(--surface-2); text-decoration:none; box-shadow:var(--shadow-1); }
+  .todo-card .n{ width:34px; height:34px; border-radius:9px; display:grid; place-items:center; font-weight:800; flex:none; }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" data-active="home"></aside>
+  <div class="main">
+    <header class="topbar">
+      <button class="btn btn-icon hamb" data-icon="menu" aria-label="メニュー"></button>
+      <h1>ホーム</h1>
+      <div class="search"><span class="mag"></span><input placeholder="社名・メモを検索…"></div>
+      <div class="spacer"></div>
+      <a class="btn btn-sm" data-icon="card" href="scan.html">名刺スキャン</a>
+      <a class="btn btn-sm btn-primary" href="company-form.html">＋ 企業を登録</a>
+      <button class="btn btn-sm" data-icon="help" data-iw="15" onclick="openGuide('ホームの使い方', document.getElementById('guide').innerHTML)">使い方</button>
+      <div class="user"><div class="avatar">山</div></div>
+    </header>
+
+    <div class="content">
+      <div id="guide" hidden>
+        <p>ログイン後のホームです。事務所の状況をひと目で把握し、次の作業に進みます。</p>
+        <ul>
+          <li>上の<b>件数カード</b>：顧客数・顧問中・見込み・名刺化率。</li>
+          <li><b>対応が必要</b>：要フォローの紹介・新しいマッチング候補・名刺未登録など、いま押すべき作業。</li>
+          <li><b>クイック操作</b>から名刺スキャン・企業登録・CSV取込。</li>
+          <li>下に<b>最近更新した企業</b>と<b>種別×ステータス</b>の集計。</li>
+        </ul>
+      </div>
+      <div class="page-head">
+        <div>
+          <h2>おはようございます、山田さん</h2>
+          <div class="sub">2026年6月19日（金）・大吉会計事務所</div>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="k">顧客（企業）</div><div class="v num">248</div><div class="d">▲ 今月 +12 件</div></div>
+        <div class="stat"><div class="k">顧問中</div><div class="v num">130</div><div class="d muted" style="color:var(--ink-3)">全体の 52%</div></div>
+        <div class="stat"><div class="k">見込み</div><div class="v num">84</div><div class="d">▲ 今週 +5 件</div></div>
+        <div class="stat gold"><div class="k">登録済み担当者 / 名刺</div><div class="v num">391 <small>/ 305枚</small></div><div class="d muted" style="color:var(--ink-3)">名刺化率 78%</div></div>
+      </div>
+
+      <!-- 対応が必要(8割) ｜ クイック操作(2割) -->
+      <div class="dash-row mt16">
+        <div class="panel">
+          <div class="panel-head"><h3>対応が必要</h3><span class="badge prospect" style="margin-left:auto;">4件</span></div>
+          <div class="panel-body" style="display:flex;flex-direction:column;gap:10px;">
+            <a href="schedule.html" class="todo-card">
+              <span class="n num" style="background:var(--red-50);color:var(--red-600);">1</span>
+              <span style="flex:1;"><span class="b">期限の遅延・今週の締切</span><br><span class="muted" style="font-size:12px;">遅延 1 ・ 今週の期限 3 ・ 未完了タスク 9 — 期限・タスクへ</span></span>
+              <span style="color:var(--ink-3);">›</span>
+            </a>
+            <a href="referrals.html" class="todo-card">
+              <span class="n num" style="background:var(--amber-50);color:var(--amber-600);">1</span>
+              <span style="flex:1;"><span class="b">打診中の紹介を要フォロー</span><br><span class="muted" style="font-size:12px;">7日以上ステータス更新なし — 大吉商事 → テック合同会社</span></span>
+              <span style="color:var(--ink-3);">›</span>
+            </a>
+            <a href="matching.html" class="todo-card">
+              <span class="n num" style="background:var(--gold-50);color:var(--gold-700);">12</span>
+              <span style="flex:1;"><span class="b">新しいマッチング候補</span><br><span class="muted" style="font-size:12px;">未確認の紹介候補（求↔提のタグ重なり）</span></span>
+              <span style="color:var(--ink-3);">›</span>
+            </a>
+            <a href="scan.html" class="todo-card">
+              <span class="n num" style="background:var(--brand-50);color:var(--brand-700);">5</span>
+              <span style="flex:1;"><span class="b">名刺未登録の担当者</span><br><span class="muted" style="font-size:12px;">名刺画像が未保存の担当者</span></span>
+              <span style="color:var(--ink-3);">›</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h3>クイック操作</h3></div>
+          <div class="panel-body" style="display:flex;flex-direction:column;gap:8px;">
+            <a class="btn btn-primary" data-icon="card" href="scan.html" style="justify-content:flex-start;">名刺スキャン</a>
+            <a class="btn" data-icon="building" href="company-form.html" style="justify-content:flex-start;">企業を登録</a>
+            <a class="btn" data-icon="home" href="import.html" style="justify-content:flex-start;">CSV取込</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 最近更新した企業（全幅） -->
+      <div class="panel mt16">
+        <div class="panel-head"><h3>最近更新した企業</h3><a class="right" href="companies.html">一覧へ</a></div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>社名</th><th>業種</th><th>エリア</th><th>ステータス</th><th>社内担当</th><th class="right">更新</th></tr></thead>
+            <tbody>
+              <tr onclick="location.href='company-detail.html'"><td class="name">株式会社 大吉商事</td><td>卸売</td><td>東京都</td><td><span class="badge active"><span class="dot"></span>顧問中</span></td><td class="muted">山田 健太</td><td class="right num muted">06/19</td></tr>
+              <tr onclick="location.href='company-detail.html'"><td class="name">みどり食堂</td><td>飲食</td><td>大阪府</td><td><span class="badge prospect"><span class="dot"></span>見込み</span></td><td class="muted">佐藤 京子</td><td class="right num muted">06/19</td></tr>
+              <tr onclick="location.href='company-detail.html'"><td class="name">佐藤デザイン事務所</td><td>広告・メディア</td><td>福岡県</td><td><span class="badge active"><span class="dot"></span>顧問中</span></td><td class="muted">山田 健太</td><td class="right num muted">06/18</td></tr>
+              <tr onclick="location.href='company-detail.html'"><td class="name">鈴木工務店</td><td>建設</td><td>愛知県</td><td><span class="badge active"><span class="dot"></span>顧問中</span></td><td class="muted">田中 一郎</td><td class="right num muted">06/18</td></tr>
+              <tr onclick="location.href='company-detail.html'"><td class="name">山本会計サポート</td><td>専門サービス</td><td>東京都</td><td><span class="badge dormant"><span class="dot"></span>休眠</span></td><td class="muted">田中 一郎</td><td class="right num muted">06/17</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 種別 × ステータス 集計（法人 / 個人事業主） -->
+      <div class="panel mt16">
+        <div class="panel-head"><h3>種別 × ステータス</h3><a class="right" href="companies.html">一覧で絞り込む</a></div>
+        <div class="panel-body" style="display:flex;gap:32px;flex-wrap:wrap;">
+          <div>
+            <div class="b">法人 <span class="num muted" style="font-weight:600;">130 社</span></div>
+            <div class="row" style="gap:8px;margin-top:8px;">
+              <span class="badge active"><span class="dot"></span>顧問中 <span class="num">90</span></span>
+              <span class="badge prospect"><span class="dot"></span>見込み <span class="num">25</span></span>
+              <span class="badge dormant"><span class="dot"></span>休眠 <span class="num">15</span></span>
+            </div>
+          </div>
+          <div style="width:1px;align-self:stretch;background:var(--line);"></div>
+          <div>
+            <div class="b">個人事業主 <span class="num muted" style="font-weight:600;">118 社</span></div>
+            <div class="row" style="gap:8px;margin-top:8px;">
+              <span class="badge active"><span class="dot"></span>顧問中 <span class="num">70</span></span>
+              <span class="badge prospect"><span class="dot"></span>見込み <span class="num">30</span></span>
+              <span class="badge dormant"><span class="dot"></span>休眠 <span class="num">18</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+# --- Claude Code（個人・端末ローカル設定。共有は settings.json のみ） ---
+.claude/settings.local.json
+
+# --- シークレット / 環境変数（CLAUDE.md SEC-5: コードに置かない） ---
+.env
+.env.*
+!.env.example
+
+# --- 依存・ビルド成果物（Next.js を scaffold したら有効化） ---
+node_modules/
+.next/
+out/
+dist/
+.open-next/
+.wrangler/
+
+# --- OS / エディタ ---
+.DS_Store
+*.log

@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>名刺スキャン・大吉CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  .dup-opt{ display:flex; gap:10px; align-items:flex-start; padding:8px 2px; cursor:pointer; font-size:13px; }
+  .dup-opt + .dup-opt{ border-top:1px solid #ecdcb4; }
+  .dup-opt input{ margin-top:3px; width:16px; height:16px; flex:none; }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" data-active="scan"></aside>
+  <div class="main">
+    <header class="topbar">
+      <button class="btn btn-icon hamb" data-icon="menu" aria-label="メニュー"></button>
+      <h1>名刺スキャン</h1>
+      <div class="spacer"></div>
+      <div class="steps">
+        <span class="s on"><span class="n num">1</span>取り込み</span><span class="sep"></span>
+        <span class="s on"><span class="n num">2</span>読み取り</span><span class="sep"></span>
+        <span class="s on"><span class="n num">3</span>確認・補正</span><span class="sep"></span>
+        <span class="s"><span class="n num">4</span>作成</span>
+      </div>
+      <div class="user" style="margin-left:14px;"><div class="avatar">山</div></div>
+    </header>
+
+    <div class="content">
+      <div class="page-head"><div><h2>名刺から顧客を作成</h2><div class="sub">読み取り後に必ず内容を確認・補正してから作成します（OCR: ブラウザ内 Tesseract.js）</div></div></div>
+
+      <div class="scan-split">
+        <!-- 左: 画像とOCR -->
+        <div>
+          <div class="scan-preview">
+            <div class="row" style="justify-content:space-between;color:#cdddea;font-size:12.5px;font-weight:700;">
+              <span>取り込んだ名刺</span>
+              <span class="row" style="gap:6px;"><button class="btn btn-sm" data-icon="card" onclick="toast('カメラを起動しました')">撮影</button><button class="btn btn-sm">ファイル</button></span>
+            </div>
+            <div class="shot"><div class="fakecard"><div class="lines"><div style="font-weight:700;font-size:14px;">みどり食堂</div><div style="font-size:11px;margin-top:8px;">店主</div><div style="font-size:15px;font-weight:700;">緑川 みどり</div><div class="num" style="font-size:10px;margin-top:10px;">大阪府大阪市中央区… ／ TEL 06-6xxx-xxxx</div><div class="num" style="font-size:10px;">midori@example.co.jp</div></div></div></div>
+            <div class="row" style="gap:6px;"><button class="btn btn-sm" style="flex:1">トリミング</button><button class="btn btn-sm" style="flex:1">回転</button><button class="btn btn-sm" style="flex:1">明るさ</button></div>
+            <div style="color:#9fb6c9;font-size:12px;">裏面（任意）: <a href="#" style="color:#bcd2e4;">＋ 追加</a></div>
+          </div>
+
+          <div class="panel mt16">
+            <div class="panel-body">
+              <div class="row" style="justify-content:space-between;margin-bottom:8px;"><span class="b">OCR 読み取り</span><span class="muted" style="font-size:12px;">完了</span></div>
+              <div class="progress"><i style="width:100%"></i></div>
+              <div class="muted" style="font-size:12px;margin-top:8px;">画像はブラウザ内で処理。外部サービスには送信していません。</div>
+              <button class="btn btn-sm mt8" onclick="toast('再読み取りしました')">再読み取り</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右: 抽出結果フォーム -->
+        <div class="panel">
+          <div class="panel-head"><h3>抽出結果を確認・補正</h3></div>
+          <div class="panel-body">
+            <div class="panel" style="border-color:#ecdcb4;background:var(--amber-50);margin-bottom:14px;box-shadow:none;">
+              <div class="panel-body" style="padding:12px 14px;">
+                <div class="b" style="color:var(--gold-700);margin-bottom:6px;">⚠ 似た企業「みどり食堂」が見つかりました — 重複を防ぐため、登録先を選んでください</div>
+                <label class="dup-opt"><input type="radio" name="dupmode" value="existing" checked onchange="setDupMode('existing')">
+                  <span><b>既存の「みどり食堂」に担当者として追加</b> <span class="badge prospect" style="height:18px;font-size:10px;">おすすめ</span><br><span class="muted">いま読み取った担当者の内容はそのまま使います。会社情報は既存のものを引き継ぎます。</span></span></label>
+                <label class="dup-opt"><input type="radio" name="dupmode" value="new" onchange="setDupMode('new')">
+                  <span><b>新しい企業として作成</b><br><span class="muted">別の会社であればこちら。</span></span></label>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="field col-2">
+                <label>会社名 / 屋号</label>
+                <input class="input" value="みどり食堂">
+              </div>
+              <div class="field">
+                <label>氏名</label>
+                <input class="input" value="緑川 みどり">
+              </div>
+              <div class="field err">
+                <label>役職</label>
+                <input class="input lowconf" value="店王">
+                <span class="lowconf-note">⚠ 読み取り信頼度: 低 — 「店主」の可能性。確認してください</span>
+              </div>
+              <div class="field col-2">
+                <label>メール</label>
+                <input class="input" value="midori@example.co.jp">
+              </div>
+              <div class="field">
+                <label>電話</label>
+                <input class="input num" value="06-6xxx-xxxx">
+              </div>
+              <div class="field">
+                <label>携帯</label>
+                <input class="input num" placeholder="（未検出）">
+              </div>
+              <div class="field col-2">
+                <label>住所</label>
+                <input class="input" value="大阪府大阪市中央区…">
+              </div>
+            </div>
+
+            <div id="classifySection">
+              <div class="muted" style="font-size:12px;font-weight:700;margin:16px 0 6px;">企業の分類（任意・後で設定可）</div>
+              <div class="row">
+                <select class="select"><option selected>個人事業主</option><option>法人</option></select>
+                <select class="select"><option>業種を選択</option><option selected>飲食</option></select>
+                <select class="select"><option>エリア</option><option selected>大阪府</option></select>
+                <select class="select"><option>規模</option><option selected>〜1千万</option></select>
+              </div>
+            </div>
+            <div id="inheritNote" class="muted" style="display:none;font-size:12px;margin:16px 0 0;">業種・エリア・規模・求/提は <b>既存の「みどり食堂」</b> のものを引き継ぎます。</div>
+
+            <div class="banner info mt16" id="outcomeNote" style="font-size:12.5px;"></div>
+
+            <div class="row mt16" style="justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+              <span class="muted" id="targetNote" style="font-size:12px;"></span>
+              <span class="row" style="gap:8px;">
+                <button class="btn" onclick="location.href='scan.html'">やり直す</button>
+                <button class="btn btn-primary" id="createBtn" onclick="createFromScan()">この内容で作成</button>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="assets/app.js"></script>
+<script>
+  // 重複が見つかったときの登録先選択（遷移せず、読み取り内容は保持）
+  function setDupMode(mode){
+    const cls = document.getElementById('classifySection');
+    const inh = document.getElementById('inheritNote');
+    const btn = document.getElementById('createBtn');
+    const note = document.getElementById('targetNote');
+    const out = document.getElementById('outcomeNote');
+    if(mode === 'existing'){
+      cls.style.display = 'none'; inh.style.display = '';
+      btn.textContent = '「みどり食堂」に担当者を追加';
+      note.innerHTML = '登録先: <b>既存企業「みどり食堂」</b>';
+      out.innerHTML = '既存の <b>「みどり食堂」</b> に 担当者 <b>「緑川 みどり」</b> を追加します。会社情報は既存のものを使います（読み取った担当者情報はそのまま反映）。';
+    } else {
+      cls.style.display = ''; inh.style.display = 'none';
+      btn.textContent = '企業＋担当者を作成';
+      note.innerHTML = '登録先: <b>新しい企業「みどり食堂」</b>';
+      out.innerHTML = '新しい企業 <b>「みどり食堂」</b> ＋ 担当者 <b>「緑川 みどり」</b> を作成します。求/提は作成後に企業ページで設定できます。';
+    }
+  }
+  function createFromScan(){
+    const mode = document.querySelector('input[name=dupmode]:checked').value;
+    toast(mode === 'existing' ? '「みどり食堂」に担当者を追加しました' : '企業＋担当者を作成しました');
+    setTimeout(() => location.href = 'company-detail.html' + (mode === 'existing' ? '#contacts' : ''), 800);
+  }
+  document.addEventListener('DOMContentLoaded', () => setDupMode('existing'));
+</script>
+</body>
+</html>

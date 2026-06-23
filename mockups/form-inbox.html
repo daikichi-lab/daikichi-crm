@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>フォーム回答・大吉CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  .badge.new{ color:var(--brand-700); background:var(--brand-50); border-color:#cfe0ef; }
+  .badge.dup{ color:var(--amber-600); background:var(--amber-50); border-color:#ecdcb4; }
+  .badge.done2{ color:var(--green-700); background:var(--green-50); border-color:#cce7d6; }
+  .admin-tabs{ display:flex; gap:4px; border-bottom:1px solid var(--line); margin-bottom:18px;}
+  .admin-tabs a{ padding:10px 16px; font-size:13.5px; font-weight:700; color:var(--ink-3); border-bottom:2px solid transparent;}
+  .admin-tabs a:hover{ text-decoration:none; color:var(--brand-600);}
+  .admin-tabs a.on{ color:var(--brand-700); border-bottom-color:var(--brand-700);}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" data-active="forms"></aside>
+  <div class="main">
+    <header class="topbar">
+      <button class="btn btn-icon hamb" data-icon="menu" aria-label="メニュー"></button>
+      <h1>フォーム</h1>
+      <div class="search"><span class="mag"></span><input placeholder="回答を検索…"></div>
+      <div class="spacer"></div>
+      <a class="btn btn-sm btn-primary" data-icon="gear" data-iw="15" href="form-edit.html">フォームを編集</a>
+      <a class="btn btn-sm" href="form-public.html" target="_blank">プレビュー ↗</a>
+      <button class="btn btn-sm" onclick="toast('公開フォームのURLをコピーしました')">URLをコピー</button>
+      <button class="btn btn-sm" data-icon="help" data-iw="15" onclick="openGuide('フォーム回答の使い方', document.getElementById('guide').innerHTML)">使い方</button>
+      <div class="user"><div class="avatar">山</div></div>
+    </header>
+
+    <div class="content">
+      <div id="guide" hidden>
+        <p>公開フォームからの回答を確認し、顧客に取り込む画面です。</p>
+        <ul>
+          <li>回答は<b>いったん受信箱に貯まり</b>、直接は顧客データに入りません（安全）。</li>
+          <li><b>取込</b>で企業＋担当者として登録。似た会社は<b>重複の可能性</b>として警告します。</li>
+          <li>右上から<b>公開フォームのプレビュー／URLコピー</b>。</li>
+        </ul>
+      </div>
+      <div class="page-head">
+        <div>
+          <h2>顧客情報フォーム — 回答受信箱</h2>
+          <div class="sub">公開フォームの回答を確認し、顧客（企業＋担当者）として取り込みます。直接DBには書き込まれません（スタッフ確認制）。</div>
+        </div>
+      </div>
+
+      <nav class="admin-tabs">
+        <a href="form-inbox.html" class="on">回答受信箱</a>
+        <a href="form-edit.html">フォーム編集</a>
+        <a href="form-public.html" target="_blank">公開フォームを開く ↗</a>
+      </nav>
+
+      <div class="banner info">
+        <span data-icon="building" data-iw="16"></span>
+        <div>回答は <span class="b">form_submissions</span>（anon INSERT のみ許可・RLSで保護）に入り、<span class="b">companies へ直書きしません</span>。スタッフが「取込」すると重複検出のうえ企業＋担当者を作成します。スパム対策にCAPTCHA／レート制限。</div>
+      </div>
+
+      <div class="stats mt16" style="grid-template-columns:repeat(3,1fr);">
+        <div class="stat"><div class="k">未確認</div><div class="v num">4</div></div>
+        <div class="stat gold"><div class="k">重複の可能性</div><div class="v num">1</div></div>
+        <div class="stat"><div class="k">今月の取込</div><div class="v num">7</div></div>
+      </div>
+
+      <div class="panel mt16">
+        <div class="filterbar">
+          <select class="select"><option>ステータス: すべて</option><option>未確認</option><option>取込済</option><option>対応不要</option></select>
+          <select class="select"><option>種別: すべて</option><option>法人</option><option>個人事業主</option></select>
+          <span class="right"></span>
+          <span class="filter-pill">未確認 <span class="x">✕</span></span>
+        </div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>受信</th><th>会社 / 担当者</th><th>種別</th><th>連絡先</th><th>求 / 提</th><th>状態</th><th class="right">操作</th></tr></thead>
+            <tbody>
+              <tr style="cursor:default;">
+                <td class="num muted">06/19 09:12</td>
+                <td><span class="name">ベーカリー麦の香</span><br><span class="muted" style="font-size:12px;">高橋 結衣</span></td>
+                <td><span class="badge type">個人</span></td>
+                <td class="num" style="font-size:12px;">yui@muginoka.jp<br>075-…</td>
+                <td><div class="chips"><span class="chip need" style="height:20px;"><span class="mk">求</span>集客</span><span class="chip offer" style="height:20px;"><span class="mk">提</span>焼菓子卸</span></div></td>
+                <td><span class="badge new"><span class="dot"></span>未確認</span></td>
+                <td class="right"><button class="btn btn-sm btn-primary" onclick="demoModal('顧客として取り込みますか？','「ベーカリー麦の香 / 高橋 結衣」を企業＋担当者として作成します。タグはマスタに追加されます。','取り込む')">取込</button></td>
+              </tr>
+              <tr style="cursor:default;background:var(--amber-50);">
+                <td class="num muted">06/19 08:40</td>
+                <td><span class="name">株式会社 大吉商事</span><br><span class="muted" style="font-size:12px;">佐藤 太郎</span></td>
+                <td><span class="badge type">法人</span></td>
+                <td class="num" style="font-size:12px;">sato@daikichi-shoji.co.jp</td>
+                <td><div class="chips"><span class="chip need" style="height:20px;"><span class="mk">求</span>EC強化</span></div></td>
+                <td><span class="badge dup"><span class="dot"></span>重複の可能性</span></td>
+                <td class="right"><button class="btn btn-sm btn-gold" onclick="demoModal('既存企業にマージしますか？','既存の「株式会社 大吉商事」が見つかりました。担当者の追加 / 情報の更新を行えます。','既存にマージ')">確認</button></td>
+              </tr>
+              <tr style="cursor:default;">
+                <td class="num muted">06/18 17:55</td>
+                <td><span class="name">合同会社 海風マリン</span><br><span class="muted" style="font-size:12px;">大島 涼</span></td>
+                <td><span class="badge type">法人</span></td>
+                <td class="num" style="font-size:12px;">oshima@umikaze.jp</td>
+                <td><div class="chips"><span class="chip need" style="height:20px;"><span class="mk">求</span>資金調達</span><span class="chip offer" style="height:20px;"><span class="mk">提</span>海産物卸</span></div></td>
+                <td><span class="badge new"><span class="dot"></span>未確認</span></td>
+                <td class="right"><button class="btn btn-sm btn-primary" onclick="demoModal('顧客として取り込みますか？','「合同会社 海風マリン / 大島 涼」を企業＋担当者として作成します。','取り込む')">取込</button></td>
+              </tr>
+              <tr style="cursor:default;">
+                <td class="num muted">06/17 12:03</td>
+                <td><span class="name">フィット鍼灸院</span><br><span class="muted" style="font-size:12px;">岡田 司</span></td>
+                <td><span class="badge type">個人</span></td>
+                <td class="num" style="font-size:12px;">okada@fit-shinkyu.jp</td>
+                <td><div class="chips"><span class="chip need" style="height:20px;"><span class="mk">求</span>集客</span></div></td>
+                <td><span class="badge done2"><span class="dot"></span>取込済</span></td>
+                <td class="right"><a class="btn btn-sm" href="company-detail.html">顧客を開く</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tfoot"><span>12 件中 1–4 を表示</span>
+          <div class="pager"><span class="pg">‹</span><span class="pg on">1</span><span class="pg">2</span><span class="pg">3</span><span class="pg">›</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

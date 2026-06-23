@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>議事録・大吉CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  .conn{ display:inline-flex;align-items:center;gap:7px;height:26px;padding:0 11px;border-radius:999px;font-size:12px;font-weight:700;background:var(--green-50);color:var(--green-700);border:1px solid #cce7d6; }
+  .conn .d{ width:7px;height:7px;border-radius:50%;background:var(--green-600); }
+  /* 取り込み導線（2つの方法） */
+  .ways{ display:grid;grid-template-columns:1fr 1fr;gap:12px; }
+  @media (max-width:760px){ .ways{ grid-template-columns:1fr; } }
+  .way{ border:1px solid var(--line);border-radius:var(--radius);padding:14px;display:flex;gap:12px;align-items:flex-start; }
+  .way .ic{ width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-size:19px;flex:none; }
+  .way .ic.a{ background:var(--brand-50);color:var(--brand-700); } .way .ic.b{ background:var(--gold-50);color:var(--gold-700); }
+  .way h4{ font-size:13.5px; } .way p{ margin:3px 0 0;color:var(--ink-3);font-size:12px; }
+  /* 議事録タイムライン */
+  .note{ display:flex;gap:14px;padding:15px 16px;border-bottom:1px solid var(--line);cursor:pointer; }
+  .note:last-child{ border-bottom:0; } .note:hover{ background:var(--brand-tint); }
+  .note .ic{ width:36px;height:36px;border-radius:9px;display:grid;place-items:center;font-size:16px;flex:none; }
+  .note .ic.auto{ background:var(--brand-50);color:var(--brand-700); } .note .ic.manual{ background:var(--surface-3);color:var(--ink-2); }
+  .note .body{ flex:1;min-width:0; }
+  .note .title{ font-weight:700; }
+  .note .cust{ color:var(--brand-600);font-size:12.5px;font-weight:600; }
+  .note .sum{ color:var(--ink-2);font-size:12.5px;margin-top:5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden; }
+  .note .foot{ display:flex;gap:12px;margin-top:7px;font-size:12px;color:var(--ink-3);align-items:center;flex-wrap:wrap; }
+  .pill{ display:inline-flex;align-items:center;gap:5px;height:21px;padding:0 8px;border-radius:999px;font-size:11.5px;font-weight:700;background:var(--surface-3);color:var(--ink-2);border:1px solid var(--line); }
+  .pill.act{ background:var(--amber-50);color:var(--amber-600);border-color:#ecdcb4; }
+  .note .go{ align-self:center;color:var(--ink-3); }
+  /* 設定（折りたたみ・技術寄り） */
+  details.setup{ margin-top:16px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface); }
+  details.setup > summary{ list-style:none;cursor:pointer;padding:12px 16px;font-weight:700;font-size:13.5px;display:flex;align-items:center;gap:8px; }
+  details.setup > summary::-webkit-details-marker{ display:none; }
+  details.setup > summary .chev{ margin-left:auto;color:var(--ink-3);transition:.15s; }
+  details.setup[open] > summary .chev{ transform:rotate(90deg); }
+  details.setup .inner{ padding:0 16px 16px; border-top:1px solid var(--line); }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" data-active="notes"></aside>
+  <div class="main">
+    <header class="topbar">
+      <button class="btn btn-icon hamb" data-icon="menu" aria-label="メニュー"></button>
+      <h1>議事録</h1>
+      <div class="search"><span class="mag"></span><input placeholder="議事録・発言内容を検索…"></div>
+      <div class="spacer"></div>
+      <button class="btn btn-sm" data-icon="help" data-iw="15" onclick="openGuide('議事録の使い方', document.getElementById('guide').innerHTML)">使い方</button>
+      <button class="btn btn-sm btn-primary" data-icon="doc" data-iw="14" onclick="openImport()">＋ 議事録を取り込む</button>
+      <div class="user"><div class="avatar">山</div></div>
+    </header>
+
+    <div class="content">
+      <div id="guide" hidden>
+        <p>打ち合わせの議事録を<b>会社のカルテ</b>に残し、要点と「次にやること」を自動でまとめます。</p>
+        <h4>議事録の入れ方</h4>
+        <ul>
+          <li><b>その場で取り込む</b>：Nottaの議事録を貼り付け／TXTをアップロード。</li>
+          <li><b>自動で入る</b>：会議終了 → Notta が Google ドライブに保存 → 自動で取り込み（設定済み）。</li>
+        </ul>
+        <h4>見方・できること</h4>
+        <ul>
+          <li>一覧は会社名・要点・「次にやること件数」。<b>行をクリックで詳細</b>（全文・要点・次アクション）。</li>
+          <li>取り込むと、要約と<b>次のアクション提案</b>（求/提タグ追加・紹介起票）が出ます。</li>
+          <li>議事録は会社詳細・打ち合わせ・検索からも見られます。</li>
+        </ul>
+      </div>
+      <div class="page-head">
+        <div>
+          <h2>議事録 <span class="tag" style="font-size:11px;border:1px solid var(--line-strong);padding:1px 7px;border-radius:5px;color:var(--ink-3);vertical-align:middle;">Phase 2-3</span></h2>
+          <div class="sub">打ち合わせの議事録を、その会社のカルテに残します。要点と「次にやること」は自動でまとまります。</div>
+        </div>
+        <div class="actions"><span class="conn"><span class="d"></span>会議終了で自動保存 ON</span></div>
+      </div>
+
+      <!-- 取り込みの2つの方法（やさしい言葉で） -->
+      <div class="panel">
+        <div class="panel-head"><h3>議事録の入れ方は2つ</h3></div>
+        <div class="panel-body">
+          <div class="ways">
+            <div class="way">
+              <div class="ic b">📋</div>
+              <div style="flex:1;"><h4>その場で取り込む</h4>
+                <p>Nottaの議事録テキストを貼り付け、または TXT をアップロード。会社を選んで保存。</p>
+                <button class="btn btn-sm mt8" onclick="openImport()">取り込む</button></div>
+            </div>
+            <div class="way">
+              <div class="ic a">⚡</div>
+              <div style="flex:1;"><h4>会議が終わると自動で入る</h4>
+                <p>Notta が Google ドライブに保存した議事録を、当システムが自動で取り込み、会社に紐付けます（設定済み・Zapier不要）。</p>
+                <a class="muted" href="#setup" style="font-size:12px;display:inline-block;margin-top:8px;">自動連携の設定を見る ›</a></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 議事録タイムライン -->
+      <div class="panel mt16">
+        <div class="panel-head"><h3>最近の議事録</h3><span class="count num">3件</span></div>
+
+        <div class="note" onclick="location.href='note-detail.html'">
+          <div class="ic auto" title="会議終了で自動保存">⚡</div>
+          <div class="body">
+            <div class="title">北斗ロジ 配送協業ミーティング</div>
+            <div class="cust">株式会社 北斗ロジ ・ 北村 物流</div>
+            <div class="sum">大吉商事の食材卸の配送を一括で受けられないか相談。北海道〜本州のチルド便は週3便で対応可能。料金は数量次第で見積もり。次回までに出荷量データを共有いただく…</div>
+            <div class="foot"><span class="num">2026/06/18</span><span>・ 38分</span><span class="pill act">次にやること 2件</span><span class="pill">自動保存</span></div>
+          </div>
+          <div class="go">›</div>
+        </div>
+
+        <div class="note" onclick="location.href='note-detail.html'">
+          <div class="ic manual" title="手で取り込み">📋</div>
+          <div class="body">
+            <div class="title">大吉商事 EC協業キックオフ</div>
+            <div class="cust">株式会社 大吉商事 ・ 佐藤 太郎</div>
+            <div class="sum">ECサイトの構築をテック合同会社に依頼する方向。初期費用と月額の概算、決済まわりの要件を整理。販路拡大の打ち手として、まずは既存顧客向けの受発注をオンライン化…</div>
+            <div class="foot"><span class="num">2026/06/12</span><span>・ 52分</span><span class="pill act">次にやること 2件</span><span class="pill">手で取込</span></div>
+          </div>
+          <div class="go">›</div>
+        </div>
+
+        <div class="note" onclick="location.href='note-detail.html'">
+          <div class="ic auto" title="会議終了で自動保存">⚡</div>
+          <div class="body">
+            <div class="title">みどり食堂 初回ヒアリング</div>
+            <div class="cust">みどり食堂 ・ 緑川 みどり</div>
+            <div class="sum">集客と仕入先の見直しが課題。ランチの客足が落ちており、SNSでの発信を強化したい。食材は現状コストが高く、安定した卸先を探している。大吉商事の食材卸を紹介できそう…</div>
+            <div class="foot"><span class="num">2026/06/05</span><span>・ 28分</span><span class="pill act">次にやること 1件</span><span class="pill">自動保存</span></div>
+          </div>
+          <div class="go">›</div>
+        </div>
+      </div>
+
+      <!-- 自動連携の設定（技術寄り・折りたたみ） -->
+      <details class="setup" id="setup">
+        <summary>⚙ 自動連携（Notta → Google ドライブ）の設定 <span class="chev">›</span></summary>
+        <div class="inner">
+          <p class="muted" style="font-size:12.5px;margin:12px 0;">Notta を <b>Google ドライブ</b> に連携すると、会議の議事録が自動でドライブに保存されます。当システムは<b>その保存先フォルダ</b>を監視し、新しい議事録を自動で取り込みます（<b>Zapier不要</b>）。一度設定すれば以後は自動です。</p>
+          <div class="row" style="gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+            <span class="conn"><span class="d"></span>Google ドライブ 連携中</span>
+            <span class="muted" style="font-size:12px;">yamada@daikichi-accg.co.jp（カレンダーと同じ Google アカウントでOK）</span>
+          </div>
+          <div class="field"><label>議事録の保存先フォルダ（Notta が保存する場所）</label>
+            <div class="row" style="gap:6px;"><input class="input" style="flex:1;" value="マイドライブ / Notta / 議事録" readonly>
+              <button class="btn btn-sm" onclick="toast('フォルダを選び直します')">変更</button></div>
+          </div>
+          <div class="b mt16" style="font-size:12.5px;margin-bottom:6px;">流れ</div>
+          <ol style="margin:0;padding-left:18px;color:var(--ink-2);font-size:12.5px;display:flex;flex-direction:column;gap:6px;">
+            <li>Notta 側で「Google ドライブに自動保存」をON（Notta の公式連携）</li>
+            <li>会議終了 → 議事録(TXT/DOCX)が上のフォルダに保存される</li>
+            <li>当システムがフォルダを監視し、新しいファイルを自動取り込み（Google Drive API・無料）</li>
+            <li>ファイル名・会議名を <a href="meetings.html">打ち合わせ（カレンダー）</a> と突合し、会社・担当者へ自動で紐付け</li>
+          </ol>
+          <div class="banner info mt16" style="font-size:12px;">Zapier のような外部の自動化ツールは不要。カレンダー連携と同じ Google アカウントを使い回せます。議事録は当システムの Tokyo 保管・RLS で保護します。</div>
+        </div>
+      </details>
+    </div>
+  </div>
+</div>
+<script src="assets/app.js"></script>
+<script>
+  // 議事録の全文ビュー
+  function openNote(title, company, person, date, src){
+    const s = document.createElement('div'); s.className = 'scrim';
+    s.innerHTML = `<div class="modal" style="max-width:680px;">
+      <div class="m-head"><h3>${title}</h3>
+        <div class="muted" style="font-size:12.5px;margin-top:2px;">${company} / ${person} ・ ${date} ・ ${src==='auto'?'⚡ 自動保存':'📋 手で取込'}</div></div>
+      <div class="m-body" style="max-height:62vh;overflow:auto;">
+        <div class="b" style="margin-bottom:6px;">要点（自動でまとめ）</div>
+        <div class="banner info" style="font-size:12.5px;margin-bottom:14px;">配送協業の相談。チルド便 週3便で対応可。料金は数量次第。次回までに出荷量データを共有。→ 紹介を「打診中」で起票済み。</div>
+        <div class="b" style="margin-bottom:6px;">次にやること</div>
+        <ul style="margin:0 0 14px;padding-left:18px;color:var(--ink-2);font-size:13px;">
+          <li>大吉商事の月間出荷量データを共有してもらう（〜6/25）</li>
+          <li>チルド便の概算見積もりを北斗ロジから受領</li>
+        </ul>
+        <div class="b" style="margin-bottom:6px;">文字起こし（全文）</div>
+        <div class="num" style="font-size:12.5px;color:var(--ink-2);white-space:pre-wrap;line-height:1.7;border-left:3px solid var(--line-strong);padding-left:12px;">[00:00] 山田：本日はお時間ありがとうございます。大吉商事さんの配送の件で…
+[00:42] 北村：はい、チルドであれば週3便、北海道から本州まで対応できます。
+[02:10] 山田：料金感はいかがでしょう。
+[02:18] 北村：数量によりますが…（以下略）</div>
+      </div>
+      <div class="m-foot">
+        <button class="btn" onclick="toast('全文をコピーしました')">全文コピー</button>
+        <a class="btn" href="company-detail.html">会社を開く</a>
+        <button class="btn btn-primary" onclick="closeModal(this)">閉じる</button>
+      </div></div>`;
+    s.addEventListener('click', e => { if (e.target === s) s.remove(); });
+    document.body.appendChild(s);
+  }
+  // 手動取込
+  function openImport(){
+    const s = document.createElement('div'); s.className = 'scrim';
+    s.innerHTML = `<div class="modal" style="max-width:560px;">
+      <div class="m-head"><h3>議事録を取り込む</h3>
+        <div class="muted" style="font-size:12.5px;margin-top:2px;">Nottaの議事録を貼り付け／TXTをアップロードして、会社に紐付けます。</div></div>
+      <div class="m-body">
+        <div class="field"><label>どの会社の打ち合わせ？</label>
+          <select class="select"><option>株式会社 大吉商事 / 佐藤 太郎</option><option>みどり食堂 / 緑川 みどり</option><option>（あとで紐付ける）</option></select></div>
+        <div class="field mt8"><label>会議名</label><input class="input" placeholder="例: 大吉商事 EC協業キックオフ"></div>
+        <div class="field mt8"><label>議事録テキスト</label>
+          <textarea class="input" rows="6" placeholder="Notta の文字起こし・要約を貼り付け"></textarea></div>
+        <div class="row mt8"><button class="btn btn-sm" onclick="toast('TXTを読み込みました')">📁 TXTをアップロード</button>
+          <span class="muted" style="font-size:11.5px;">社外に送りません・Tokyo保管</span></div>
+      </div>
+      <div class="m-foot">
+        <button class="btn" onclick="closeModal(this)">キャンセル</button>
+        <button class="btn btn-primary" onclick="closeModal(this);importResult()">取り込む</button>
+      </div></div>`;
+    s.addEventListener('click', e => { if (e.target === s) s.remove(); });
+    document.body.appendChild(s);
+  }
+  // 取込後に何が起きるか
+  function importResult(){
+    const s = document.createElement('div'); s.className = 'scrim';
+    s.innerHTML = `<div class="modal" style="max-width:580px;">
+      <div class="m-head"><h3><span style="color:var(--green-600)">✓</span> 議事録を取り込みました</h3>
+        <div class="muted" style="font-size:12.5px;margin-top:2px;">紐付け: <b>株式会社 大吉商事 / 佐藤 太郎</b> ・ 2026/06/19 の打ち合わせ</div></div>
+      <div class="m-body" style="max-height:64vh;overflow:auto;">
+        <div class="b" style="margin-bottom:6px;">① 要点と「次にやること」を自動でまとめました</div>
+        <div class="banner info" style="font-size:12.5px;margin-bottom:12px;">ECサイト構築をテック合同会社へ依頼する方向。販路拡大の打ち手として受発注をオンライン化。次回までに出荷量データを共有。</div>
+        <ul style="margin:0 0 16px;padding-left:18px;color:var(--ink-2);font-size:13px;">
+          <li>大吉商事の月間出荷量データを共有（〜6/25）</li>
+          <li>テック合同会社からEC構築の概算見積もりを受領</li>
+        </ul>
+        <div class="b" style="margin:0 0 8px;">② 次のアクション（おすすめ）</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div class="row" style="gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--radius);">
+            <span style="flex:1;">会話から <span class="chip need" style="height:20px;"><span class="mk">求</span>EC強化</span> が出ました。この会社の「求めてること」に追加しますか？</span>
+            <button class="btn btn-sm btn-primary" onclick="toast('「EC強化」を追加 → マッチングに反映しました')">追加</button>
+          </div>
+          <div class="row" style="gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--radius);">
+            <span style="flex:1;"><b>テック合同会社</b> への紹介を起票しますか？</span>
+            <button class="btn btn-sm btn-gold" onclick="toast('紹介を「提案」で起票しました')">紹介を起票</button>
+          </div>
+        </div>
+        <div class="banner ok mt16" style="font-size:12px;">この議事録は <b>会社のカルテ</b>・<b>打ち合わせ</b>・<b>検索</b> から見られます（Tokyo保管・RLS保護）。</div>
+      </div>
+      <div class="m-foot">
+        <button class="btn" onclick="closeModal(this)">閉じる</button>
+        <a class="btn" href="company-detail.html">会社を開く</a>
+        <button class="btn btn-primary" onclick="closeModal(this);location.href='note-detail.html'">議事録を見る</button>
+      </div></div>`;
+    s.addEventListener('click', e => { if (e.target === s) s.remove(); });
+    document.body.appendChild(s);
+  }
+</script>
+</body>
+</html>

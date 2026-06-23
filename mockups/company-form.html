@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>企業を編集・大吉CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" data-active="companies"></aside>
+  <div class="main">
+    <header class="topbar">
+      <button class="btn btn-icon hamb" data-icon="menu" aria-label="メニュー"></button>
+      <div class="crumb"><a href="companies.html">顧客</a> / <a href="company-detail.html">株式会社 大吉商事</a> / <b>編集</b></div>
+      <div class="spacer"></div>
+      <a class="btn btn-sm" href="company-detail.html">キャンセル</a>
+      <button class="btn btn-sm btn-primary" onclick="toast('企業を保存しました');setTimeout(()=>location.href='company-detail.html',700)">保存</button>
+      <div class="user"><div class="avatar">山</div></div>
+    </header>
+
+    <div class="content" style="max-width:1120px;">
+      <div class="page-head"><div><h2>企業を編集</h2><div class="sub">必須は <span class="b" style="color:var(--red-600)">*</span> のみ。残りは運用しながら追加できます。</div></div></div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>基本情報</h3></div>
+        <div class="panel-body">
+          <div class="form-grid">
+            <div class="field">
+              <label>種別 <span class="req">*</span></label>
+              <select class="select"><option>法人</option><option>個人事業主</option></select>
+            </div>
+            <div class="field">
+              <label>ステータス</label>
+              <select class="select"><option>顧問中</option><option>見込み</option><option>休眠</option></select>
+            </div>
+            <div class="field col-2">
+              <label>名称 <span class="req">*</span></label>
+              <input class="input" value="株式会社 大吉商事">
+            </div>
+            <div class="field">
+              <label>業種</label>
+              <select class="select"><option>卸売</option><option>飲食</option><option>建設</option><option>小売</option><option>IT・情報通信</option><option>専門サービス</option></select>
+              <span class="hint">マッチング精度のためマスタから選択</span>
+            </div>
+            <div class="field">
+              <label>エリア（都道府県）</label>
+              <select class="select"><option>東京都</option><option>大阪府</option><option>愛知県</option><option>福岡県</option></select>
+            </div>
+            <div class="field">
+              <label>規模（売上）</label>
+              <select class="select"><option>〜1千万</option><option>1千万〜5千万</option><option>5千万〜1億</option><option selected>1億〜10億</option><option>10億〜</option><option>不明</option></select>
+            </div>
+            <div class="field">
+              <label>社内担当</label>
+              <select class="select"><option>山田 健太</option><option>佐々木 操</option><option>（なし）</option></select>
+              <span class="hint">先方担当者ではなく事務所側の担当</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>Webサイト・SNS</h3></div>
+        <div class="panel-body">
+          <div class="form-grid">
+            <div class="field col-2"><label>公式サイト</label><input class="input" placeholder="https://example.co.jp" value="https://daikichi-shoji.co.jp"></div>
+            <div class="field"><label>X（旧Twitter）</label><input class="input" placeholder="https://x.com/…"></div>
+            <div class="field"><label>Instagram</label><input class="input" placeholder="https://instagram.com/…"></div>
+            <div class="field"><label>Facebook</label><input class="input" placeholder="https://facebook.com/…"></div>
+            <div class="field"><label>LINE公式 / その他</label><input class="input" placeholder="https://…"></div>
+          </div>
+          <span class="hint mt8">SNS・サイトのURLを保存できます（当面は <b>extra</b>(JSONB) に格納、多用されれば正式な列へ昇格）。</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>求めてること / 提供できること</h3>
+          <span class="legend right"><span class="chip need" style="height:20px;"><span class="mk">求</span>needs</span><span class="chip offer" style="height:20px;"><span class="mk">提</span>offers</span></span>
+        </div>
+        <div class="panel-body">
+          <div class="field col-2" style="margin-bottom:14px;">
+            <label>求めてること（needs）</label>
+            <div class="chips" style="padding:8px;border:1px solid var(--line-strong);border-radius:var(--radius-sm);min-height:44px;">
+              <span class="chip need"><span class="mk">求</span>販路拡大 <span class="x">✕</span></span>
+              <span class="chip need"><span class="mk">求</span>EC強化 <span class="x">✕</span></span>
+              <span class="chip-add chip">＋ タグを追加</span>
+            </div>
+            <span class="hint">マスタから補完。無いタグは確認のうえ追加されます（表記ゆれ防止）。</span>
+          </div>
+          <div class="field col-2">
+            <label>提供できること（offers）</label>
+            <div class="chips" style="padding:8px;border:1px solid var(--line-strong);border-radius:var(--radius-sm);min-height:44px;">
+              <span class="chip offer"><span class="mk">提</span>食材卸 <span class="x">✕</span></span>
+              <span class="chip offer"><span class="mk">提</span>業務用パッケージ <span class="x">✕</span></span>
+              <span class="chip-add chip">＋ タグを追加</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>メモ・追加項目</h3></div>
+        <div class="panel-body">
+          <div class="field col-2" style="margin-bottom:14px;">
+            <label>メモ</label>
+            <textarea class="input" rows="3">地方の生産者ネットワークが強み。EC・物販の協業先を探している。</textarea>
+          </div>
+          <div class="banner info"><span>「取引銀行」「決算月」などの試験的な項目は <b>extra</b> として、マイグレーションなしで追加できます。</span></div>
+          <button class="btn btn-sm btn-ghost mt8">＋ 追加項目（extra）を足す</button>
+        </div>
+      </div>
+
+      <div class="row mt16" style="justify-content:flex-end;">
+        <a class="btn" href="company-detail.html">キャンセル</a>
+        <button class="btn btn-primary" onclick="toast('企業を保存しました');setTimeout(()=>location.href='company-detail.html',700)">保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

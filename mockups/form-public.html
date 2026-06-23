@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>お客様情報のご登録・大吉会計事務所</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  body{ background:var(--app-bg); }
+  .pub-wrap{ max-width:680px; margin:0 auto; padding:28px 20px 60px; }
+  .pub-head{ display:flex; align-items:center; gap:12px; padding:18px 0 22px; }
+  .pub-head .seal{ width:42px; height:42px; border-radius:11px; background:var(--gold-500); color:#2a1c05; display:grid; place-items:center; font-weight:800; font-size:22px; }
+  .pub-head h1{ font-size:20px; } .pub-head .sub{ color:var(--ink-3); font-size:12.5px; }
+  .pub-hero{ background:linear-gradient(180deg,var(--brand-900),var(--brand-700)); color:#fff; border-radius:var(--radius-lg); padding:22px 22px; margin-bottom:18px; }
+  .pub-hero h2{ color:#fff; font-size:18px; } .pub-hero p{ color:#bcd2e4; margin:6px 0 0; font-size:13px; }
+  .done-card{ text-align:center; padding:46px 24px; }
+  .done-card .ic{ width:56px; height:56px; border-radius:50%; background:var(--green-50); color:var(--green-600); display:grid; place-items:center; font-size:30px; margin:0 auto 14px; }
+</style>
+</head>
+<body>
+  <div class="pub-wrap">
+    <div class="pub-head">
+      <span class="seal">大</span>
+      <div><h1>大吉会計事務所</h1><div class="sub">お客様情報のご登録フォーム</div></div>
+    </div>
+
+    <div class="pub-hero">
+      <h2>事業の「求めてること」「提供できること」を教えてください</h2>
+      <p>いただいた情報は、顧問先・お客様同士の<strong style="color:#fff;">ビジネス紹介（協業先・お客様のご紹介）</strong>に活用します。送信内容は担当者が確認のうえ登録します。</p>
+    </div>
+
+    <!-- 入力フォーム -->
+    <div class="panel" id="formCard">
+      <div class="panel-body">
+        <div class="form-grid">
+          <div class="field"><label>種別 <span class="req">*</span></label>
+            <select class="select"><option>法人</option><option>個人事業主</option></select></div>
+          <div class="field"><label>業種</label>
+            <select class="select"><option>選択してください</option><option>飲食</option><option>建設</option><option>卸売</option><option>小売</option><option>IT・情報通信</option><option>専門サービス</option><option>その他</option></select></div>
+          <div class="field col-2"><label>会社名 / 屋号 <span class="req">*</span></label><input class="input" placeholder="株式会社サンプル"></div>
+          <div class="field"><label>ご担当者名 <span class="req">*</span></label><input class="input" placeholder="山田 太郎"></div>
+          <div class="field"><label>フリガナ</label><input class="input" placeholder="ヤマダ タロウ"></div>
+          <div class="field"><label>メール <span class="req">*</span></label><input class="input" type="email" placeholder="taro@example.co.jp"></div>
+          <div class="field"><label>電話</label><input class="input" placeholder="03-1234-5678"></div>
+          <div class="field"><label>エリア（都道府県）</label>
+            <select class="select"><option>選択してください</option><option>東京都</option><option>大阪府</option><option>愛知県</option><option>福岡県</option></select></div>
+          <div class="field"><label>規模（売上）</label>
+            <select class="select"><option>選択してください</option><option>〜1千万</option><option>1千万〜5千万</option><option>5千万〜1億</option><option>1億〜10億</option><option>10億〜</option></select></div>
+        </div>
+
+        <div class="field col-2" style="margin-top:16px;">
+          <label>求めてること（探しているもの）</label>
+          <div class="chips" style="padding:8px;border:1px solid var(--line-strong);border-radius:var(--radius-sm);min-height:44px;">
+            <span class="chip need"><span class="mk">求</span>集客 <span class="x">✕</span></span>
+            <span class="chip need"><span class="mk">求</span>仕入先 <span class="x">✕</span></span>
+            <span class="chip-add chip">＋ 追加</span>
+          </div>
+          <span class="hint">例: 集客 / 仕入先 / 資金調達 / 人材採用 など</span>
+        </div>
+        <div class="field col-2" style="margin-top:14px;">
+          <label>提供できること（強み・サービス）</label>
+          <div class="chips" style="padding:8px;border:1px solid var(--line-strong);border-radius:var(--radius-sm);min-height:44px;">
+            <span class="chip offer"><span class="mk">提</span>食材卸 <span class="x">✕</span></span>
+            <span class="chip-add chip">＋ 追加</span>
+          </div>
+        </div>
+
+        <div class="field col-2" style="margin-top:14px;"><label>Webサイト・SNS</label><input class="input" placeholder="https://example.co.jp / SNSのURL"></div>
+        <div class="field col-2" style="margin-top:14px;"><label>ご相談・メッセージ</label><textarea class="input" rows="3" placeholder="ご要望やご紹介してほしい相手など"></textarea></div>
+
+        <label class="row" style="gap:8px;margin-top:16px;font-size:12.5px;color:var(--ink-2);">
+          <input type="checkbox"> 入力内容を大吉会計事務所が確認・保管することに同意します（個人情報は国内サーバーに保管）。</label>
+
+        <button class="btn btn-primary" style="width:100%;margin-top:16px;height:44px;" onclick="document.getElementById('formCard').style.display='none';document.getElementById('doneCard').style.display='block';window.scrollTo(0,0);">送信する</button>
+      </div>
+    </div>
+
+    <!-- 送信完了 -->
+    <div class="panel" id="doneCard" style="display:none;">
+      <div class="done-card">
+        <div class="ic">✓</div>
+        <h3>送信ありがとうございました</h3>
+        <p class="muted" style="max-width:420px;margin:8px auto 0;">担当者が内容を確認し、必要に応じてご連絡いたします。ご登録いただいた「求めてること／提供できること」をもとに、相性の良いお客様のご紹介を検討します。</p>
+      </div>
+    </div>
+
+    <div class="muted" style="text-align:center;font-size:11.5px;margin-top:18px;">大吉会計事務所 ／ このフォームは公開URLです（ログイン不要）。送信内容はスタッフ確認後に登録されます。</div>
+  </div>
+</body>
+</html>

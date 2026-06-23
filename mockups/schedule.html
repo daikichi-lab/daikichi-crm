@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>期限・タスク・大吉CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  /* 種別バッジ＝既存のセマンティック変数から導く（独自色を作らない） */
+  .t-badge{ display:inline-flex; align-items:center; gap:5px; height:22px; padding:0 8px; border-radius:6px;
+    font-size:11.5px; font-weight:700; border:1px solid; white-space:nowrap; }
+  .t-badge .mk{ width:7px; height:7px; border-radius:50%; flex:none; }
+  .t-kessan  { color:var(--gold-700); background:var(--gold-50); border-color:#ecdcb4; } .t-kessan .mk{ background:var(--gold-600); }
+  .t-shinkoku{ color:var(--red-700);  background:var(--red-50);  border-color:#e6c4c1; } .t-shinkoku .mk{ background:var(--red-600); }
+  .t-nencho  { color:var(--brand-700);background:var(--brand-50);border-color:#cfe0ef; } .t-nencho .mk{ background:var(--brand-600); }
+  .t-task    { color:var(--ink-2);    background:var(--surface-3);border-color:var(--line); } .t-task .mk{ background:var(--ink-3); }
+  .badge.overdue{ color:var(--red-700); background:var(--red-50); border-color:#e6c4c1; }
+
+  /* 台帳のグループ見出し行 */
+  tr.grp td{ background:var(--surface-2); font-weight:700; color:var(--ink-2); font-size:12px; letter-spacing:.03em; padding:8px 14px; border-bottom:1px solid var(--line-strong); }
+  tr.grp .cnt{ color:var(--ink-3); font-weight:600; margin-left:4px; }
+  tr.overdue-row td:first-child{ box-shadow: inset 3px 0 0 var(--red-600); }
+  .today-pill{ display:inline-block; margin-left:6px; font-size:10px; font-weight:800; color:#fff; background:var(--brand-600); padding:0 6px; border-radius:999px; vertical-align:middle; }
+
+  /* ミニ月カレンダー */
+  .cal{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+  .cal .dow{ text-align:center; font-size:10.5px; font-weight:700; color:var(--ink-3); padding:2px 0; }
+  .cal .cell{ aspect-ratio:1/.92; border:1px solid var(--line); border-radius:6px; padding:4px 5px; font-size:12px;
+    color:var(--ink-2); position:relative; background:var(--surface); }
+  .cal .cell.empty{ background:transparent; border-color:transparent; }
+  .cal .cell.today{ border-color:var(--brand-500); box-shadow:0 0 0 2px var(--brand-50); font-weight:800; color:var(--brand-700); }
+  .cal .cell.sun{ color:var(--red-600); } .cal .cell.sat{ color:var(--brand-500); }
+  .cal .cell .dots{ position:absolute; left:5px; bottom:5px; display:flex; gap:2px; }
+  .cal .cell .dt{ width:6px; height:6px; border-radius:50%; }
+  .dt.kessan{ background:var(--gold-600); } .dt.shinkoku{ background:var(--red-600); }
+  .dt.nencho{ background:var(--brand-600); } .dt.task{ background:var(--ink-3); }
+  .leg{ display:flex; flex-direction:column; gap:8px; }
+  .leg .li{ display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--ink-2); }
+  .leg .sw{ width:10px; height:10px; border-radius:3px; flex:none; }
+  .rulelist{ margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:9px; font-size:12.5px; color:var(--ink-2); }
+  .rulelist li{ display:flex; gap:8px; } .rulelist b{ color:var(--ink); }
+  .side-col{ display:flex; flex-direction:column; gap:16px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" data-active="schedule"></aside>
+  <div class="main">
+    <header class="topbar">
+      <button class="btn btn-icon hamb" data-icon="menu" aria-label="メニュー"></button>
+      <h1>期限・タスク</h1>
+      <div class="search"><span class="mag"></span><input placeholder="企業・内容で絞り込み…"></div>
+      <div class="spacer"></div>
+      <button class="btn btn-sm" data-icon="calendar" data-iw="15" onclick="toast('Googleカレンダーへ書き出しました（デモ）')">カレンダー書出</button>
+      <button class="btn btn-sm btn-primary" onclick="demoModal('タスクを追加','企業・内容・期日・担当を入力して手動タスクを追加します。','追加')">＋ タスクを追加</button>
+      <button class="btn btn-sm" data-icon="help" data-iw="15" onclick="openGuide('期限・タスクの使い方', document.getElementById('guide').innerHTML)">使い方</button>
+      <div class="user"><div class="avatar">山</div></div>
+    </header>
+
+    <div class="content">
+      <div id="guide" hidden>
+        <p>会計事務所の業務サイクル（決算・申告・納付・年末調整）と、社内の手動タスクを<b>1つの期限ハブ</b>でまとめて把握します。</p>
+        <h4>期限はどこから来る？</h4>
+        <ul>
+          <li>各企業の<b>決算月・登録情報から自動生成</b>（申告期限・中間納付・決算準備リマインド・年末調整など）。</li>
+          <li>面談フォローや資料回収などは<b>手動タスク</b>として追加。</li>
+          <li>担当（社内スタッフ）で絞り込み、自分の「今週やること」を確認。</li>
+        </ul>
+        <h4>連携</h4>
+        <ul>
+          <li><b>Googleカレンダー</b>へ書き出して外出先でも確認（打ち合わせ画面と連動）。</li>
+          <li>期日超過は<b>遅延</b>として上部にまとめ、放置を防止。</li>
+        </ul>
+      </div>
+
+      <div class="page-head">
+        <div>
+          <h2>期限・タスク</h2>
+          <div class="sub">決算・申告・納付の期限と手動タスクを横断で管理 — 2026年6月23日（火）時点</div>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="k">今週やること</div><div class="v num">5 <small>件</small></div><div class="d muted" style="color:var(--ink-3)">うち期限あり 3 件</div></div>
+        <div class="stat"><div class="k">今月の税務期限</div><div class="v num">6 <small>件</small></div><div class="d muted" style="color:var(--ink-3)">申告・納付・決算準備</div></div>
+        <div class="stat gold"><div class="k">遅延（要対応）</div><div class="v num">1 <small>件</small></div><div class="d" style="color:var(--red-600)">至急 対応</div></div>
+        <div class="stat"><div class="k">未完了タスク</div><div class="v num">9 <small>件</small></div><div class="d">今月 完了 12 件</div></div>
+      </div>
+
+      <div class="grid-2 mt16">
+        <!-- 左：期限・タスク台帳 -->
+        <div class="panel">
+          <div class="panel-head">
+            <h3>期限・タスク一覧</h3>
+            <span class="count">8 件</span>
+            <div class="actions">
+              <button class="btn btn-sm">一覧</button>
+              <button class="btn btn-sm btn-ghost">カレンダー</button>
+            </div>
+          </div>
+          <div class="filterbar">
+            <div class="row" style="gap:6px;">
+              <button class="btn btn-sm btn-icon" aria-label="前月">‹</button>
+              <b class="num" style="min-width:96px;text-align:center;">2026年 6月</b>
+              <button class="btn btn-sm btn-icon" aria-label="翌月">›</button>
+              <button class="btn btn-sm">今日</button>
+            </div>
+            <select class="select">
+              <option>担当：すべて</option>
+              <option>山田 健太</option>
+              <option>佐藤 京子</option>
+              <option>田中 一郎</option>
+            </select>
+            <select class="select">
+              <option>種別：すべて</option>
+              <option>決算</option>
+              <option>申告・納付</option>
+              <option>年末調整</option>
+              <option>手動タスク</option>
+            </select>
+            <span class="filter-pill">未完了のみ <span class="x">×</span></span>
+          </div>
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr><th style="width:74px;">期日</th><th style="width:104px;">種別</th><th>企業</th><th>内容</th><th>担当</th><th>状態</th></tr>
+              </thead>
+              <tbody>
+                <tr class="grp"><td colspan="6">遅延 <span class="cnt num">1</span></td></tr>
+                <tr class="overdue-row" onclick="location.href='company-detail.html'">
+                  <td class="num b" style="color:var(--red-700);">6/20</td>
+                  <td><span class="t-badge t-task"><span class="mk"></span>手動タスク</span></td>
+                  <td class="name">山本会計サポート</td>
+                  <td>5月分 記帳資料の回収（未着）</td>
+                  <td class="muted">田中 一郎</td>
+                  <td><span class="badge overdue"><span class="dot"></span>遅延 3日</span></td>
+                </tr>
+
+                <tr class="grp"><td colspan="6">今週（6/23–6/29） <span class="cnt num">4</span></td></tr>
+                <tr onclick="location.href='company-detail.html'">
+                  <td class="num b">6/23<span class="today-pill">今日</span></td>
+                  <td><span class="t-badge t-task"><span class="mk"></span>手動タスク</span></td>
+                  <td class="name">みどり食堂</td>
+                  <td>面談フォロー連絡（見込み・初回提案）</td>
+                  <td class="muted">佐藤 京子</td>
+                  <td><span class="badge prospect"><span class="dot"></span>対応中</span></td>
+                </tr>
+                <tr onclick="location.href='company-detail.html'">
+                  <td class="num b">6/25</td>
+                  <td><span class="t-badge t-shinkoku"><span class="mk"></span>申告・納付</span></td>
+                  <td class="name">鈴木工務店</td>
+                  <td>源泉所得税 納期特例分 納付</td>
+                  <td class="muted">田中 一郎</td>
+                  <td><span class="badge dormant"><span class="dot"></span>未対応</span></td>
+                </tr>
+                <tr onclick="location.href='company-detail.html'">
+                  <td class="num b">6/26</td>
+                  <td><span class="t-badge t-kessan"><span class="mk"></span>決算準備</span></td>
+                  <td class="name">株式会社 北斗ロジ</td>
+                  <td>決算準備キックオフ（7月決算の3ヶ月前）</td>
+                  <td class="muted">佐藤 京子</td>
+                  <td><span class="badge dormant"><span class="dot"></span>未対応</span></td>
+                </tr>
+                <tr onclick="location.href='company-detail.html'">
+                  <td class="num b">6/30</td>
+                  <td><span class="t-badge t-shinkoku"><span class="mk"></span>申告・納付</span></td>
+                  <td class="name">合同会社 海風マリン</td>
+                  <td>法人税・消費税 申告期限（4月決算）</td>
+                  <td class="muted">佐藤 京子</td>
+                  <td><span class="badge prospect"><span class="dot"></span>対応中</span></td>
+                </tr>
+
+                <tr class="grp"><td colspan="6">今月のその他（6月） <span class="cnt num">1</span></td></tr>
+                <tr onclick="location.href='company-detail.html'">
+                  <td class="num b">6/30</td>
+                  <td><span class="t-badge t-shinkoku"><span class="mk"></span>申告・納付</span></td>
+                  <td class="name">株式会社 大吉商事</td>
+                  <td>消費税 中間納付</td>
+                  <td class="muted">山田 健太</td>
+                  <td><span class="badge dormant"><span class="dot"></span>未対応</span></td>
+                </tr>
+
+                <tr class="grp"><td colspan="6">来月以降（7月〜） <span class="cnt num">2</span></td></tr>
+                <tr>
+                  <td class="num b">7/10</td>
+                  <td><span class="t-badge t-shinkoku"><span class="mk"></span>申告・納付</span></td>
+                  <td class="muted">（全顧問先）</td>
+                  <td>源泉所得税 納付期限（毎月10日）</td>
+                  <td class="muted">—</td>
+                  <td><span class="badge dormant"><span class="dot"></span>未対応</span></td>
+                </tr>
+                <tr onclick="location.href='company-detail.html'">
+                  <td class="num b">7/31</td>
+                  <td><span class="t-badge t-shinkoku"><span class="mk"></span>申告・納付</span></td>
+                  <td class="name">さくら美容室</td>
+                  <td>法人税・消費税 申告期限（5月決算）</td>
+                  <td class="muted">山田 健太</td>
+                  <td><span class="badge dormant"><span class="dot"></span>未対応</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="tfoot">
+            <span>期限は各企業の決算月・登録情報から自動生成（手動タスクを除く）</span>
+            <div class="pager">
+              <span class="pg">‹</span><span class="pg on">1</span><span class="pg">2</span><span class="pg">›</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右：ミニカレンダー＋凡例＋自動生成ルール -->
+        <div class="side-col">
+          <div class="panel">
+            <div class="panel-head"><h3>2026年 6月</h3><span class="count" style="margin-left:auto;">5 日に予定</span></div>
+            <div class="panel-body">
+              <div class="cal">
+                <div class="dow" style="color:var(--red-600)">日</div><div class="dow">月</div><div class="dow">火</div><div class="dow">水</div><div class="dow">木</div><div class="dow">金</div><div class="dow" style="color:var(--brand-500)">土</div>
+                <div class="cell empty"></div>
+                <div class="cell">1</div><div class="cell">2</div><div class="cell">3</div><div class="cell">4</div><div class="cell">5</div><div class="cell sat">6</div>
+                <div class="cell sun">7</div><div class="cell">8</div><div class="cell">9</div><div class="cell">10</div><div class="cell">11</div><div class="cell">12</div><div class="cell sat">13</div>
+                <div class="cell sun">14</div><div class="cell">15</div><div class="cell">16</div><div class="cell">17</div><div class="cell">18</div><div class="cell">19</div><div class="cell sat">20<div class="dots"><i class="dt task"></i></div></div>
+                <div class="cell sun">21</div><div class="cell">22</div>
+                <div class="cell today">23<div class="dots"><i class="dt task"></i></div></div>
+                <div class="cell">24</div>
+                <div class="cell">25<div class="dots"><i class="dt shinkoku"></i></div></div>
+                <div class="cell">26<div class="dots"><i class="dt kessan"></i></div></div>
+                <div class="cell sat">27</div>
+                <div class="cell sun">28</div><div class="cell">29</div>
+                <div class="cell">30<div class="dots"><i class="dt shinkoku"></i><i class="dt shinkoku"></i></div></div>
+                <div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div>
+              </div>
+              <div class="leg mt16">
+                <div class="li"><span class="sw" style="background:var(--gold-600)"></span>決算（決算期・準備リマインド）</div>
+                <div class="li"><span class="sw" style="background:var(--red-600)"></span>申告・納付（法人税・消費税・源泉ほか）</div>
+                <div class="li"><span class="sw" style="background:var(--brand-600)"></span>年末調整・法定調書</div>
+                <div class="li"><span class="sw" style="background:var(--ink-3)"></span>手動タスク（面談・資料回収など）</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><h3>自動生成のルール</h3></div>
+            <div class="panel-body">
+              <ul class="rulelist">
+                <li><span style="color:var(--gold-600)">●</span><span><b>決算月</b>から逆算し、決算準備（3ヶ月前）・申告期限（2ヶ月後）を生成。</span></li>
+                <li><span style="color:var(--red-600)">●</span><span><b>消費税</b>の中間申告・納付を課税区分に応じて生成。</span></li>
+                <li><span style="color:var(--brand-600)">●</span><span><b>年末調整・法定調書・償却資産申告</b>（1/31）を毎年生成。</span></li>
+                <li><span style="color:var(--ink-3)">●</span><span>源泉所得税の納付（毎月10日／納期特例）をリマインド。</span></li>
+              </ul>
+              <div class="banner info mt16">
+                <span>ⓘ</span>
+                <div>これは<b>設計モック</b>です。実装では企業の決算月・課税区分を基に期限を算出し、<b>Googleカレンダー</b>へ書き出せます。</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

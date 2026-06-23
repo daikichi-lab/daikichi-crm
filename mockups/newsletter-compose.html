@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>メルマガ作成・大吉CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  .topic{ display:inline-flex; align-items:center; gap:5px; height:30px; padding:0 12px; border-radius:999px;
+    font-size:12.5px; font-weight:600; color:var(--ink-2); background:#fff; border:1px solid var(--line-strong); cursor:pointer; user-select:none; }
+  .topic:hover{ border-color:var(--brand-500); color:var(--brand-600); }
+  .topic.on{ color:#fff; background:var(--brand-700); border-color:var(--brand-700); }
+  .topic.on::before{ content:"✓ "; }
+  .merge{ display:inline-flex; align-items:center; height:22px; padding:0 8px; border-radius:5px; font-size:12px; font-weight:700;
+    background:var(--gold-50); color:var(--gold-700); border:1px dashed #ecdcb4; cursor:pointer; }
+  .merge.link{ background:var(--brand-tint); color:var(--brand-700); border:1px solid #cfe0ef; }
+  .merge:hover{ filter:brightness(.97); }
+  .target-num{ font-size:34px; font-weight:800; color:var(--brand-800); letter-spacing:-.01em; }
+  .mail-foot{ margin-top:12px; padding:12px 14px; border-top:1px dashed var(--line-strong); background:var(--surface-2);
+    border-radius:0 0 var(--radius) var(--radius); font-size:12px; color:var(--ink-3); }
+  .sticky-side{ position:sticky; top:78px; }
+  textarea.body-input{ min-height:280px; font-size:13.5px; line-height:1.7; }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" data-active="newsletter"></aside>
+  <div class="main">
+    <header class="topbar">
+      <button class="btn btn-icon hamb" data-icon="menu" aria-label="メニュー"></button>
+      <div class="crumb"><a href="newsletters.html">メルマガ</a> / <b>新規作成</b></div>
+      <div class="spacer"></div>
+      <div class="steps">
+        <span class="s on"><span class="n">1</span>内容</span><span class="sep"></span>
+        <span class="s on"><span class="n">2</span>宛先</span><span class="sep"></span>
+        <span class="s"><span class="n">3</span>確認・送信</span>
+      </div>
+      <div class="user" style="margin-left:14px;"><div class="avatar">山</div></div>
+    </header>
+
+    <div class="content">
+      <div class="page-head">
+        <div><h2>メルマガを作成</h2><div class="sub">本文を書き、配信トピック × 顧客属性で宛先を絞り込みます。</div></div>
+        <div class="actions">
+          <button class="btn" onclick="toast('下書きを保存しました')">下書き保存</button>
+          <button class="btn btn-sm" data-icon="help" data-iw="15" onclick="openGuide('メルマガ作成の使い方', document.getElementById('guide').innerHTML)">使い方</button>
+        </div>
+      </div>
+
+      <div id="guide" hidden>
+        <p>本文と宛先を決めてメルマガを送ります。</p>
+        <ul>
+          <li><b>差し込み変数</b>（{{氏名}} など）で1通ずつ宛名を差し込めます。</li>
+          <li><b>宛先</b>は配信トピックの購読者から、業種・エリア等でさらに絞り込めます。</li>
+          <li><b>送信者情報と配信停止リンクは自動で本文末尾に付与</b>されます（法令対応）。</li>
+          <li><b>Claudeで下書き</b>＝手元のClaude（MCP）に本文案を作らせます（追加課金なし）。</li>
+        </ul>
+      </div>
+
+      <div class="banner info">
+        <span data-icon="help" data-iw="16"></span>
+        <div>送信者情報（事務所名・住所）と<span class="b">配信停止リンク</span>はメール末尾に自動付与されます。<span class="b">配信同意のない宛先・配信停止した人には送信されません。</span></div>
+      </div>
+
+      <div class="grid-2 mt16">
+        <!-- 左: 本文 -->
+        <div>
+          <div class="panel">
+            <div class="panel-head"><h3>内容</h3>
+              <div class="actions">
+                <button class="btn btn-sm btn-gold" data-icon="doc" data-iw="14" onclick="toast('Claude（MCP）に本文の下書きを依頼しました')">Claudeで下書き</button>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="form-grid">
+                <div class="field col-2"><label>件名 <span class="req">*</span></label>
+                  <input class="input" value="【7月】インボイス・電子帳簿保存法の最新対応ポイント"></div>
+                <div class="field"><label>送信者名</label><input class="input" value="大吉会計事務所"></div>
+                <div class="field"><label>返信先メール</label><input class="input" value="info@daikichi-kaikei.example.jp"></div>
+              </div>
+
+              <div class="field col-2" style="margin-top:16px;">
+                <label>本文</label>
+                <div class="row" style="gap:6px;margin:2px 0 6px;">
+                  <span class="hint">差し込み変数:</span>
+                  <span class="merge" onclick="ins('{{氏名}}')">{{氏名}}</span>
+                  <span class="merge" onclick="ins('{{会社名}}')">{{会社名}}</span>
+                  <span class="merge" onclick="ins('{{役職}}')">{{役職}}</span>
+                </div>
+                <div class="row" style="gap:6px;margin:0 0 6px;">
+                  <span class="hint">リンク挿入:</span>
+                  <span class="merge link" onclick="insLink('form')">顧客情報フォーム</span>
+                  <span class="merge link" onclick="insLink('seminar')">セミナー申込</span>
+                  <span class="merge link" onclick="insLink('url')">任意のURL</span>
+                  <span class="merge link" onclick="insCTA()">▶ CTAボタン</span>
+                </div>
+                <textarea id="body" class="input body-input">{{会社名}}
+{{氏名}} 様
+
+いつも大変お世話になっております。大吉会計事務所です。
+
+本年7月施行・改正分のうち、特に対応が必要なポイントを3点に絞ってお知らせします。
+
+1. インボイス：少額特例の期限と経過措置の確認
+2. 電子帳簿保存法：電子取引データの保存要件
+3. 今期に間に合う節税の打ち手
+
+ご不明な点は、本メールへの返信または担当者まで気軽にご相談ください。</textarea>
+                <span class="hint">簡易HTML＋差し込み変数に対応。送信前にテスト送信での確認をおすすめします。</span>
+              </div>
+
+              <!-- 自動付与フッタのプレビュー -->
+              <div class="mail-foot">
+                ── このメールは配信トピック「税制改正ニュース」を購読中の方へお送りしています。<br>
+                大吉会計事務所 ／ 〒000-0000 ○○県○○市○○ 1-2-3 ／ TEL 00-0000-0000<br>
+                <a href="unsubscribe.html" target="_blank">配信を停止する</a>（このリンクは受信者ごとに自動生成されます）
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><h3>テスト送信</h3></div>
+            <div class="panel-body row">
+              <input class="input" style="min-width:260px;" value="yamada@daikichi-kaikei.example.jp">
+              <button class="btn" onclick="toast('テストメールを送信しました')">自分宛にテスト送信</button>
+              <span class="muted" style="font-size:12px;">差し込み変数はサンプル値で表示されます。</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右: 宛先セグメント -->
+        <div>
+          <div class="panel sticky-side">
+            <div class="panel-head"><h3>宛先（セグメント）</h3></div>
+            <div class="panel-body">
+              <div class="field col-2">
+                <label>配信トピック（メルマガ属性）</label>
+                <div class="chips" style="margin-top:4px;">
+                  <span class="topic on" onclick="this.classList.toggle('on')">税制改正ニュース</span>
+                  <span class="topic" onclick="this.classList.toggle('on')">セミナー・勉強会案内</span>
+                  <span class="topic" onclick="this.classList.toggle('on')">経営お役立ち情報</span>
+                  <span class="topic" onclick="this.classList.toggle('on')">年末調整のお知らせ</span>
+                  <span class="topic" onclick="this.classList.toggle('on')">決算前リマインド</span>
+                </div>
+                <span class="hint">購読者だけが対象。複数選ぶといずれかを購読中の人が対象になります。</span>
+              </div>
+
+              <div class="field col-2" style="margin-top:16px;">
+                <label>さらに絞り込み（任意・顧客属性）</label>
+                <div class="form-grid" style="gap:10px;">
+                  <div class="field"><select class="select"><option>ステータス: すべて</option><option>顧問中</option><option>見込み</option><option>休眠</option></select></div>
+                  <div class="field"><select class="select"><option>種別: すべて</option><option>法人</option><option>個人事業主</option></select></div>
+                  <div class="field"><select class="select"><option>業種: すべて</option><option>飲食</option><option>建設</option><option>卸売</option><option>小売</option><option>IT・情報通信</option><option>専門サービス</option></select></div>
+                  <div class="field"><select class="select"><option>エリア: すべて</option><option>関東</option><option>近畿</option><option>中部</option><option>九州・沖縄</option></select></div>
+                </div>
+                <span class="hint">既存の顧客台帳の属性をそのまま条件に使えます（新しい名簿は不要）。</span>
+              </div>
+
+              <div class="panel" style="margin-top:16px;box-shadow:none;background:var(--surface-2);">
+                <div class="panel-body" style="text-align:center;">
+                  <div class="muted" style="font-size:12px;font-weight:700;">送信対象</div>
+                  <div class="target-num num">142 <span style="font-size:15px;color:var(--ink-3);">人</span></div>
+                  <div class="muted" style="font-size:11.5px;">購読 153 から <b>同意なし 8</b>・<b>配信停止 3</b> を自動除外</div>
+                </div>
+              </div>
+
+              <div class="field col-2" style="margin-top:16px;">
+                <label>送信タイミング</label>
+                <label class="row" style="gap:8px;font-weight:500;font-size:13px;"><input type="radio" name="when" checked onchange="setWhen(false)"> 今すぐ送信</label>
+                <label class="row" style="gap:8px;font-weight:500;font-size:13px;"><input type="radio" name="when" onchange="setWhen(true)"> 予約送信</label>
+                <div id="schedRow" class="row" style="gap:8px;display:none;margin-top:8px;">
+                  <input id="sd" class="input" type="date" value="2026-06-25" style="max-width:160px;">
+                  <input id="st" class="input" type="time" value="09:00" style="max-width:112px;">
+                  <span class="hint">日本時間（JST）</span>
+                </div>
+              </div>
+              <button id="sendBtn" class="btn btn-primary" style="width:100%;margin-top:14px;height:44px;" data-icon="send" onclick="doSend()">142人に送信</button>
+              <div class="hint" style="text-align:center;margin-top:6px;">送信は日次上限内で自動スロットル配信されます。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="assets/app.js"></script>
+<script>
+  // --- 本文への差し込み変数・リンク挿入（カーソル位置に挿入） ---
+  function insAt(text){
+    const t = document.getElementById('body');
+    const s = (t.selectionStart!=null)?t.selectionStart:t.value.length;
+    const e = (t.selectionEnd!=null)?t.selectionEnd:t.value.length;
+    t.value = t.value.slice(0,s) + text + t.value.slice(e);
+    t.focus(); const p = s + text.length; t.setSelectionRange(p,p);
+  }
+  function ins(v){ insAt(v); }
+  function insLink(kind){
+    const m = {
+      form:    ['お客様情報フォーム', 'https://daikichi-kaikei.example.jp/f/intake'],
+      seminar: ['セミナー申込',       'https://daikichi-kaikei.example.jp/f/seminar'],
+      url:     ['リンクテキスト',     'https://']
+    };
+    const [label,url] = m[kind];
+    insAt(`\n▶ ${label}：${url}\n`);
+    toast('リンクを本文に挿入しました');
+  }
+  function insCTA(){
+    insAt(`\n────────────────\n  ▶ お客様情報フォームはこちら\n  https://daikichi-kaikei.example.jp/f/intake\n────────────────\n`);
+    toast('CTAボタンを挿入しました');
+  }
+
+  // --- 送信タイミング（今すぐ / 予約） ---
+  function setWhen(sched){
+    document.getElementById('schedRow').style.display = sched ? 'flex' : 'none';
+    const b = document.getElementById('sendBtn');
+    b.dataset.sched = sched ? '1' : '';
+    b.innerHTML = (sched ? window.icon(window.ICONS.calendar,16) + '予約を確定'
+                         : window.icon(window.ICONS.send,16) + '142人に送信');
+  }
+  function doSend(){
+    if(document.getElementById('sendBtn').dataset.sched){
+      const d = document.getElementById('sd').value, t = document.getElementById('st').value;
+      demoModal('この日時に予約送信しますか？',
+        `${d} ${t}（JST）に、配信トピック「税制改正ニュース」の購読者 142人 へ送信予約します。予約後も送信前なら編集・取消できます。`, '予約する');
+    } else {
+      demoModal('142人にメルマガを送信しますか？',
+        '配信トピック「税制改正ニュース」の購読者のうち、同意あり・配信停止していない 142人 に今すぐ送信します。日次上限内で自動スロットル配信されます。', '送信する');
+    }
+  }
+</script>
+</body>
+</html>

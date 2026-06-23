@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CSV取込・大吉CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" data-active="companies"></aside>
+  <div class="main">
+    <header class="topbar">
+      <button class="btn btn-icon hamb" data-icon="menu" aria-label="メニュー"></button>
+      <div class="crumb"><a href="companies.html">顧客</a> / <b>CSV取込</b></div>
+      <div class="spacer"></div>
+      <div class="steps">
+        <span class="s on"><span class="n num">1</span>ファイル</span><span class="sep"></span>
+        <span class="s on"><span class="n num">2</span>検証</span><span class="sep"></span>
+        <span class="s"><span class="n num">3</span>確定</span>
+      </div>
+      <div class="user" style="margin-left:14px;"><div class="avatar">山</div></div>
+    </header>
+
+    <div class="content">
+      <div class="page-head">
+        <div><h2>CSV取込（企業単位）</h2><div class="sub">UTF-8（BOM付）・日本語ヘッダ。検証OKの行だけ取り込み、NG行はスキップします。</div></div>
+        <div class="actions"><button class="btn" onclick="toast('テンプレCSVをダウンロードしました')">テンプレCSVをダウンロード</button></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-body row" style="justify-content:space-between;">
+          <div class="row">
+            <div class="avatar" style="background:var(--green-50);color:var(--green-600);width:40px;height:40px;border-radius:8px;">CSV</div>
+            <div>
+              <div class="b">顧客台帳_2026.csv</div>
+              <div class="muted num" style="font-size:12.5px;">120 行 ・ 9 列 ・ 24 KB</div>
+            </div>
+          </div>
+          <div class="row"><button class="btn btn-sm">ファイルを変更</button></div>
+        </div>
+      </div>
+
+      <div class="row mt16" style="gap:10px;">
+        <div class="banner ok" style="flex:1;"><span><b>116 行</b> が取込可能</span></div>
+        <div class="banner warn" style="flex:1;"><span><b>4 行</b> にエラー（スキップ対象）</span></div>
+      </div>
+
+      <div class="panel mt16">
+        <div class="panel-head"><h3>取り込まれる内容（先頭プレビュー）</h3><span class="count num">116 行のうち先頭 5 行</span></div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>名称</th><th>種別</th><th>業種</th><th>エリア</th><th>規模</th><th>ステータス</th><th>求 / 提</th></tr></thead>
+            <tbody>
+              <tr style="cursor:default;"><td class="name">株式会社 山田製作所</td><td><span class="badge type">法人</span></td><td>製造</td><td>東京都</td><td class="num">1億〜10億</td><td><span class="badge prospect"><span class="dot"></span>見込み</span></td><td><div class="chips"><span class="chip need" style="height:20px;"><span class="mk">求</span>販路拡大</span><span class="chip offer" style="height:20px;"><span class="mk">提</span>金属加工</span></div></td></tr>
+              <tr style="cursor:default;"><td class="name">さくら美容室</td><td><span class="badge type">個人</span></td><td>美容・理容</td><td>大阪府</td><td class="num">〜1千万</td><td><span class="badge prospect"><span class="dot"></span>見込み</span></td><td><div class="chips"><span class="chip need" style="height:20px;"><span class="mk">求</span>集客</span></div></td></tr>
+              <tr style="cursor:default;"><td class="name">株式会社 みなと運輸</td><td><span class="badge type">法人</span></td><td>運輸・物流</td><td>神奈川県</td><td class="num">5千万〜1億</td><td><span class="badge active"><span class="dot"></span>顧問中</span></td><td><div class="chips"><span class="chip offer" style="height:20px;"><span class="mk">提</span>配送代行</span></div></td></tr>
+              <tr style="cursor:default;"><td class="name">たなか会計補助</td><td><span class="badge type">個人</span></td><td>専門サービス</td><td>愛知県</td><td class="num">〜1千万</td><td><span class="badge prospect"><span class="dot"></span>見込み</span></td><td><div class="chips"><span class="chip offer" style="height:20px;"><span class="mk">提</span>記帳代行</span></div></td></tr>
+              <tr style="cursor:default;"><td class="name">グリーンファーム</td><td><span class="badge type">法人</span></td><td>農林漁業</td><td>北海道</td><td class="num">1千万〜5千万</td><td><span class="badge prospect"><span class="dot"></span>見込み</span></td><td><div class="chips"><span class="chip offer" style="height:20px;"><span class="mk">提</span>農産物卸</span><span class="chip need" style="height:20px;"><span class="mk">求</span>販路拡大</span></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tfoot"><span class="muted">未知の求/提タグは取込時にタグマスタへ追加されます。</span></div>
+      </div>
+
+      <div class="panel mt16">
+        <div class="panel-head"><h3>エラー（スキップ対象）</h3><span class="count num">4 件</span>
+          <div class="actions"><button class="btn btn-sm" onclick="toast('エラー行のCSVを書き出しました')">エラー行を書き出し</button></div>
+        </div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>行</th><th>名称</th><th>列</th><th>内容</th><th>エラー理由</th></tr></thead>
+            <tbody>
+              <tr style="cursor:default;"><td class="num">8</td><td>—</td><td>名称</td><td class="muted">（空）</td><td style="color:var(--red-600)">必須項目が空です</td></tr>
+              <tr style="cursor:default;"><td class="num">23</td><td>本田商会</td><td>エリア</td><td>東京</td><td style="color:var(--red-600)">マスタ外の値（候補: 東京都）</td></tr>
+              <tr style="cursor:default;"><td class="num">57</td><td>あおぞらマート</td><td>規模</td><td>中規模</td><td style="color:var(--red-600)">区分に存在しません</td></tr>
+              <tr style="cursor:default;"><td class="num">98</td><td>—</td><td>（列数）</td><td class="muted">列ずれ</td><td style="color:var(--red-600)">列数が一致しません（9列必要）</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tfoot"><span class="muted">未知の求/提タグは取込時にマスタへ追加されます。</span></div>
+      </div>
+
+      <div class="row mt16" style="justify-content:flex-end;">
+        <a class="btn" href="companies.html">キャンセル</a>
+        <button class="btn btn-primary" onclick="toast('116 件を取り込みました（4 件スキップ）');setTimeout(()=>location.href='companies.html',900)">116 件を取り込む</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>
