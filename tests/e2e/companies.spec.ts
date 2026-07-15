@@ -158,17 +158,16 @@ test.describe('企業詳細 /companies/[id]', () => {
     await expect(page.locator('.toast', { hasText: '追加しました' })).toBeVisible();
   });
 
-  test('使い方ガイド: 開いて「とじる」で閉じる', async ({ page }) => {
+  test('「使い方」の案内人ツアーが起動し、ESCで閉じる', async ({ page }) => {
     await page.goto(`/companies/${SEED.daikichi}`);
-    await page.getByRole('button', { name: /使い方|？|\?/ }).first().click().catch(async () => {
-      // GuideButton のラベルが固定でない場合はタイトル一致のトリガを探す
-      await page.locator('button').filter({ hasText: /使い方/ }).first().click();
-    });
-    const modal = page.locator('.scrim .modal');
-    await expect(modal).toBeVisible();
-    await expect(modal.locator('.m-head h3')).toContainText('使い方');
-    await modal.getByRole('button', { name: 'とじる' }).click();
-    await expect(modal).toHaveCount(0);
+    await page.getByRole('button', { name: '使い方' }).click();
+    const card = page.locator('.tour-card');
+    await expect(card).toBeVisible();
+    await expect(card).toContainText('使い方ツアー');
+    await expect(card).toContainText('タブで1社のカルテを切替');
+    await card.getByRole('button', { name: /次へ|完了/ }).click();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.tour-card')).toHaveCount(0);
   });
 });
 

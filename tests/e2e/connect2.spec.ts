@@ -86,14 +86,17 @@ test.describe('打ち合わせ /meetings', () => {
     await expect(page.locator('.page-head h2')).toContainText('打ち合わせ');
   });
 
-  test('使い方ガイドが開閉できる', async ({ page }) => {
+  test('「使い方」の案内人ツアーが起動し、ESCで閉じる', async ({ page }) => {
     await page.goto('/meetings');
-    await page.getByRole('button', { name: /使い方|打ち合わせの使い方/ }).first().click();
-    const modal = page.locator('.scrim .modal');
-    await expect(modal).toBeVisible();
-    await expect(modal).toContainText('打ち合わせの使い方');
-    await modal.getByRole('button', { name: 'とじる' }).click();
-    await expect(modal).toBeHidden();
+    await page.getByRole('button', { name: '使い方' }).click();
+    const card = page.locator('.tour-card');
+    await expect(card).toBeVisible();
+    await expect(card).toContainText('使い方ツアー');
+    await expect(card).toContainText('Googleカレンダー連携');
+    // 次へでステップが進む
+    await card.getByRole('button', { name: /次へ|完了/ }).click();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.tour-card')).toHaveCount(0);
   });
 });
 
@@ -153,14 +156,17 @@ test.describe('議事録一覧 /notes', () => {
     await expect(page.locator('.toast')).toContainText('フォルダを選び直します');
   });
 
-  test('使い方ガイドが開閉できる', async ({ page }) => {
+  test('「使い方」の案内人ツアーが起動し、ESCで閉じる', async ({ page }) => {
     await page.goto('/notes');
-    await page.getByRole('button', { name: /使い方|議事録の使い方/ }).first().click();
-    const modal = page.locator('.scrim .modal');
-    await expect(modal).toBeVisible();
-    await expect(modal).toContainText('議事録の使い方');
-    await modal.getByRole('button', { name: 'とじる' }).click();
-    await expect(modal).toBeHidden();
+    await page.getByRole('button', { name: '使い方' }).click();
+    const card = page.locator('.tour-card');
+    await expect(card).toBeVisible();
+    await expect(card).toContainText('使い方ツアー');
+    await expect(card).toContainText('議事録の入れ方は2つ');
+    // 次へでステップが進む
+    await card.getByRole('button', { name: /次へ|完了/ }).click();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.tour-card')).toHaveCount(0);
   });
 });
 

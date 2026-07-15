@@ -4,9 +4,19 @@ import { redirect, notFound } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth/session';
 import { getContact } from '@/lib/data/dal';
 import { AppShell } from '@/components/AppShell';
-import { GuideButton } from '@/components/GuideButton';
+import { TourButton, type GuideTourStep } from '@/components/TourButton';
 import { StatusBadge, UserAvatar } from '@/components/ui-bits';
 import { DeleteContactButton, SetPrimaryButton, UnsetPrimaryButton, CardViewer, CardActionButton } from './parts';
+
+const GUIDE_TOUR: GuideTourStep[] = [
+  { sel: '.grid-2', title: '先方担当者の詳細',
+    body: '左に連絡先・個人SNS・名刺、右に主担当の設定・所属企業・関連情報。' },
+  { sel: '.bizset', title: '名刺は表裏を切替・クリックで拡大',
+    body: '差し替えや履歴は名刺パネル右上から。' },
+  { title: '主担当と関連リンク',
+    body: '右カラムで<b>主担当</b>の設定／解除。所属企業のカルテや、出た打ち合わせ・議事録にも移動できます。' },
+];
+
 
 export default async function ContactDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
@@ -42,14 +52,7 @@ export default async function ContactDetailPage({ params }: { params: Promise<{ 
       <div className="spacer" />
       <Link className="btn btn-sm" href={`/contacts/${id}/edit`}>編集</Link>
       <DeleteContactButton id={id} name={c.name} companyId={companyId} />
-      <GuideButton title="担当者詳細の使い方">
-        <p>先方担当者の詳細です。</p>
-        <ul>
-          <li>連絡先・<b>個人SNS</b>・<b>名刺（表/裏・クリックで拡大）</b>を確認。</li>
-          <li><b>主担当</b>の設定／解除。</li>
-          <li>この担当者が<b>出た打ち合わせ・議事録</b>へ移動できます。</li>
-        </ul>
-      </GuideButton>
+      <TourButton steps={GUIDE_TOUR} />
       <UserAvatar initial={user.avatar} />
     </>
   );

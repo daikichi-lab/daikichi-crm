@@ -4,9 +4,19 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth/session';
 import { listTags, getMasters } from '@/lib/data/dal';
 import { AppShell } from '@/components/AppShell';
-import { GuideButton } from '@/components/GuideButton';
+import { TourButton, type GuideTourStep } from '@/components/TourButton';
 import { UserAvatar } from '@/components/ui-bits';
 import { TagManager, IndustryAddButton, TopicAddButton } from './parts';
+
+const GUIDE_TOUR: GuideTourStep[] = [
+  { sel: '.panel', title: 'タグの名寄せ',
+    body: 'リネーム・統合で表記ゆれを防ぎ、マッチング精度を保ちます。似たタグは警告されます。' },
+  { sel: '#topics', title: 'メルマガ配信トピック',
+    body: '配信トピック（メルマガ属性）はここで管理。メルマガ画面のセグメントと連動します。' },
+  { title: '業種は編集可・エリア/規模は固定',
+    body: '業種マスタは追加・編集できます。エリア（都道府県）と規模区分は固定マスタです。' },
+];
+
 
 export default async function AdminMastersPage() {
   const user = await getCurrentUser();
@@ -24,13 +34,7 @@ export default async function AdminMastersPage() {
     <>
       <div className="crumb"><b>管理</b> / タグ・業種マスタ</div>
       <div className="spacer" />
-      <GuideButton title="管理（マスタ）の使い方">
-        <p>タグや業種マスタを管理します（管理者のみ）。表記ゆれを防ぎ、マッチング精度を保ちます。</p>
-        <ul>
-          <li>タグの<b>リネーム・統合（名寄せ）</b>。似たタグは黄色で警告。</li>
-          <li><b>業種マスタ</b>の追加・編集。エリア・規模は固定です。</li>
-        </ul>
-      </GuideButton>
+      <TourButton steps={GUIDE_TOUR} />
       <UserAvatar initial={user.avatar} />
     </>
   );

@@ -2,9 +2,19 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth/session';
 import { listTrash } from '@/lib/data/dal';
 import { AppShell } from '@/components/AppShell';
-import { GuideButton } from '@/components/GuideButton';
+import { TourButton, type GuideTourStep } from '@/components/TourButton';
 import { UserAvatar } from '@/components/ui-bits';
 import { TrashFilter, RestoreButton, PurgeButton } from './parts';
+
+const GUIDE_TOUR: GuideTourStep[] = [
+  { sel: '.banner.info', title: '完全には消えていない',
+    body: '削除した項目はここに移動します（論理削除）。' },
+  { sel: '.filterbar', title: '種類で絞り込み',
+    body: '企業／担当者を切り替えて表示します。' },
+  { sel: '.table-wrap', title: '復元と完全削除',
+    body: '「復元」でいつでも元に戻せます。<b>完全削除は取り消せません</b>（管理者のみ）。' },
+];
+
 
 type SP = { kind?: string };
 
@@ -25,13 +35,7 @@ export default async function TrashPage({ searchParams }: { searchParams: Promis
     <>
       <h1>ゴミ箱</h1>
       <div className="spacer" />
-      <GuideButton title="ゴミ箱の使い方">
-        <p>削除した項目の置き場です。完全には消えていません。</p>
-        <ul>
-          <li><b>復元</b>でいつでも元に戻せます。</li>
-          <li><b>完全削除</b>は取り消せません（管理者のみ）。</li>
-        </ul>
-      </GuideButton>
+      <TourButton steps={GUIDE_TOUR} />
       <UserAvatar initial={user.avatar} />
     </>
   );

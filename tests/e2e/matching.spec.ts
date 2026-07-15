@@ -179,14 +179,17 @@ test.describe('マッチング（/matching）', () => {
     await expect(reco.getByRole('button', { name: 'この紹介を起票' })).toBeEnabled();
   });
 
-  test('「使い方」ガイドが開いて「とじる」で閉じる', async ({ page }) => {
+  test('「使い方」の案内人ツアーが起動し、ESCで閉じる', async ({ page }) => {
     await page.goto('/matching');
     await page.getByRole('button', { name: '使い方' }).click();
-    const modal = page.locator('.scrim .modal');
-    await expect(modal).toBeVisible();
-    await expect(modal.locator('h3')).toContainText('マッチングの使い方');
-    await modal.getByRole('button', { name: 'とじる' }).click();
-    await expect(modal).toHaveCount(0);
+    const card = page.locator('.tour-card');
+    await expect(card).toBeVisible();
+    await expect(card).toContainText('使い方ツアー');
+    await expect(card).toContainText('探し方を切り替える');
+    // 次へでステップが進む
+    await card.getByRole('button', { name: /次へ|完了/ }).click();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.tour-card')).toHaveCount(0);
   });
 });
 
@@ -210,10 +213,12 @@ test.describe('紹介履歴（/referrals）', () => {
     await expect(stats.nth(3)).toContainText('不成立');
 
     // seed の打診中レコード（大吉商事 → 佐藤デザイン事務所）が見える
-    const row = page.locator('.table tbody tr', { hasText: '佐藤デザイン事務所' }).first();
+    // 注: 起票テストが同じ組み合わせの「提案」行を追加している場合があるため（書き込みは永続化される）、
+    // 先頭行ではなく「打診中」の行を特定して検証する（順序非依存）。
+    const row = page.locator('.table tbody tr').filter({ hasText: '打診中' }).first();
     await expect(row).toBeVisible();
     await expect(row.locator('.flow')).toContainText('株式会社 大吉商事');
-    await expect(row.locator('.badge')).toContainText('打診中');
+    await expect(row.locator('.flow')).toContainText('佐藤デザイン事務所');
 
     // トップバーの「マッチングから起票」リンク
     await expect(page.getByRole('link', { name: 'マッチングから起票' })).toHaveAttribute('href', '/matching');
@@ -260,17 +265,15 @@ test.describe('紹介履歴（/referrals）', () => {
   });
 
   test('ステータス変更モーダルで更新を実行すると toast が出て閉じる', async ({ page }) => {
-    // 注: この dev 環境では update_referral_status の書き込みが永続化されず、
-    // ReferralRowAction も router.refresh() を呼ばないため、行バッジ/集計は
-    // 即時に変化しない（リロードしても seed のまま）。
-    // よってここでは更新操作の観測可能な結果（モーダル・toast・閉じる）を検証する。
+    // 注: 書き込みは永続化されるため、現在ステータスは前提にしない（順序非依存・再実行冪等）。
+    // ここでは更新操作の観測可能な結果（モーダル・toast・閉じる）を検証する。
     await page.goto('/referrals');
 
-    // 操作対象 = seed の打診中レコード（大吉商事 → 佐藤デザイン事務所）
+    // 操作対象 = 佐藤デザイン事務所が絡む行（seed または起票テストが作成した行）
     const row = page.locator('.table tbody tr', { hasText: '佐藤デザイン事務所' }).first();
-    await expect(row.locator('.badge')).toContainText('打診中');
+    await expect(row).toBeVisible();
 
-    // 「状態を更新」→ modal（.scrim .modal）で 提案 を選び 更新
+    // 「状態を更新」→ modal（.scrim .modal）で 打診中 を選び 更新
     await row.getByRole('button', { name: '状態を更新' }).click();
     const modal = page.locator('.scrim .modal');
     await expect(modal).toBeVisible();
@@ -278,8 +281,8 @@ test.describe('紹介履歴（/referrals）', () => {
     // モーダル内の遷移先（from → to）が表示されている
     await expect(modal.locator('.m-body')).toContainText('佐藤デザイン事務所');
     const sel = modal.locator('select.select');
-    await sel.selectOption('提案');
-    await expect(sel).toHaveValue('提案');
+    await sel.selectOption('打診中');
+    await expect(sel).toHaveValue('打診中');
     await modal.getByRole('button', { name: '更新' }).click();
 
     await expect(page.locator('.toast')).toContainText('ステータスを更新しました');

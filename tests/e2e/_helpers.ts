@@ -12,6 +12,11 @@ export const SEED = {
 
 /** dev ログイン（既定は admin の山田）。 */
 export async function login(page: Page, email = SEED.yamadaEmail) {
+  // /schedule のボードNEW告知（初回のみのfeatureツアー）が操作を遮らないよう既読化しておく。
+  // 告知そのものは connect1.spec の専用テストがフラグを消して検証する。
+  await page.addInitScript(() => {
+    try { localStorage.setItem('daikichi.schedule.board.v1', '1'); } catch { /* noop */ }
+  });
   await page.goto('/login');
   await page.fill('#email', email);
   await Promise.all([page.waitForURL('**/dashboard'), page.click('button[type=submit]')]);

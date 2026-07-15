@@ -5,9 +5,21 @@ import { getCurrentUser } from '@/lib/auth/session';
 import { listFormSubmissions, detectDuplicateCompany } from '@/lib/data/dal';
 import { AppShell } from '@/components/AppShell';
 import { Icon } from '@/components/icons';
-import { GuideButton } from '@/components/GuideButton';
+import { TourButton, type GuideTourStep } from '@/components/TourButton';
 import { TypeBadge, TagChips, UserAvatar } from '@/components/ui-bits';
 import { InboxFilter, ImportButton, DiscardButton, CopyUrlButton } from './parts';
+
+const GUIDE_TOUR: GuideTourStep[] = [
+  { sel: 'nav.admin-tabs', title: '受信箱とフォーム編集',
+    body: '公開フォームの回答はまず<b>受信箱</b>に貯まり、直接は顧客データに入りません（安全設計）。' },
+  { sel: '.stats', title: '未対応と重複の可能性',
+    body: '似た会社がある回答は「重複の可能性」として警告されます。' },
+  { sel: '.table-wrap', title: '確認して取り込む',
+    body: '「取込」で企業＋担当者を登録、「破棄」でスキップ。' },
+  { title: '公開フォームの共有',
+    body: 'プレビューとURLコピーは右上から。フォームの項目編集は「フォーム編集」タブへ。' },
+];
+
 
 type SP = { [k: string]: string | undefined };
 
@@ -54,14 +66,7 @@ export default async function FormInboxPage({ searchParams }: { searchParams: Pr
       <Link className="btn btn-sm btn-primary" href="/forms/edit"><Icon name="gear" size={15} />フォームを編集</Link>
       <Link className="btn btn-sm" href={PUBLIC_FORM_URL} target="_blank">プレビュー ↗</Link>
       <CopyUrlButton url={PUBLIC_FORM_URL} />
-      <GuideButton title="フォーム回答の使い方">
-        <p>公開フォームからの回答を確認し、顧客に取り込む画面です。</p>
-        <ul>
-          <li>回答は<b>いったん受信箱に貯まり</b>、直接は顧客データに入りません（安全）。</li>
-          <li><b>取込</b>で企業＋担当者として登録。似た会社は<b>重複の可能性</b>として警告します。</li>
-          <li>右上から<b>公開フォームのプレビュー／URLコピー</b>。</li>
-        </ul>
-      </GuideButton>
+      <TourButton steps={GUIDE_TOUR} />
       <UserAvatar initial={user.avatar} />
     </>
   );

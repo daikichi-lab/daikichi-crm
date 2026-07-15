@@ -4,9 +4,21 @@ import { getCurrentUser } from '@/lib/auth/session';
 import { searchCompanies, getMasters, listTags } from '@/lib/data/dal';
 import { AppShell } from '@/components/AppShell';
 import { Icon } from '@/components/icons';
-import { GuideButton } from '@/components/GuideButton';
+import { TourButton, type GuideTourStep } from '@/components/TourButton';
 import { CompanyFilterBar } from '@/components/CompanyFilterBar';
 import { StatusBadge, TypeBadge, TagChips, Seal, UserAvatar } from '@/components/ui-bits';
+
+const GUIDE_TOUR: GuideTourStep[] = [
+  { sel: '.filterbar', title: '条件で絞り込む',
+    body: '種別・業種・エリア・規模・ステータス・<b>求/提タグ</b>を組み合わせて絞り込み（AND）。' },
+  { sel: '.table-wrap', title: '行クリックで企業カルテへ',
+    body: '行をクリックすると企業詳細（概要・担当者・資料・議事録・紹介履歴）へ移動します。' },
+  { sel: '.page-head .actions', title: 'CSV取込・書き出し',
+    body: '企業単位で一括登録・エクスポート。書き出しは絞り込んだ結果が対象です。' },
+  { title: '求＝青 / 提＝金',
+    body: '<b>求</b>めてること・<b>提</b>供できることタグがマッチングの肝。企業登録時に必ず付けましょう。' },
+];
+
 
 type SP = { [k: string]: string | undefined };
 
@@ -28,13 +40,7 @@ export default async function CompaniesPage({ searchParams }: { searchParams: Pr
       <h1>顧客（企業）</h1>
       <div className="spacer" />
       <Link className="btn btn-sm" href="/scan"><Icon name="card" size={15} />名刺スキャン</Link>
-      <GuideButton title="顧客一覧の使い方">
-        <p>顧問先・見込み客の一覧です。条件で絞り込み、行をクリックすると詳細を開きます。</p>
-        <ul>
-          <li>上の<b>絞り込み</b>で 種別/業種/エリア/規模/ステータス/求・提タグ を組み合わせ（AND）。</li>
-          <li><b>CSV取込/書き出し</b>で一括登録・エクスポート（企業単位）。</li>
-        </ul>
-      </GuideButton>
+      <TourButton steps={GUIDE_TOUR} />
       <UserAvatar initial={user.avatar} />
     </>
   );

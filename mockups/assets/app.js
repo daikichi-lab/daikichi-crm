@@ -33,22 +33,23 @@
   window.icon = svg; window.ICONS = I;
 
   // --- サイドバー ---
+  // 並びは実アプリ（components/AppShell.tsx）と同期: 業務動線順＋活動履歴はメルマガの下
   const NAV = [
     { id:'home',     label:'ホーム',       href:'dashboard.html',     ic:I.home },
+    { id:'schedule', label:'期限・タスク', href:'schedule.html',      ic:I.clock },
     { id:'companies',label:'顧客（企業）', href:'companies.html',     ic:I.building, count:'248' },
     { id:'people',   label:'会った人',     href:'people.html',        ic:I.users },
-    { id:'activities',label:'活動履歴',    href:'activities.html',    ic:I.pulse },
-    { id:'documents',label:'資料',         href:'documents.html',     ic:I.folder },
     { id:'scan',     label:'名刺スキャン', href:'scan.html',          ic:I.card },
-    { id:'schedule', label:'期限・タスク', href:'schedule.html',      ic:I.clock },
-    { id:'matching', label:'マッチング',   href:'matching.html',      ic:I.link,       phase2:true },
-    { id:'referrals',label:'紹介',         href:'referrals.html',     ic:I.handshake,  phase2:true },
+    { id:'documents',label:'資料',         href:'documents.html',     ic:I.folder },
+    { id:'matching', label:'マッチング',   href:'matching.html',      ic:I.link },
+    { id:'referrals',label:'紹介',         href:'referrals.html',     ic:I.handshake },
   ];
   const CONNECT = [
     { id:'meetings',   label:'打ち合わせ',   href:'meetings.html',      ic:I.calendar },
     { id:'notes',      label:'議事録',       href:'notes.html',         ic:I.doc },
     { id:'forms',      label:'フォーム',     href:'form-inbox.html',    ic:I.inbox },
     { id:'newsletter', label:'メルマガ',     href:'newsletters.html',   ic:I.mail },
+    { id:'activities', label:'活動履歴',     href:'activities.html',    ic:I.pulse },
   ];
   const ADMIN = [
     { id:'admin',    label:'管理',         href:'admin-users.html',   ic:I.gear },
@@ -130,5 +131,112 @@
     </div>`;
     s.addEventListener('click', e => { if (e.target === s) s.remove(); });
     document.body.appendChild(s);
+  };
+})();
+
+/* ===== 機能ツアー（案内人）: スポットライト + コーチカード =====
+   startTour(steps, {mode:'tour'|'feature'})
+   step: { sel?, title, body, note?, before?, cta?, onCta?, eyebrow? }
+   sel なし = 中央カード（締めの一枚）。before = 表示前に実行（ビュー切替など）。 */
+(function () {
+  let T = null;
+
+  function place(repos) {
+    const s = T.steps[T.i];
+    if (s.before && !repos) s.before();
+    const el = s.sel ? document.querySelector(s.sel) : null;
+    if (el) el.scrollIntoView({ block: 'center' });
+    requestAnimationFrame(() => {
+      if (!T) return;
+      const last = T.i === T.steps.length - 1;
+      const eyebrow = s.eyebrow || (T.mode === 'feature' ? '新機能' : '使い方ツアー');
+      const stp = T.steps.length > 1 ? `<span class="stp num">${T.i + 1}/${T.steps.length}</span>` : '';
+      const dots = T.steps.length > 1
+        ? `<div class="tour-dots">${T.steps.map((_, j) => '<i class="' + (j === T.i ? 'on' : '') + '"></i>').join('')}</div>`
+        : '<div class="tour-dots"></div>';
+      const btns = T.mode === 'feature'
+        ? `<button class="btn btn-sm btn-ghost" data-act="close">あとで</button>
+           <button class="btn btn-sm btn-primary" data-act="cta">${s.cta || '試してみる'}</button>`
+        : (T.i > 0 ? '<button class="btn btn-sm" data-act="prev">戻る</button>' : '') +
+          `<button class="btn btn-sm btn-primary" data-act="next">${last ? '完了' : '次へ'}</button>`;
+      T.card.innerHTML =
+        `<button class="x" data-act="close" aria-label="とじる">✕</button>
+         <div class="hd"><div class="guide">案</div><div><div class="eyebrow">${eyebrow}${stp}</div><h4>${s.title}</h4></div></div>
+         <div class="bd">${s.body}</div>` +
+        (s.note ? `<div class="tour-note">${s.note}</div>` : '') +
+        `<div class="ft">${dots}${btns}</div><span class="arr" hidden></span>`;
+
+      const r = el ? el.getBoundingClientRect() : null;
+      if (r) {
+        T.veil.style.background = 'transparent';
+        T.spot.style.display = 'block';
+        T.spot.style.left = (r.left - 6) + 'px';
+        T.spot.style.top = (r.top - 6) + 'px';
+        T.spot.style.width = (r.width + 12) + 'px';
+        T.spot.style.height = (r.height + 12) + 'px';
+      } else {
+        T.spot.style.display = 'none';
+        T.veil.style.background = 'rgba(14,44,71,.58)';
+      }
+      const cw = T.card.offsetWidth, ch = T.card.offsetHeight;
+      let cx, cy, arrPos = null;
+      if (r) {
+        cx = Math.min(Math.max(r.left + r.width / 2 - cw / 2, 16), window.innerWidth - cw - 16);
+        cy = r.bottom + 18;
+        if (cy + ch > window.innerHeight - 16) { cy = r.top - ch - 18; arrPos = 'bottom'; }
+        else { arrPos = 'top'; }
+        if (cy < 16) { cy = 16; arrPos = null; }
+      } else {
+        cx = (window.innerWidth - cw) / 2;
+        cy = Math.max((window.innerHeight - ch) / 2, 16);
+      }
+      T.card.style.left = cx + 'px';
+      T.card.style.top = cy + 'px';
+      const arr = T.card.querySelector('.arr');
+      if (arrPos && r) {
+        arr.hidden = false;
+        arr.style.left = Math.min(Math.max(r.left + r.width / 2 - cx - 6, 14), cw - 26) + 'px';
+        if (arrPos === 'top') { arr.style.top = '-6px'; arr.style.bottom = 'auto'; }
+        else { arr.style.bottom = '-6px'; arr.style.top = 'auto'; }
+      }
+    });
+  }
+
+  window.startTour = function (steps, opts) {
+    window.endTour();
+    T = { steps, i: 0, mode: (opts && opts.mode) || 'tour' };
+    T.veil = document.createElement('div'); T.veil.className = 'tour-veil';
+    T.spot = document.createElement('div'); T.spot.className = 'tour-spot';
+    T.card = document.createElement('div'); T.card.className = 'tour-card';
+    T.card.setAttribute('role', 'dialog'); T.card.setAttribute('aria-label', '使い方ツアー');
+    T.veil.addEventListener('wheel', e => e.preventDefault(), { passive: false });
+    T.veil.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+    T.card.addEventListener('click', e => {
+      const act = e.target.dataset && e.target.dataset.act;
+      if (!act || !T) return;
+      const s = T.steps[T.i];
+      if (act === 'close') window.endTour();
+      else if (act === 'prev') { T.i--; place(); }
+      else if (act === 'next') { if (T.i >= T.steps.length - 1) window.endTour(); else { T.i++; place(); } }
+      else if (act === 'cta') { const fn = s.onCta; window.endTour(); if (fn) fn(); }
+    });
+    T.onKey = e => {
+      if (e.key === 'Escape') window.endTour();
+      else if (e.key === 'ArrowRight' && T.mode !== 'feature') { if (T.i < T.steps.length - 1) { T.i++; place(); } }
+      else if (e.key === 'ArrowLeft' && T.mode !== 'feature') { if (T.i > 0) { T.i--; place(); } }
+    };
+    T.onRs = () => place(true);
+    document.addEventListener('keydown', T.onKey);
+    window.addEventListener('resize', T.onRs);
+    document.body.append(T.veil, T.spot, T.card);
+    place();
+  };
+
+  window.endTour = function () {
+    if (!T) return;
+    document.removeEventListener('keydown', T.onKey);
+    window.removeEventListener('resize', T.onRs);
+    T.veil.remove(); T.spot.remove(); T.card.remove();
+    T = null;
   };
 })();

@@ -4,10 +4,22 @@ import { getCurrentUser } from '@/lib/auth/session';
 import { searchDocuments } from '@/lib/data/dal';
 import { AppShell } from '@/components/AppShell';
 import { Icon } from '@/components/icons';
-import { GuideButton } from '@/components/GuideButton';
+import { TourButton, type GuideTourStep } from '@/components/TourButton';
 import { UserAvatar } from '@/components/ui-bits';
 import { DocumentFilterBar, DocRow } from './parts';
 import type { DocumentMeta } from '@/lib/data/types';
+
+const GUIDE_TOUR: GuideTourStep[] = [
+  { sel: '.stats', title: '全社の保管状況',
+    body: '件数と合計容量（無料枠1GBの目安バー）を確認できます。' },
+  { sel: '.filterbar', title: '会社横断で検索',
+    body: 'ファイル名・種別・会社・登録者で絞り込み。アップロードは各企業詳細の資料タブから。' },
+  { sel: '.table-wrap', title: '行クリックでプレビュー',
+    body: '閲覧・ダウンロードは有効期限つき<b>署名URL</b>（非公開バケット）で安全に。' },
+  { title: 'Claudeからも同じ検索',
+    body: '同じ検索は手元のClaude（MCP: search_documents）からも<b>同一結果</b>になります（メタ情報のみ）。' },
+];
+
 
 type SP = { [k: string]: string | undefined };
 
@@ -65,15 +77,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
         <input name="keyword" placeholder="ファイル名で検索…（例: 商品カタログ / 決算書）" defaultValue={sp.keyword ?? ''} />
       </form>
       <div className="spacer" />
-      <GuideButton title="資料（全社横断）の使い方">
-        <p>全社の保管資料（PDF・商品資料・契約書・決算書など）を<b>会社をまたいで横断検索</b>します。</p>
-        <ul>
-          <li><b>ファイル名・種別・会社・登録者</b>で絞り込み。例:「全社の“商品カタログ”を一覧」。</li>
-          <li><b>アップロード・削除は各企業の詳細</b>（資料タブ）から。ここは検索・閲覧の入口。</li>
-          <li>閲覧・ダウンロードは<b>有効期限つき署名URL</b>で安全に（非公開バケット）。</li>
-          <li>同じ検索は手元の <b>Claude（MCP: search_documents）</b> からも実行でき、結果は一致します（メタデータのみ）。</li>
-        </ul>
-      </GuideButton>
+      <TourButton steps={GUIDE_TOUR} />
       <UserAvatar initial={user.avatar} />
     </>
   );

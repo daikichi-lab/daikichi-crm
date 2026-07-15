@@ -5,9 +5,19 @@ import { getCurrentUser } from '@/lib/auth/session';
 import { getNote } from '@/lib/data/dal';
 import { AppShell } from '@/components/AppShell';
 import { Icon } from '@/components/icons';
-import { GuideButton } from '@/components/GuideButton';
+import { TourButton, type GuideTourStep } from '@/components/TourButton';
 import { UserAvatar } from '@/components/ui-bits';
 import { NoteActions, TodoChecklist, RecoButtons } from './parts';
+
+const GUIDE_TOUR: GuideTourStep[] = [
+  { sel: '.grid-2', title: '1件の議事録',
+    body: '左に要点・次にやること・文字起こし全文。<b>要点は人が編集・補正</b>できます。' },
+  { sel: '.transcript', title: '文字起こし（全文）',
+    body: '検索や見返しに。要約と食い違うときは全文が正です。' },
+  { title: '次のアクションへ',
+    body: '右カラムの「次のアクション（おすすめ）」から、求/提タグの追加や紹介の起票へ進めます。' },
+];
+
 
 type Note = {
   id: string;
@@ -39,14 +49,7 @@ export default async function NoteDetailPage({ params }: { params: Promise<{ id:
       <div className="spacer" />
       <NoteActions fullText={n.full_text ?? ''} />
       <Link className="btn btn-sm" href={company}>会社を開く</Link>
-      <GuideButton title="議事録詳細の使い方">
-        <p>1件の議事録です。</p>
-        <ul>
-          <li>左に<b>要点</b>・<b>次にやること</b>・<b>全文</b>。</li>
-          <li>右で紐付く会社、<b>次のアクション</b>（求/提タグ追加・紹介起票）、関連へのリンク。</li>
-          <li>要点は人が<b>編集・補正</b>できます。</li>
-        </ul>
-      </GuideButton>
+      <TourButton steps={GUIDE_TOUR} />
       <UserAvatar initial={user.avatar} />
     </>
   );

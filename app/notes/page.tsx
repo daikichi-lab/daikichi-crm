@@ -5,9 +5,19 @@ import { getCurrentUser } from '@/lib/auth/session';
 import { listNotes } from '@/lib/data/dal';
 import { AppShell } from '@/components/AppShell';
 import { Icon } from '@/components/icons';
-import { GuideButton } from '@/components/GuideButton';
+import { TourButton, type GuideTourStep } from '@/components/TourButton';
 import { UserAvatar } from '@/components/ui-bits';
 import { ImportButton, FolderChangeButton } from './parts';
+
+const GUIDE_TOUR: GuideTourStep[] = [
+  { sel: '.ways', title: '議事録の入れ方は2つ',
+    body: '<b>その場で取り込む</b>（Notta貼り付け／TXTアップロード）か、<b>自動で入る</b>（会議終了→Notta→Googleドライブ→自動取込）。' },
+  { sel: '.panel.mt16', title: '最近の議事録',
+    body: '会社名・要点・ソースを一覧。行クリックで詳細（全文・要点・次アクション）へ。' },
+  { sel: 'details.setup', title: '自動連携の設定',
+    body: '保存先フォルダの変更などはここから。' },
+];
+
 
 type Note = {
   id: string;
@@ -34,19 +44,7 @@ export default async function NotesPage() {
         <input name="q" placeholder="議事録・発言内容を検索…" />
       </form>
       <div className="spacer" />
-      <GuideButton title="議事録の使い方">
-        <p>打ち合わせの議事録を<b>会社のカルテ</b>に残し、要点と「次にやること」を自動でまとめます。</p>
-        <h4>議事録の入れ方</h4>
-        <ul>
-          <li><b>その場で取り込む</b>：Nottaの議事録を貼り付け／TXTをアップロード。</li>
-          <li><b>自動で入る</b>：会議終了 → Notta が Google ドライブに保存 → 自動で取り込み（設定済み）。</li>
-        </ul>
-        <h4>見方・できること</h4>
-        <ul>
-          <li>一覧は会社名・要点・ソース。<b>行をクリックで詳細</b>（全文・要点・次アクション）。</li>
-          <li>取り込むと、要約と<b>次のアクション提案</b>（求/提タグ追加・紹介起票）が出ます。</li>
-        </ul>
-      </GuideButton>
+      <TourButton steps={GUIDE_TOUR} />
       <ImportButton />
       <UserAvatar initial={user.avatar} />
     </>

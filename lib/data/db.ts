@@ -21,6 +21,9 @@ async function pgRpc<T>(name: string, args: Record<string, unknown>, ctx: Ctx): 
   const { getPg } = await import('./pglite-server');
   const db = await getPg();
   const keys = Object.keys(args).filter((k) => args[k] !== undefined);
+  // 引数キー名はSQL文へ補間されるため、名前も検証する（現状の呼び出しは全てハードコードの p_* だが、
+  // 将来ユーザー由来のキーが混入してもSQLインジェクションにならないよう封鎖＝security review 指摘3）。
+  for (const k of keys) if (!RPC_NAME.test(k)) throw new Error(`invalid rpc arg name: ${k}`);
   const params = keys.map((k) => args[k]);
   const role: Role = ctx.role ?? (ctx.uid ? 'authenticated' : 'anon');
   const claims = JSON.stringify(ctx.uid ? { sub: ctx.uid, role } : { role });

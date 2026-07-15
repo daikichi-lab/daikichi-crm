@@ -66,14 +66,17 @@ test.describe('メルマガ一覧 /newsletters', () => {
     await expect(page).toHaveURL(/\/admin\/masters/);
   });
 
-  test('使い方ボタンでガイドのモーダルが開き、とじるで閉じる', async ({ page }) => {
+  test('「使い方」の案内人ツアーが起動し、ESCで閉じる', async ({ page }) => {
     await page.goto('/newsletters');
-    await page.getByRole('button', { name: /使い方/ }).click();
-    const modal = page.locator('.scrim .modal');
-    await expect(modal).toBeVisible();
-    await expect(modal.locator('h3')).toContainText('メルマガの使い方');
-    await modal.getByRole('button', { name: 'とじる' }).click();
-    await expect(page.locator('.scrim .modal')).toHaveCount(0);
+    await page.getByRole('button', { name: '使い方' }).click();
+    const card = page.locator('.tour-card');
+    await expect(card).toBeVisible();
+    await expect(card).toContainText('使い方ツアー');
+    await expect(card).toContainText('配信の全体像');
+    // 次へでステップが進む
+    await card.getByRole('button', { name: /次へ|完了/ }).click();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.tour-card')).toHaveCount(0);
   });
 
   test('状態フィルタ（送信済 / 下書き）で行が絞り込まれる', async ({ page }) => {

@@ -84,8 +84,8 @@ export async function getContact(id: string, reveal = false): Promise<any> {
 export async function companyOverview(idOrName: string): Promise<any> {
   return callRpc('app_company_overview', { p_company: idOrName }, await authedCtx());
 }
-export async function listSchedule(f: { status?: string; assignee?: string; kind?: string; company?: string } = {}): Promise<any> {
-  return callRpc('app_list_schedule', { p_status: f.status, p_assignee: f.assignee, p_kind: f.kind, p_company: f.company }, await authedCtx());
+export async function listSchedule(f: { status?: string; assignee?: string; kind?: string; company?: string; scope?: string; q?: string } = {}): Promise<any> {
+  return callRpc('app_list_schedule', { p_status: f.status, p_assignee: f.assignee, p_kind: f.kind, p_company: f.company, p_scope: f.scope, p_q: f.q }, await authedCtx());
 }
 export async function listReferrals(f: { company?: string; status?: string } = {}): Promise<any> {
   return callRpc('app_list_referrals', { p_company: f.company, p_status: f.status }, await authedCtx());
@@ -126,11 +126,15 @@ export async function deleteBusinessCard(id: string): Promise<any> { return call
 export async function createReferral(p: J): Promise<any> { return callRpc('create_referral', { p }, await authedCtx()); }
 export async function updateReferralStatus(id: string, status: string): Promise<any> { return callRpc('update_referral_status', { p_id: id, p_status: status }, await authedCtx()); }
 
-// ===== schedule =====
+// ===== schedule（期限・タスク v2: 親子課題・コメント/履歴） =====
 export async function createTask(p: J): Promise<any> { return callRpc('create_task', { p }, await authedCtx()); }
 export async function updateScheduleItem(id: string, p: J): Promise<any> { return callRpc('update_schedule_item', { p_id: id, p }, await authedCtx()); }
 export async function completeScheduleItem(id: string): Promise<any> { return callRpc('complete_schedule_item', { p_id: id }, await authedCtx()); }
 export async function regenerateAutoSchedule(company?: string): Promise<any> { return callRpc('regenerate_auto_schedule', { p_company: company }, await authedCtx()); }
+export async function getTask(id: string): Promise<any> { return callRpc('app_get_task', { p_id: id }, await authedCtx()); }
+export async function deleteTask(id: string): Promise<any> { return callRpc('delete_task', { p_id: id }, await authedCtx()); }
+export async function addTaskComment(id: string, body: string): Promise<any> { return callRpc('add_task_comment', { p_id: id, p_body: body }, await authedCtx()); }
+export async function taskFormLookup(company?: string, scope: 'client' | 'internal' = 'client'): Promise<any> { return callRpc('app_task_form_lookup', { p_company: company, p_scope: scope }, await authedCtx()); }
 
 // ===== activities =====
 export async function recordActivity(p: J): Promise<any> { return callRpc('record_activity', { p }, await authedCtx()); }

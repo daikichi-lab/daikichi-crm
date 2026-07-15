@@ -5,8 +5,22 @@ import { getCurrentUser } from '@/lib/auth/session';
 import { getDashboard } from '@/lib/data/dal';
 import { AppShell } from '@/components/AppShell';
 import { Icon } from '@/components/icons';
-import { GuideButton } from '@/components/GuideButton';
+import { TourButton, type GuideTourStep } from '@/components/TourButton';
 import { StatusBadge, UserAvatar } from '@/components/ui-bits';
+
+const GUIDE_TOUR: GuideTourStep[] = [
+  { sel: '.stats', title: '事務所のいまを数字で把握',
+    body: '顧客数・顧問中・見込み・名刺化率の件数カード。毎朝ここが起点です。' },
+  { sel: '.dash-row', title: '「対応が必要」から今日の仕事へ',
+    body: '要フォローの紹介・期限・名刺未登録などを集約。<b>クイック操作</b>から名刺スキャン・企業登録・CSV取込へ1クリックで移動できます。' },
+  { sel: '.panel.mt16', title: '最近更新した企業',
+    body: '直近で動きのあった顧客をすぐ開けます。行クリックで企業カルテへ。' },
+  { sel: 'header.topbar form.search', title: '検索はどこからでも',
+    body: '社名・メモで横断検索できます。' },
+  { title: 'ホームは「次にやること」の入口',
+    body: '左のサイドバーから各機能へ。それぞれの画面にもこの案内人（使い方）がいます。' },
+];
+
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
@@ -32,14 +46,7 @@ export default async function DashboardPage() {
       <div className="spacer" />
       <Link className="btn btn-sm" href="/scan"><Icon name="card" size={15} />名刺スキャン</Link>
       <Link className="btn btn-sm btn-primary" href="/companies/new">＋ 企業を登録</Link>
-      <GuideButton title="ホームの使い方">
-        <p>ログイン後のホームです。事務所の状況をひと目で把握し、次の作業に進みます。</p>
-        <ul>
-          <li><b>件数カード</b>：顧客数・顧問中・見込み・名刺化率。</li>
-          <li><b>対応が必要</b>：要フォローの紹介・期限・名刺未登録など、いま押すべき作業。</li>
-          <li><b>クイック操作</b>から名刺スキャン・企業登録・CSV取込。</li>
-        </ul>
-      </GuideButton>
+      <TourButton steps={GUIDE_TOUR} />
       <UserAvatar initial={user.avatar} />
     </>
   );

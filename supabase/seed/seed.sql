@@ -140,3 +140,79 @@ insert into newsletter_recipients (newsletter_id, contact_id, name, company, ema
  ('cccccccc-0000-0000-0000-000000000001','bbbbbbbb-0000-0000-0000-000000000005','田中 啓介','テック合同会社','tanaka@tech-llc.jp','送信'),
  ('cccccccc-0000-0000-0000-000000000001','bbbbbbbb-0000-0000-0000-000000000004','鈴木 大輔','鈴木工務店','suzuki@suzuki-koumuten.jp','停止スキップ')
 on conflict do nothing;
+
+-- =====================================================================
+-- ===== 期限・タスク v2（親子課題・所内課題・コメント/履歴。mockups/schedule.html と整合） =====
+-- 期日は投入日基準の相対日付（current_date）で、いつ seed してもモック同等の見え方になる。
+-- 固定UUID: 課題 = eeeeeeee-0000-0000-0000-0000000000NN
+
+-- 北斗ロジは7月決算（決算準備ツリーの前提）
+update companies set fiscal_month = 7 where id = 'aaaaaaaa-0000-0000-0000-000000000006' and fiscal_month is null;
+
+-- 海風マリンの旧・単発「確定申告」自動行は、親子ツリー（下の eeeeeeee-…-04）へ置き換える
+delete from schedule_items where company_id = 'aaaaaaaa-0000-0000-0000-000000000009' and rule_key = 'houjin_shinkoku' and id::text not like 'eeeeeeee-%';
+
+insert into schedule_items (id, company_id, parent_id, scope, kind, title, description, start_date, due_date, source, rule_key, assignee, status, progress, done_at) values
+ -- 単独（顧客）
+ ('eeeeeeee-0000-0000-0000-000000000001','aaaaaaaa-0000-0000-0000-000000000007',null,'client','手動タスク','5月分 記帳資料の回収（未着）',null,
+   (now() at time zone 'Asia/Tokyo')::date - 7, (now() at time zone 'Asia/Tokyo')::date - 3,'手動',null,'33333333-3333-3333-3333-333333333333','未対応',0,null),
+ ('eeeeeeee-0000-0000-0000-000000000002','aaaaaaaa-0000-0000-0000-000000000002',null,'client','手動タスク','面談フォロー連絡（見込み・初回提案）',null,
+   (now() at time zone 'Asia/Tokyo')::date, (now() at time zone 'Asia/Tokyo')::date,'手動',null,'22222222-2222-2222-2222-222222222222','対応中',50,null),
+ ('eeeeeeee-0000-0000-0000-000000000003','aaaaaaaa-0000-0000-0000-000000000004',null,'client','申告・納付','源泉所得税 納期特例分 納付',null,
+   null, (now() at time zone 'Asia/Tokyo')::date + 2,'自動','gensen_tokurei','33333333-3333-3333-3333-333333333333','未対応',0,null),
+ -- 親課題ツリー: 海風マリン 申告（4月決算）
+ ('eeeeeeee-0000-0000-0000-000000000004','aaaaaaaa-0000-0000-0000-000000000009',null,'client','申告・納付','法人税・消費税 申告（4月決算）',
+   E'4月決算の法人税・消費税の申告一式。電子申告は e-Tax / eLTAX を使用。\n・消費税は本則課税。インボイス経過措置の売手負担分に注意。\n・納付はダイレクト納付設定済み（納付書の送付は不要）。\n・完了条件: 受信通知の保存 ＋ お客様への納付金額のご案内メール送信まで。',
+   (now() at time zone 'Asia/Tokyo')::date - 5, (now() at time zone 'Asia/Tokyo')::date + 7,'自動','houjin_shinkoku','22222222-2222-2222-2222-222222222222','対応中',0,null),
+ ('eeeeeeee-0000-0000-0000-000000000005','aaaaaaaa-0000-0000-0000-000000000009','eeeeeeee-0000-0000-0000-000000000004','client','申告・納付','申告書ドラフト作成',null,
+   (now() at time zone 'Asia/Tokyo')::date - 5, (now() at time zone 'Asia/Tokyo')::date - 1,'自動',null,'22222222-2222-2222-2222-222222222222','完了',100,
+   (((now() at time zone 'Asia/Tokyo')::date - 1) + time '18:02') at time zone 'Asia/Tokyo'),
+ ('eeeeeeee-0000-0000-0000-000000000006','aaaaaaaa-0000-0000-0000-000000000009','eeeeeeee-0000-0000-0000-000000000004','client','申告・納付','所内レビュー・修正',null,
+   (now() at time zone 'Asia/Tokyo')::date + 1, (now() at time zone 'Asia/Tokyo')::date + 3,'自動',null,'11111111-1111-1111-1111-111111111111','対応中',50,null),
+ ('eeeeeeee-0000-0000-0000-000000000007','aaaaaaaa-0000-0000-0000-000000000009','eeeeeeee-0000-0000-0000-000000000004','client','申告・納付','電子申告・納付のご案内',null,
+   null, (now() at time zone 'Asia/Tokyo')::date + 7,'自動',null,'22222222-2222-2222-2222-222222222222','未対応',0,null),
+ -- 所内（大吉会計）
+ ('eeeeeeee-0000-0000-0000-000000000008',null,null,'internal','所内業務','所内経理の月次締め（' || to_char((now() at time zone 'Asia/Tokyo')::date,'FMMM') || '月分）',null,
+   (now() at time zone 'Asia/Tokyo')::date + 8, (now() at time zone 'Asia/Tokyo')::date + 12,'手動',null,'11111111-1111-1111-1111-111111111111','未対応',0,null),
+ ('eeeeeeee-0000-0000-0000-000000000009',null,null,'internal','所内業務','メルマガ ' || to_char((now() at time zone 'Asia/Tokyo')::date + 14,'FMMM') || '月号の企画・配信',
+   'メルマガ画面（下書き→配信）と連動。特集・セグメント・配信後チェックまでを子課題で管理。',
+   (now() at time zone 'Asia/Tokyo')::date + 1, (now() at time zone 'Asia/Tokyo')::date + 14,'手動',null,'22222222-2222-2222-2222-222222222222','対応中',0,null),
+ ('eeeeeeee-0000-0000-0000-000000000010',null,'eeeeeeee-0000-0000-0000-000000000009','internal','所内業務','特集記事の原稿作成（インボイス実務Q&A）',null,
+   (now() at time zone 'Asia/Tokyo')::date + 1, (now() at time zone 'Asia/Tokyo')::date + 6,'手動',null,'22222222-2222-2222-2222-222222222222','対応中',50,null),
+ ('eeeeeeee-0000-0000-0000-000000000011',null,'eeeeeeee-0000-0000-0000-000000000009','internal','所内業務','配信セグメントの確認（業種・購読状況）',null,
+   (now() at time zone 'Asia/Tokyo')::date + 7, (now() at time zone 'Asia/Tokyo')::date + 9,'手動',null,'11111111-1111-1111-1111-111111111111','未対応',0,null),
+ ('eeeeeeee-0000-0000-0000-000000000012',null,'eeeeeeee-0000-0000-0000-000000000009','internal','所内業務','配信・開封率チェック',null,
+   null, (now() at time zone 'Asia/Tokyo')::date + 14,'手動',null,'22222222-2222-2222-2222-222222222222','未対応',0,null),
+ ('eeeeeeee-0000-0000-0000-000000000013',null,null,'internal','所内業務','所内研修: 電子帳簿保存法アップデート',null,
+   (now() at time zone 'Asia/Tokyo')::date + 23, (now() at time zone 'Asia/Tokyo')::date + 23,'手動',null,'33333333-3333-3333-3333-333333333333','未対応',0,null),
+ -- 全顧問先（企業なし・自動）
+ ('eeeeeeee-0000-0000-0000-000000000014',null,null,'client','申告・納付','源泉所得税 納付期限（毎月10日）',null,
+   null, (now() at time zone 'Asia/Tokyo')::date + 17,'自動','gensen_monthly',null,'未対応',0,null),
+ -- 親課題ツリー: 北斗ロジ 決算準備（7月決算）
+ ('eeeeeeee-0000-0000-0000-000000000015','aaaaaaaa-0000-0000-0000-000000000006',null,'client','決算準備','決算準備（7月決算）',
+   '決算月の3ヶ月前から準備開始。資料回収 → 試算表レビュー → 決算方針の順で進める。',
+   (now() at time zone 'Asia/Tokyo')::date + 3, (now() at time zone 'Asia/Tokyo')::date + 24,'自動','kessan_prep','22222222-2222-2222-2222-222222222222','未対応',0,null),
+ ('eeeeeeee-0000-0000-0000-000000000016','aaaaaaaa-0000-0000-0000-000000000006','eeeeeeee-0000-0000-0000-000000000015','client','決算準備','必要資料の依頼・回収',null,
+   (now() at time zone 'Asia/Tokyo')::date + 3, (now() at time zone 'Asia/Tokyo')::date + 10,'自動',null,'22222222-2222-2222-2222-222222222222','未対応',0,null),
+ ('eeeeeeee-0000-0000-0000-000000000017','aaaaaaaa-0000-0000-0000-000000000006','eeeeeeee-0000-0000-0000-000000000015','client','決算準備','試算表レビュー・論点洗い出し',null,
+   (now() at time zone 'Asia/Tokyo')::date + 13, (now() at time zone 'Asia/Tokyo')::date + 17,'自動',null,'33333333-3333-3333-3333-333333333333','未対応',0,null),
+ ('eeeeeeee-0000-0000-0000-000000000018','aaaaaaaa-0000-0000-0000-000000000006','eeeeeeee-0000-0000-0000-000000000015','client','決算準備','決算方針ミーティング',null,
+   (now() at time zone 'Asia/Tokyo')::date + 22, (now() at time zone 'Asia/Tokyo')::date + 22,'自動',null,'22222222-2222-2222-2222-222222222222','未対応',0,null),
+ -- さくら美容室 申告期限（5月決算）
+ ('eeeeeeee-0000-0000-0000-000000000019','aaaaaaaa-0000-0000-0000-000000000010',null,'client','申告・納付','法人税・消費税 申告期限（5月決算）',null,
+   (now() at time zone 'Asia/Tokyo')::date + 29, (now() at time zone 'Asia/Tokyo')::date + 38,'自動','houjin_shinkoku','11111111-1111-1111-1111-111111111111','未対応',0,null)
+on conflict (id) do nothing;
+
+-- コメント・変更履歴（海風マリンの親課題。task-detail モックと整合）
+insert into schedule_comments (item_id, kind, body, author, author_label, created_at) values
+ ('eeeeeeee-0000-0000-0000-000000000004','event','決算月（4月）から課題を自動生成（子課題 3件）',null,'システム',
+   (((now() at time zone 'Asia/Tokyo')::date - 13) + time '06:00') at time zone 'Asia/Tokyo'),
+ ('eeeeeeee-0000-0000-0000-000000000004','event','状態を 未対応 → 対応中 に変更','11111111-1111-1111-1111-111111111111',null,
+   (((now() at time zone 'Asia/Tokyo')::date - 5) + time '10:15') at time zone 'Asia/Tokyo'),
+ ('eeeeeeee-0000-0000-0000-000000000004','event','子課題「申告書ドラフト作成」を完了にしました','22222222-2222-2222-2222-222222222222',null,
+   (((now() at time zone 'Asia/Tokyo')::date - 1) + time '18:02') at time zone 'Asia/Tokyo'),
+ ('eeeeeeee-0000-0000-0000-000000000004','comment','ドラフト作成完了しました。消費税の中間納付額の充当を反映済み。レビューお願いします → @山田','22222222-2222-2222-2222-222222222222',null,
+   (((now() at time zone 'Asia/Tokyo')::date - 1) + time '18:04') at time zone 'Asia/Tokyo'),
+ ('eeeeeeee-0000-0000-0000-000000000004','comment','承知しました。期日までにレビューします。役員貸付の利息計上だけ先に確認させてください。','11111111-1111-1111-1111-111111111111',null,
+   (((now() at time zone 'Asia/Tokyo')::date) + time '09:30') at time zone 'Asia/Tokyo')
+on conflict do nothing;

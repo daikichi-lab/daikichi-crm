@@ -4,9 +4,21 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth/session';
 import { getMasters, getNewsletter } from '@/lib/data/dal';
 import { AppShell } from '@/components/AppShell';
-import { GuideButton } from '@/components/GuideButton';
+import { TourButton, type GuideTourStep } from '@/components/TourButton';
 import { UserAvatar } from '@/components/ui-bits';
 import { ComposeForm } from './parts';
+
+const GUIDE_TOUR: GuideTourStep[] = [
+  { sel: 'header.topbar .steps', title: '内容 → 宛先 → 確認・送信',
+    body: '本文と宛先を決めて送信します。' },
+  { sel: '.merge', title: '差し込み変数',
+    body: '{{氏名}}・{{会社名}}などで1通ずつ宛名を差し込み。リンク挿入も横のボタンから。' },
+  { sel: '.sticky-side', title: '宛先（セグメント）',
+    body: '配信トピックの購読者を業種・エリア等でさらに絞り込み。<b>対象人数はその場で再計算</b>されます。' },
+  { title: '下書きと法令対応',
+    body: '「Claudeで下書き」で手元のClaude（MCP）に本文案を依頼（追加課金なし）。送信者情報と配信停止リンクは本文末尾に自動付与されます。' },
+];
+
 
 type SP = { id?: string };
 
@@ -47,15 +59,7 @@ export default async function NewsletterComposePage({ searchParams }: { searchPa
         <span className="s on"><span className="n">2</span>宛先</span><span className="sep" />
         <span className="s"><span className="n">3</span>確認・送信</span>
       </div>
-      <GuideButton title="メルマガ作成の使い方">
-        <p>本文と宛先を決めてメルマガを送ります。</p>
-        <ul>
-          <li><b>差し込み変数</b>（{'{{氏名}}'} など）で1通ずつ宛名を差し込めます。</li>
-          <li><b>宛先</b>は配信トピックの購読者から、業種・エリア等でさらに絞り込めます。</li>
-          <li><b>送信者情報と配信停止リンクは自動で本文末尾に付与</b>されます（法令対応）。</li>
-          <li><b>Claudeで下書き</b>＝手元のClaude（MCP）に本文案を作らせます（追加課金なし）。</li>
-        </ul>
-      </GuideButton>
+      <TourButton steps={GUIDE_TOUR} />
       <UserAvatar initial={user.avatar} />
     </>
   );

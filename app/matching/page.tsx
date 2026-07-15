@@ -3,9 +3,21 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth/session';
 import { findMatches, suggestMatches, getCompany, searchCompanies } from '@/lib/data/dal';
 import { AppShell } from '@/components/AppShell';
-import { GuideButton } from '@/components/GuideButton';
+import { TourButton, type GuideTourStep } from '@/components/TourButton';
 import { UserAvatar } from '@/components/ui-bits';
 import { MatchingBoard, type Reco } from './parts';
+
+const GUIDE_TOUR: GuideTourStep[] = [
+  { sel: '.page-head .actions', title: '探し方を切り替える',
+    body: '「会社を選んで探す」（起点企業に合う相手）と「事務所全体のおすすめ」を切替できます。' },
+  { sel: '#candList', title: '候補は紹介文で読む',
+    body: '「A社 に B社 を紹介」＋なぜ紹介できるか（<b>求↔提</b>の一致タグ）。相性の高い・中は一致タグ数です。' },
+  { sel: '.match-filter', title: '絞り込み',
+    body: '相性や紹介のしかた（協業先紹介／顧客紹介）で候補を絞り込めます。' },
+  { title: '起票して追跡へ',
+    body: '「この紹介を起票」で紹介履歴に登録。以降の進捗（提案→打診中→成立）は紹介履歴画面で追跡します。' },
+];
+
 
 type SP = { base?: string };
 
@@ -91,20 +103,7 @@ export default async function MatchingPage({ searchParams }: { searchParams: Pro
     <>
       <h1>マッチング</h1>
       <div className="spacer" />
-      <GuideButton title="マッチングの使い方">
-        <p>顧客どうしの <b>「紹介できる組み合わせ」</b> を、相性の高い順に表示します。</p>
-        <h4>見方</h4>
-        <ul>
-          <li>1件＝1つの紹介文「<b>A社 に B社 を紹介</b>」。下に「なぜ紹介できるか（求↔提のどのタグが一致したか）」が出ます。</li>
-          <li><b>相性 高い／中</b> は、一致したタグの数です。</li>
-          <li>協業先紹介＝相手を紹介してもらう／顧客紹介＝自社の顧客を紹介する。</li>
-        </ul>
-        <h4>操作</h4>
-        <ul>
-          <li>上で<b>起点の会社</b>を選ぶと、その会社に合う相手が出ます。</li>
-          <li><b>この紹介を起票</b>＝紹介履歴に登録。<b>見送り</b>＝候補から外す。</li>
-        </ul>
-      </GuideButton>
+      <TourButton steps={GUIDE_TOUR} />
       <UserAvatar initial={user.avatar} />
     </>
   );

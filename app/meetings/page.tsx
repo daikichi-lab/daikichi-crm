@@ -5,9 +5,19 @@ import { getCurrentUser } from '@/lib/auth/session';
 import { listMeetings } from '@/lib/data/dal';
 import { AppShell } from '@/components/AppShell';
 import { Icon } from '@/components/icons';
-import { GuideButton } from '@/components/GuideButton';
+import { TourButton, type GuideTourStep } from '@/components/TourButton';
 import { UserAvatar } from '@/components/ui-bits';
 import { ResyncButton } from './parts';
+
+const GUIDE_TOUR: GuideTourStep[] = [
+  { sel: '.banner.ok', title: 'Googleカレンダー連携',
+    body: '予定を自動で取り込み、出席者の<b>メール一致</b>で会社・担当者に自動リンクします。' },
+  { sel: '.grid-2 .panel', title: '今日／今後の打ち合わせ',
+    body: '相手の会社をすぐ開けます。名前しか無い予定は既存顧客に手動で紐付け（または新規作成）。' },
+  { title: '会議のあとは議事録へ',
+    body: 'Nottaの議事録が自動保存され、この打ち合わせ・顧客に紐付きます（議事録画面で確認）。' },
+];
+
 
 type Meeting = {
   id: string;
@@ -90,18 +100,7 @@ export default async function MeetingsPage() {
         <input name="q" placeholder="打ち合わせ・出席者を検索…" />
       </form>
       <div className="spacer" />
-      <GuideButton title="打ち合わせの使い方">
-        <p>Google カレンダーと連携し、<b>打ち合わせの相手を顧客（CRM）につなげる</b>画面です。</p>
-        <h4>見方</h4>
-        <ul>
-          <li>今日／今後の予定が並びます。出席者のメールが一致すると、会社・担当者に<b>自動でリンク</b>。</li>
-          <li>カレンダーに<b>名前しか無いとき</b>は既存顧客に手動で紐付け（または新規作成）。</li>
-        </ul>
-        <h4>会議のあと</h4>
-        <ul>
-          <li>Notta の議事録が自動で保存され、この打ち合わせ・顧客に紐付きます（<Link href="/notes">議事録</Link>）。</li>
-        </ul>
-      </GuideButton>
+      <TourButton steps={GUIDE_TOUR} />
       <UserAvatar initial={user.avatar} />
     </>
   );

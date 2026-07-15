@@ -9,12 +9,9 @@ type ConfirmOpts = {
   danger?: boolean;
   onConfirm?: () => void | Promise<void>;
 };
-type GuideState = { title: string; body: ReactNode };
-
 type UI = {
   toast: (msg: string) => void;
   confirm: (opts: ConfirmOpts) => void;
-  guide: (title: string, body: ReactNode) => void;
 };
 
 const Ctx = createContext<UI | null>(null);
@@ -28,7 +25,6 @@ export function useUI(): UI {
 export function UIProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<{ id: number; msg: string }[]>([]);
   const [confirmS, setConfirmS] = useState<ConfirmOpts | null>(null);
-  const [guideS, setGuideS] = useState<GuideState | null>(null);
   const idRef = useRef(0);
 
   const toast = useCallback((msg: string) => {
@@ -38,7 +34,6 @@ export function UIProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const confirm = useCallback((opts: ConfirmOpts) => setConfirmS(opts), []);
-  const guide = useCallback((title: string, body: ReactNode) => setGuideS({ title, body }), []);
 
   const runConfirm = async () => {
     const opts = confirmS;
@@ -48,7 +43,7 @@ export function UIProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <Ctx.Provider value={{ toast, confirm, guide }}>
+    <Ctx.Provider value={{ toast, confirm }}>
       {children}
 
       {confirmS && (
@@ -67,22 +62,6 @@ export function UIProvider({ children }: { children: ReactNode }) {
                 onClick={runConfirm}
               >
                 {confirmS.confirmLabel || '実行'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {guideS && (
-        <div className="scrim" onClick={(e) => e.target === e.currentTarget && setGuideS(null)}>
-          <div className="modal" role="dialog" aria-modal="true" style={{ maxWidth: 520 }}>
-            <div className="m-head">
-              <h3>{guideS.title}</h3>
-            </div>
-            <div className="m-body guide-body">{guideS.body}</div>
-            <div className="m-foot">
-              <button className="btn btn-primary" onClick={() => setGuideS(null)}>
-                とじる
               </button>
             </div>
           </div>

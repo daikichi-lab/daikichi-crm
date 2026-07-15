@@ -5,9 +5,19 @@ import { getCurrentUser } from '@/lib/auth/session';
 import { listUsers } from '@/lib/data/dal';
 import { AppShell } from '@/components/AppShell';
 import { Icon } from '@/components/icons';
-import { GuideButton } from '@/components/GuideButton';
+import { TourButton, type GuideTourStep } from '@/components/TourButton';
 import { UserAvatar } from '@/components/ui-bits';
 import { InviteBar, InviteButton, RoleSelect, ActiveToggleButton } from './parts';
+
+const GUIDE_TOUR: GuideTourStep[] = [
+  { sel: 'nav.admin-tabs', title: '管理メニュー',
+    body: 'ユーザーとタグ・業種マスタを切替（管理者のみ）。' },
+  { sel: '.panel.mt16', title: 'スタッフの招待と権限',
+    body: '上の欄からメールで招待。行内でロール（staff/admin）の変更、無効化／有効化ができます。' },
+  { title: '多層防御',
+    body: '画面の出し分けはUX、強制力は<b>RLS＋サーバー側チェック</b>。adminのみの操作はDB側でも検証されます。' },
+];
+
 
 type User = { id: string; name: string; email: string; role: 'staff' | 'admin'; active: boolean; avatar_initial: string };
 
@@ -24,13 +34,7 @@ export default async function AdminUsersPage() {
     <>
       <div className="crumb"><b>管理</b> / ユーザー</div>
       <div className="spacer" />
-      <GuideButton title="管理（ユーザー）の使い方">
-        <p>スタッフのアカウントを管理します（管理者のみ）。</p>
-        <ul>
-          <li>上の欄から<b>メールで招待</b>。</li>
-          <li>行内の<b>ロール</b>（staff/admin）を変更、<b>無効化／有効化</b>。</li>
-        </ul>
-      </GuideButton>
+      <TourButton steps={GUIDE_TOUR} />
       <UserAvatar initial={user.avatar} />
     </>
   );

@@ -4,9 +4,19 @@ import { getCurrentUser } from '@/lib/auth/session';
 import { getCompany, getMasters, listTags, listUsers } from '@/lib/data/dal';
 import { AppShell } from '@/components/AppShell';
 import { UserAvatar } from '@/components/ui-bits';
-import { GuideButton } from '@/components/GuideButton';
+import { TourButton, type GuideTourStep } from '@/components/TourButton';
 import { CompanyForm } from '@/app/companies/new/CompanyForm';
 import { updateCompanyAction } from '@/app/companies/new/actions';
+
+const GUIDE_TOUR: GuideTourStep[] = [
+  { sel: '.form-grid', title: '基本情報を編集',
+    body: '必須は名称と種別のみ。ほかは分かったときに足せばOKです。' },
+  { sel: '.tag-suggest', title: '求／提タグの手入れ',
+    body: 'マッチング精度はタグ次第。マスタ候補から選ぶか、その場で追加できます。' },
+  { title: '試験的な項目は extra へ',
+    body: '「メモ・追加項目」の extra はマイグレーション無しで追加できます。多用される項目は正式な列へ昇格します。' },
+];
+
 
 export default async function EditCompanyPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
@@ -28,13 +38,7 @@ export default async function EditCompanyPage({ params }: { params: Promise<{ id
       <div className="crumb"><Link href="/companies">顧客</Link> / <Link href={`/companies/${company.id}`}>{company.name}</Link> / <b>編集</b></div>
       <div className="spacer" />
       <Link className="btn btn-sm" href={`/companies/${company.id}`}>キャンセル</Link>
-      <GuideButton title="企業編集の使い方">
-        <p>企業情報を編集します。必須は名称と種別のみ。</p>
-        <ul>
-          <li><b>求／提タグ</b>はマスタ候補から選ぶか、その場で追加できます。</li>
-          <li>試験的な項目は <b>extra</b> として足せます（多用されれば正式な列へ昇格）。</li>
-        </ul>
-      </GuideButton>
+      <TourButton steps={GUIDE_TOUR} />
       <UserAvatar initial={user.avatar} />
     </>
   );

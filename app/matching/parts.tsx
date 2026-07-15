@@ -108,10 +108,7 @@ export function MatchingBoard({
     <>
       <div className="page-head">
         <div>
-          <h2>
-            紹介できる組み合わせ{' '}
-            <span className="tag" style={{ fontSize: 11, border: '1px solid var(--line-strong)', padding: '1px 7px', borderRadius: 5, color: 'var(--ink-3)', verticalAlign: 'middle' }}>Phase 2</span>
-          </h2>
+          <h2>紹介できる組み合わせ</h2>
           <div className="sub">ある会社が「求めてること」を、別の会社が「提供できる」とき、紹介の候補になります。相性の高い順に並んでいます。</div>
         </div>
         <div className="actions">

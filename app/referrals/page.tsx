@@ -5,9 +5,21 @@ import { getCurrentUser } from '@/lib/auth/session';
 import { listReferrals } from '@/lib/data/dal';
 import { AppShell } from '@/components/AppShell';
 import { Icon } from '@/components/icons';
-import { GuideButton } from '@/components/GuideButton';
+import { TourButton, type GuideTourStep } from '@/components/TourButton';
 import { UserAvatar } from '@/components/ui-bits';
 import { ReferralFilterBar, ReferralRowAction, type ReferralItem } from './parts';
+
+const GUIDE_TOUR: GuideTourStep[] = [
+  { sel: '.stats', title: '紹介の進み具合',
+    body: '提案 → 打診中 → 成立／不成立 の件数をひと目で。' },
+  { sel: '.filterbar', title: 'ステータスで絞り込み',
+    body: '打診中で7日以上動きがないものは<b>要フォロー</b>として強調されます。' },
+  { sel: '.table-wrap', title: '「状態を更新」で進める',
+    body: 'from→to・根拠タグ・起票者を記録。行のボタンから進捗を更新します。' },
+  { sel: 'header.topbar a.btn-primary', title: '起票はマッチングから',
+    body: '新しい紹介はマッチング画面の候補から起票します。' },
+];
+
 
 type SP = { status?: string };
 
@@ -26,14 +38,7 @@ export default async function ReferralsPage({ searchParams }: { searchParams: Pr
       <h1>紹介</h1>
       <div className="spacer" />
       <Link className="btn btn-sm btn-primary" href="/matching"><Icon name="link" size={14} />マッチングから起票</Link>
-      <GuideButton title="紹介履歴の使い方">
-        <p>マッチング候補から起票した紹介を <b>提案 → 打診中 → 成立 / 不成立</b> で追跡します。</p>
-        <ul>
-          <li>上の<b>ステータス</b>で絞り込み。</li>
-          <li><b>状態を更新</b>で進捗を進めます（打診中は7日以上動きがないと要フォロー）。</li>
-          <li>from → to・根拠タグ・起票者を記録します。</li>
-        </ul>
-      </GuideButton>
+      <TourButton steps={GUIDE_TOUR} />
       <UserAvatar initial={user.avatar} />
     </>
   );
@@ -42,10 +47,7 @@ export default async function ReferralsPage({ searchParams }: { searchParams: Pr
     <AppShell active="referrals" topbar={topbar}>
       <div className="page-head">
         <div>
-          <h2>
-            紹介履歴{' '}
-            <span className="tag" style={{ fontSize: 11, border: '1px solid var(--line-strong)', padding: '1px 7px', borderRadius: 5, color: 'var(--ink-3)', verticalAlign: 'middle' }}>Phase 2</span>
-          </h2>
+          <h2>紹介履歴</h2>
           <div className="sub">提案 → 打診中 → 成立 / 不成立。マッチング候補から起票した紹介を追跡します。</div>
         </div>
       </div>

@@ -8,10 +8,24 @@ import {
 } from '@/lib/data/dal';
 import { AppShell } from '@/components/AppShell';
 import { Icon } from '@/components/icons';
-import { GuideButton } from '@/components/GuideButton';
+import { TourButton, type GuideTourStep } from '@/components/TourButton';
 import { TypeBadge, StatusBadge, UserAvatar } from '@/components/ui-bits';
 import { CompanyTabs, DeleteCompanyButton } from './parts';
 import { softDeleteCompanyAction } from './actions';
+
+const GUIDE_TOUR: GuideTourStep[] = [
+  { sel: 'nav.tabs', title: 'タブで1社のカルテを切替',
+    body: '概要／担当者／資料／議事録／紹介履歴。この企業に関するすべてがここに集まります。' },
+  { sel: '.grid-2', title: '概要タブ',
+    body: '企業情報・求/提タグ・期限・タスク・タイムラインをひと目で確認できます。' },
+  { sel: '.page-head .actions', title: '担当者追加・議事録取込',
+    body: '担当者の追加や議事録の取り込みはここから。' },
+  { sel: 'header.topbar a[href*="matching"]', title: '紹介候補を見る',
+    body: 'この会社の求/提タグに合う紹介相手（協業先・顧客）を探せます。' },
+  { title: '資料は安全に保管',
+    body: '資料タブでPDF等をアップロード。閲覧・ダウンロードは有効期限つき<b>署名URL</b>（非公開バケット）です。' },
+];
+
 
 export default async function CompanyDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
@@ -36,15 +50,7 @@ export default async function CompanyDetailPage({ params }: { params: Promise<{ 
       <Link className="btn btn-sm" href={`/matching?base=${company.id}`}><Icon name="link" size={14} />紹介候補を見る</Link>
       <Link className="btn btn-sm" href={`/companies/${company.id}/edit`}>編集</Link>
       <DeleteCompanyButton id={company.id} name={company.name} action={softDeleteCompanyAction} />
-      <GuideButton title="企業詳細の使い方">
-        <p>1社の「カルテ」です。タブで情報を切り替えます。</p>
-        <ul>
-          <li><b>概要／担当者／資料／議事録／紹介履歴</b> をタブで切替。</li>
-          <li>担当者タブで <b>★主担当の変更</b>、名刺やSNSの確認。</li>
-          <li><b>資料</b>タブで PDF・商品資料・契約書・決算書などをアップロード/プレビュー（非公開バケット＋署名URLで安全に保管）。</li>
-          <li>議事録・紹介履歴タブで、この会社の打ち合わせ記録・紹介のやり取りを確認。</li>
-        </ul>
-      </GuideButton>
+      <TourButton steps={GUIDE_TOUR} />
       <UserAvatar initial={user.avatar} />
     </>
   );

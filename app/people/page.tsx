@@ -5,9 +5,19 @@ import { getCurrentUser } from '@/lib/auth/session';
 import { listContacts, getContact, searchCompanies, getCompanyTimeline } from '@/lib/data/dal';
 import { AppShell } from '@/components/AppShell';
 import { Icon } from '@/components/icons';
-import { GuideButton } from '@/components/GuideButton';
+import { TourButton, type GuideTourStep } from '@/components/TourButton';
 import { UserAvatar } from '@/components/ui-bits';
 import { PeopleFilterBar } from './parts';
+
+const GUIDE_TOUR: GuideTourStep[] = [
+  { sel: '.plist', title: '左の一覧から人を選ぶ',
+    body: '名刺交換・打ち合わせで会った先方担当者を会社横断で一覧。名前・会社・フリガナ検索、主担当のみ、並び替えで絞り込めます。' },
+  { sel: '.pdetail', title: '右に詳細',
+    body: '連絡先・名刺・所属企業・最近の接点。担当者の編集や所属企業への移動もここから。' },
+  { sel: 'header.topbar a[href="/scan"]', title: '登録は名刺スキャンから',
+    body: '名刺を取り込むと、ここに自動で並びます。' },
+];
+
 
 const PAV_COLORS = ['#1b4d72', '#2f8056', '#b7861f', '#7a3e8e', '#c0392f', '#2e78b0'];
 function pavColor(seed: string) {
@@ -52,14 +62,7 @@ export default async function PeoplePage({ searchParams }: { searchParams: Promi
       <h1>会った人</h1>
       <div className="spacer" />
       <Link className="btn btn-sm" href="/scan"><Icon name="card" size={15} />名刺スキャン</Link>
-      <GuideButton title="会った人の使い方">
-        <p>名刺交換・打ち合わせで<b>会った人（先方の担当者）</b>を、会社をまたいで一覧する画面です。</p>
-        <ul>
-          <li>左の一覧から人を選ぶと、<b>右に詳細</b>（連絡先・名刺・所属企業・最近の接点）が表示されます。</li>
-          <li>検索（名前・会社・フリガナ）と、<b>主担当のみ</b>・並び替えで絞り込み。</li>
-          <li>各担当者の編集や、所属企業の詳細へ移動できます。</li>
-        </ul>
-      </GuideButton>
+      <TourButton steps={GUIDE_TOUR} />
       <UserAvatar initial={user.avatar} />
     </>
   );

@@ -3,9 +3,19 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth/session';
 import { getMasters } from '@/lib/data/dal';
 import { AppShell } from '@/components/AppShell';
-import { GuideButton } from '@/components/GuideButton';
+import { TourButton, type GuideTourStep } from '@/components/TourButton';
 import { UserAvatar } from '@/components/ui-bits';
 import { ScanWizard } from './ScanWizard';
+
+const GUIDE_TOUR: GuideTourStep[] = [
+  { sel: '[data-scan-steps]', title: '4ステップで顧客化',
+    body: '①取り込み → ②読み取り → ③確認・補正 → ④作成。' },
+  { sel: '.scan-preview', title: '名刺を取り込む',
+    body: '撮影またはファイル選択。読み取りは<b>ブラウザ内 Tesseract.js</b> — 画像を外部サービスに送信しません。' },
+  { sel: '.form-grid', title: '結果は必ず人が確認',
+    body: '抽出結果を確認・補正してから作成。似た企業が見つかると<b>既存へ担当者追加</b>か<b>新規作成</b>かを選べます（重複防止）。' },
+];
+
 
 export default async function ScanPage() {
   const user = await getCurrentUser();
@@ -17,14 +27,7 @@ export default async function ScanPage() {
     <>
       <h1>名刺スキャン</h1>
       <div className="spacer" />
-      <GuideButton title="名刺スキャンの使い方">
-        <p>名刺を取り込み、OCRで読み取った内容を確認・補正してから顧客を作成します。</p>
-        <ul>
-          <li><b>①取り込み</b>→<b>②読み取り</b>（ブラウザ内Tesseract.js・外部送信なし）→<b>③確認・補正</b>→<b>④作成</b>。</li>
-          <li>似た企業が見つかると、<b>既存企業へ担当者追加</b>か<b>新規企業作成</b>を選べます（重複防止）。</li>
-          <li>読み取り結果は必ず人が確認してから保存します。</li>
-        </ul>
-      </GuideButton>
+      <TourButton steps={GUIDE_TOUR} />
       <UserAvatar initial={user.avatar} />
     </>
   );

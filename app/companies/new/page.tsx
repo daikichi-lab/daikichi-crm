@@ -4,9 +4,19 @@ import { getCurrentUser } from '@/lib/auth/session';
 import { getMasters, listTags, listUsers } from '@/lib/data/dal';
 import { AppShell } from '@/components/AppShell';
 import { UserAvatar } from '@/components/ui-bits';
-import { GuideButton } from '@/components/GuideButton';
+import { TourButton, type GuideTourStep } from '@/components/TourButton';
 import { CompanyForm } from './CompanyForm';
 import { createCompanyAction } from './actions';
+
+const GUIDE_TOUR: GuideTourStep[] = [
+  { sel: '.form-grid', title: '必須は名称と種別だけ',
+    body: '残りの項目は後からでOK。まず登録して、運用しながら育てる台帳です。' },
+  { sel: '.tag-suggest', title: '求／提タグがマッチングの肝',
+    body: 'マスタ候補から選ぶか、その場で追加。ここが顧客同士の紹介の材料になります。' },
+  { title: '試験的な項目は extra へ',
+    body: '「メモ・追加項目」の extra はマイグレーション無しで増やせます。絞り込みで多用するようになったら正式な列へ昇格します。' },
+];
+
 
 export default async function NewCompanyPage() {
   const user = await getCurrentUser();
@@ -21,14 +31,7 @@ export default async function NewCompanyPage() {
       <div className="crumb"><Link href="/companies">顧客</Link> / <b>新規登録</b></div>
       <div className="spacer" />
       <Link className="btn btn-sm" href="/companies">キャンセル</Link>
-      <GuideButton title="企業登録の使い方">
-        <p>新しい顧客企業（事業者）を登録します。</p>
-        <ul>
-          <li>必須は <b>名称</b> と <b>種別</b> のみ。残りは運用しながら追加できます。</li>
-          <li><b>求／提タグ</b>はマッチングの肝。マスタ候補から選ぶか、その場で追加できます。</li>
-          <li>試験的な項目は <b>extra</b> として、マイグレーションなしで足せます。</li>
-        </ul>
-      </GuideButton>
+      <TourButton steps={GUIDE_TOUR} />
       <UserAvatar initial={user.avatar} />
     </>
   );

@@ -1,9 +1,19 @@
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth/session';
 import { AppShell } from '@/components/AppShell';
-import { GuideButton } from '@/components/GuideButton';
+import { TourButton, type GuideTourStep } from '@/components/TourButton';
 import { UserAvatar } from '@/components/ui-bits';
 import { ProfileForm, PasswordForm, LogoutButton } from './parts';
+
+const GUIDE_TOUR: GuideTourStep[] = [
+  { sel: '.panel', title: 'プロフィール',
+    body: '表示名を変更できます。メールアドレスの変更は管理者へ依頼してください。' },
+  { sel: '.panel + .panel', title: 'パスワード変更',
+    body: '定期的な変更と使い回しの回避を。' },
+  { title: 'ログアウト',
+    body: '共有PCで使ったあとは、いちばん下のログアウトを忘れずに。' },
+];
+
 
 export default async function AccountPage() {
   const user = await getCurrentUser();
@@ -14,13 +24,7 @@ export default async function AccountPage() {
     <>
       <h1>アカウント</h1>
       <div className="spacer" />
-      <GuideButton title="アカウントの使い方">
-        <p>自分のアカウント設定です。</p>
-        <ul>
-          <li>表示名の変更、<b>パスワード変更</b>、<b>ログアウト</b>。</li>
-          <li>メールアドレスの変更は管理者へ依頼します。</li>
-        </ul>
-      </GuideButton>
+      <TourButton steps={GUIDE_TOUR} />
       <UserAvatar initial={user.avatar} />
     </>
   );

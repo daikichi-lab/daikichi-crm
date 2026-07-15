@@ -5,9 +5,21 @@ import { getCurrentUser } from '@/lib/auth/session';
 import { listNewsletters, getMasters } from '@/lib/data/dal';
 import { AppShell } from '@/components/AppShell';
 import { Icon } from '@/components/icons';
-import { GuideButton } from '@/components/GuideButton';
+import { TourButton, type GuideTourStep } from '@/components/TourButton';
 import { UserAvatar } from '@/components/ui-bits';
 import { NewsletterFilterBar, NewsletterRow } from './parts';
+
+const GUIDE_TOUR: GuideTourStep[] = [
+  { sel: '.stats', title: '配信の全体像',
+    body: '送信済み・下書き・配信トピック・購読者数を確認。' },
+  { sel: '.table-wrap', title: '一覧から編集・複製',
+    body: '下書きは行クリックで作成画面へ、送信済みは配信ログへ。「複製」で使い回せます。' },
+  { sel: 'header.topbar a.btn-primary', title: '＋ メルマガを作成',
+    body: '宛先セグメント＝<b>配信トピック×顧客属性</b>（業種・エリア・規模・ステータス）。新しい名簿は作りません。' },
+  { title: '法令対応は自動',
+    body: '同意のない宛先・配信停止した人には送られません。送信者情報と配信停止リンクは自動で付与されます。' },
+];
+
 
 type SP = { [k: string]: string | undefined };
 
@@ -53,15 +65,7 @@ export default async function NewslettersPage({ searchParams }: { searchParams: 
       <div className="spacer" />
       <Link className="btn btn-sm" href="/admin/masters#topics">配信トピック</Link>
       <Link className="btn btn-sm btn-primary" href="/newsletters/compose"><Icon name="send" size={15} />＋ メルマガを作成</Link>
-      <GuideButton title="メルマガの使い方">
-        <p>顧客の担当者へ、<b>配信トピック（メルマガ属性）</b>で絞り込んでメールマガジンを送る画面です。</p>
-        <ul>
-          <li><b>セグメント</b> = 配信トピック × 既存の顧客属性（業種・エリア・規模・ステータス）。新しい名簿は作りません。</li>
-          <li>送信は<b>無料の送信APIに任せ、名簿・属性・履歴は本システム内</b>に保持（顧客情報は国内保管のまま）。</li>
-          <li><b>同意のない宛先・配信停止した人には送りません</b>（特定電子メール法・個人情報保護法）。</li>
-          <li>本文の下書きは<b>手元のClaude（MCP）</b>に作らせられます（外部LLMへの追加課金なし）。</li>
-        </ul>
-      </GuideButton>
+      <TourButton steps={GUIDE_TOUR} />
       <UserAvatar initial={user.avatar} />
     </>
   );

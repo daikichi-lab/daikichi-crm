@@ -5,12 +5,24 @@ import { getCurrentUser } from '@/lib/auth/session';
 import { listActivities } from '@/lib/data/dal';
 import { AppShell } from '@/components/AppShell';
 import { Icon } from '@/components/icons';
-import { GuideButton } from '@/components/GuideButton';
+import { TourButton, type GuideTourStep } from '@/components/TourButton';
 import { UserAvatar } from '@/components/ui-bits';
 import { RecordActivityButton, ActivityFilterBar } from './parts';
 
+const GUIDE_TOUR: GuideTourStep[] = [
+  { sel: '.stats', title: '接点の全体量とフォロー待ち',
+    body: '今週の活動量・自動記録の件数・フォロー待ちを把握します。' },
+  { sel: '.grid-2 .panel', title: 'すべての接点が時系列に',
+    body: '電話・面談・メール・議事録・紹介・メルマガ・フォーム・名刺…。行クリックで元のレコードへ。右上で期間・種別・担当を絞り込み。' },
+  { sel: 'header.topbar button.btn-primary', title: '「＋活動を記録」で手動記録',
+    body: '電話・訪問・メモはここから。ほかの操作は各画面から<b>自動で記録</b>されます。' },
+  { title: 'フォロー漏れを防ぐ',
+    body: '企業詳細には「その会社だけのタイムライン」もあります。最近何をしたかを即把握できます。' },
+];
+
+
 type SP = { [k: string]: string | undefined };
-type Act = { id: string; company: string | null; company_id: string | null; contact?: string; kind: string; title: string; status?: string; actor: string; source: string; source_kind: string; source_id?: string; when: string; day: string };
+type Act = { id: string; company: string | null; company_id: string | null; contact?: string; contact_id?: string | null; kind: string; title: string; status?: string; actor: string; source: string; source_kind: string; source_id?: string; when: string; day: string };
 
 /* 種別 → a-tag クラス / nub背景 / nubアイコン */
 const KIND_STYLE: Record<string, { tag: string; bg: string; icon: string }> = {
@@ -35,6 +47,8 @@ function hrefFor(a: Act): string {
     case 'referral': return '/referrals';
     case 'newsletter': return '/newsletters';
     case 'form': return '/forms/inbox';
+    case 'card': return a.contact_id ? `/contacts/${a.contact_id}` : a.company_id ? `/companies/${a.company_id}` : '/people';
+    case 'task': return a.source_id ? `/schedule/${a.source_id}` : '/schedule';
     default: return a.company_id ? `/companies/${a.company_id}` : '/activities';
   }
 }
@@ -68,19 +82,7 @@ export default async function ActivitiesPage({ searchParams }: { searchParams: P
       </form>
       <div className="spacer" />
       <RecordActivityButton />
-      <GuideButton title="活動履歴の使い方">
-        <p>顧客との<b>すべての接点（電話・訪問・面談・メール・議事録・紹介・メルマガ・フォーム・名刺）</b>を時系列で1か所にまとめた活動フィードです。</p>
-        <h4>記録のされ方</h4>
-        <ul>
-          <li>各画面の操作・連携から<b>自動で記録</b>（議事録の取込、紹介の打診、メルマガ送信、フォーム受信、名刺OCRなど）。</li>
-          <li>電話・訪問・メモは<b>「＋活動を記録」</b>で手動追加。</li>
-          <li>種別・担当・期間で絞り込み、<b>企業詳細</b>にはその会社だけのタイムラインを表示。</li>
-        </ul>
-        <h4>使いどころ</h4>
-        <ul>
-          <li>「最近この顧客に何をしたか」を即把握 → 休眠の兆候や<b>フォロー漏れ</b>を防ぐ。</li>
-        </ul>
-      </GuideButton>
+      <TourButton steps={GUIDE_TOUR} />
       <UserAvatar initial={user.avatar} />
     </>
   );
