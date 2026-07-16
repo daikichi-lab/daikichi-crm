@@ -1,0 +1,12 @@
+.src-badge{ display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid; }
+.src-badge.auto{ color:var(--brand-700);background:var(--brand-50);border-color:#cfe0ef; }
+.src-badge.manual{ color:var(--ink-2);background:var(--surface-3);border-color:var(--line); }
+.todo{ display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line); }
+.todo:last-child{ border-bottom:0; }
+.todo input{ margin-top:3px; width:16px;height:16px;flex:none; }
+.todo .due{ margin-left:auto;font-size:12px;color:var(--amber-600);font-weight:700;white-space:nowrap; }
+.transcript{ font-size:13px;line-height:1.85;color:var(--ink); }
+.transcript .ln{ display:flex;gap:10px;padding:3px 0; }
+.transcript .ts{ color:var(--ink-3);font-variant-numeric:tabular-nums;flex:none;width:52px; }
+.transcript .sp{ font-weight:700;flex:none;width:64px; }
+.reco-mini{ display:flex;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:var(--radius); }

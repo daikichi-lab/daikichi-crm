@@ -1,0 +1,8 @@
+/* フォーム受信箱 固有スタイル（mockups/form-inbox.html より移植） */
+.badge.new{ color:var(--brand-700); background:var(--brand-50); border-color:#cfe0ef; }
+.badge.dup{ color:var(--amber-600); background:var(--amber-50); border-color:#ecdcb4; }
+.badge.done2{ color:var(--green-700); background:var(--green-50); border-color:#cce7d6; }
+.admin-tabs{ display:flex; gap:4px; border-bottom:1px solid var(--line); margin-bottom:18px;}
+.admin-tabs a{ padding:10px 16px; font-size:13.5px; font-weight:700; color:var(--ink-3); border-bottom:2px solid transparent;}
+.admin-tabs a:hover{ text-decoration:none; color:var(--brand-600);}
+.admin-tabs a.on{ color:var(--brand-700); border-bottom-color:var(--brand-700);}

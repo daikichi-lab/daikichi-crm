@@ -353,3 +353,40 @@ table.table { width:100%; border-collapse: collapse; font-size: 13.5px; }
   .table-wrap::-webkit-scrollbar-thumb{ background:var(--line-strong); border-radius:4px; }
 }
 .hamb{ display:none; }
+
+/* ============================ 機能ツアー（案内人） ============================
+   Miro/Canva風のスポットライト・ガイド。紺の台帳ベールで全体を沈め、
+   対象だけを金の印章リングで照らす。案内人は金の印「案」。 */
+.tour-veil{ position:fixed; inset:0; z-index:90; }
+.tour-spot{ position:fixed; z-index:91; border-radius:10px; pointer-events:none;
+  box-shadow:0 0 0 200vmax rgba(14,44,71,.58); transition:left .28s ease, top .28s ease, width .28s ease, height .28s ease; }
+.tour-spot::after{ content:""; position:absolute; inset:-3px; border-radius:inherit; border:2px solid var(--gold-500);
+  animation:tourPulse 1.6s ease-in-out infinite; }
+@keyframes tourPulse{
+  0%,100%{ box-shadow:0 0 0 3px rgba(183,134,31,.30); }
+  50%    { box-shadow:0 0 0 10px rgba(183,134,31,.08); }
+}
+.tour-card{ position:fixed; z-index:92; width:min(360px, calc(100vw - 32px)); background:var(--surface);
+  border-radius:var(--radius-lg); box-shadow:var(--shadow-pop); padding:16px 18px 14px; }
+.tour-card .arr{ position:absolute; width:12px; height:12px; background:var(--surface); transform:rotate(45deg); }
+.tour-card .hd{ display:flex; align-items:flex-start; gap:11px; margin-bottom:8px; padding-right:20px; }
+.tour-card .guide{ width:36px; height:36px; border-radius:9px; background:var(--gold-500); color:#2a1c05;
+  display:grid; place-items:center; font-weight:800; font-size:17px; flex:none; box-shadow:inset 0 -2px 0 rgba(0,0,0,.14); }
+.tour-card .eyebrow{ font-size:10.5px; font-weight:800; letter-spacing:.08em; color:var(--gold-700); }
+.tour-card .eyebrow .stp{ color:var(--ink-3); font-weight:700; margin-left:6px; letter-spacing:0; }
+.tour-card h4{ font-size:15px; margin:2px 0 0; line-height:1.4; }
+.tour-card .bd{ font-size:13px; color:var(--ink-2); line-height:1.75; }
+.tour-card .tour-note{ font-size:10.5px; color:var(--ink-3); margin-top:8px; }
+.tour-card .x{ position:absolute; top:10px; right:10px; border:none; background:none; color:var(--ink-3);
+  font-size:13px; cursor:pointer; padding:5px 7px; border-radius:6px; line-height:1; }
+.tour-card .x:hover{ background:var(--surface-2); color:var(--ink); }
+.tour-card .ft{ display:flex; align-items:center; gap:8px; margin-top:13px; }
+.tour-dots{ display:flex; gap:5px; margin-right:auto; }
+.tour-dots i{ width:7px; height:7px; border-radius:50%; background:var(--line-strong); }
+.tour-dots i.on{ background:var(--gold-500); }
+.new-pip{ display:inline-block; margin-left:5px; font-size:9px; font-weight:800; letter-spacing:.05em;
+  color:#fff; background:var(--gold-600); border-radius:999px; padding:1px 6px; vertical-align:2px; }
+@media (prefers-reduced-motion: reduce){
+  .tour-spot{ transition:none; }
+  .tour-spot::after{ animation:none; box-shadow:0 0 0 3px rgba(183,134,31,.30); }
+}

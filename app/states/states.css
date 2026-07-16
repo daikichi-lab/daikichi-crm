@@ -1,0 +1,15 @@
+/* スケルトン（読込中） */
+.sk { background: linear-gradient(90deg, var(--surface-3) 25%, #e4eaf1 37%, var(--surface-3) 63%); background-size: 400% 100%;
+  animation: sh 1.3s ease infinite; border-radius: 6px; height: 12px; }
+@keyframes sh { 0% { background-position: 100% 0 } 100% { background-position: 0 0 } }
+.state-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; align-items: start; }
+.state-box .panel-head .count { font-weight: 700; color: var(--brand-600); }
+.big-state { text-align: center; padding: 40px 20px; color: var(--ink-3); }
+.big-state .code { font-size: 46px; font-weight: 800; color: var(--brand-700); letter-spacing: .02em; }
+.big-state .code.warn { color: var(--gold-600); }
+@media (max-width: 880px) { .state-grid { grid-template-columns: 1fr; } }
+/* 名刺ビューア */
+.card-viewer { width: 100%; max-width: 560px; }
+.card-viewer .shot { aspect-ratio: 91/55; border-radius: 8px; overflow: hidden; box-shadow: var(--shadow-2); background: #33414f; }
+.card-viewer .face-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+.card-viewer .face-tabs .btn.on { background: var(--brand-700); border-color: var(--brand-700); color: #fff; }

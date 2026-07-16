@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>課題を作成・大吉CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  /* 区分（顧客／所内）の選択カード */
+  .scope-pick{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .scope-pick label{ display:flex; gap:10px; align-items:flex-start; border:1.5px solid var(--line-strong); border-radius:var(--radius); padding:12px 14px; cursor:pointer; background:var(--surface); }
+  .scope-pick label:hover{ border-color:var(--brand-500); }
+  .scope-pick label.on{ border-color:var(--brand-600); background:var(--brand-tint); box-shadow:0 0 0 3px var(--brand-50); }
+  .scope-pick input{ margin-top:3px; }
+  .scope-pick .tt{ font-weight:800; font-size:13.5px; color:var(--ink); }
+  .scope-pick .dd{ font-size:11.5px; color:var(--ink-3); margin-top:2px; line-height:1.5; }
+  .seal-mini{ display:inline-grid; place-items:center; width:18px; height:18px; border-radius:5px; background:var(--gold-500); color:#2a1c05; font-size:10px; font-weight:800; margin-right:4px; vertical-align:-4px; }
+
+  /* 企業の検索コンボボックス */
+  .combo{ position:relative; }
+  .combo .cbx-in{ position:relative; }
+  .combo .cbx-in .mag{ position:absolute; left:11px; top:50%; transform:translateY(-50%); color:var(--ink-3); font-size:13px; }
+  .combo input{ width:100%; padding-left:32px; }
+  .combo .picked{ position:absolute; right:9px; top:50%; transform:translateY(-50%); color:var(--green-600); font-weight:800; font-size:13px; display:none; }
+  .combo.done .picked{ display:block; }
+  .cbx-list{ position:absolute; top:40px; left:0; right:0; z-index:40; background:var(--surface); border:1px solid var(--line-strong);
+    border-radius:8px; box-shadow:var(--shadow-pop); max-height:264px; overflow:auto; padding:4px; display:none; }
+  .combo.open .cbx-list{ display:block; }
+  .cbx-item{ padding:8px 10px; border-radius:6px; cursor:pointer; font-size:13px; display:flex; gap:8px; align-items:center; }
+  .cbx-item:hover{ background:var(--brand-tint); }
+  .cbx-item b{ color:var(--ink); font-weight:700; }
+  .cbx-item .sub{ color:var(--ink-3); font-size:11px; margin-left:auto; white-space:nowrap; }
+  .cbx-empty{ padding:10px 12px; color:var(--ink-3); font-size:12.5px; }
+
+  /* 企業選択までのロック */
+  .gated{ transition:opacity .15s; }
+  .gated.off{ opacity:.45; pointer-events:none; user-select:none; }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" data-active="schedule"></aside>
+  <div class="main">
+    <header class="topbar">
+      <button class="btn btn-icon hamb" data-icon="menu" aria-label="メニュー"></button>
+      <div class="crumb"><a href="schedule.html">期限・タスク</a> / <b>課題を作成</b></div>
+      <div class="spacer"></div>
+      <a class="btn btn-sm" href="schedule.html">キャンセル</a>
+      <button class="btn btn-sm btn-primary" onclick="createTask()">作成</button>
+      <div class="user"><div class="avatar">山</div></div>
+    </header>
+
+    <div class="content" style="max-width:920px;">
+      <div class="page-head">
+        <div>
+          <h2>課題を作成</h2>
+          <div class="sub">必須は <span class="b" style="color:var(--red-600)">*</span> のみ。親課題を選ぶと子課題として作成されます。</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>区分</h3></div>
+        <div class="panel-body">
+          <div class="scope-pick">
+            <label class="on" id="pick-client">
+              <input type="radio" name="scope" checked onchange="pickScope('client')">
+              <span><span class="tt">顧客の課題</span><span class="dd">企業（顧問先・見込み客）に紐づく仕事。決算・申告・資料回収・フォロー連絡など。</span></span>
+            </label>
+            <label id="pick-internal">
+              <input type="radio" name="scope" onchange="pickScope('internal')">
+              <span><span class="tt"><span class="seal-mini">大</span>所内の課題</span><span class="dd">大吉会計の所内業務。月次締め・メルマガ・研修・採用など、企業に紐づかない仕事。</span></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>基本情報</h3></div>
+        <div class="panel-body">
+          <div class="field col-2" id="field-company" style="margin-bottom:16px;">
+            <label>企業 <span class="req">*</span></label>
+            <div class="combo" id="combo">
+              <div class="cbx-in">
+                <span class="mag">🔍</span>
+                <input class="input" id="cbx-input" placeholder="企業名で検索…（例: 海風 / みどり / 北斗）" autocomplete="off"
+                       oninput="cbxFilter()" onfocus="cbxFilter()">
+                <span class="picked">✓</span>
+              </div>
+              <div class="cbx-list" id="cbx-list"></div>
+            </div>
+            <span class="hint" id="company-hint">先に企業を選択すると、残りの項目が入力できます（顧客名簿から検索）</span>
+          </div>
+
+          <div class="gated off">
+            <div class="form-grid">
+              <div class="field col-2">
+                <label>題名 <span class="req">*</span></label>
+                <input class="input" placeholder="例: 法人税・消費税 申告（4月決算）／ 5月分 記帳資料の回収">
+              </div>
+              <div class="field">
+                <label>親課題</label>
+                <select class="select" id="sel-parent"></select>
+                <span class="hint" id="parent-hint">選ぶと<b>子課題</b>として作成。この企業の課題だけが選べます</span>
+              </div>
+              <div class="field">
+                <label>種別</label>
+                <select class="select" id="sel-type">
+                  <option>手動タスク</option>
+                  <option>決算準備</option>
+                  <option>申告・納付</option>
+                  <option>年末調整</option>
+                  <option>所内業務</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>担当</label>
+                <select class="select">
+                  <option>山田 健太</option>
+                  <option>佐藤 京子</option>
+                  <option>田中 一郎</option>
+                  <option>（未定）</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>開始日</label>
+                <input class="input num" type="text" placeholder="2026/06/24" value="2026/06/24">
+              </div>
+              <div class="field">
+                <label>期日</label>
+                <input class="input num" type="text" placeholder="2026/06/30">
+                <span class="hint">一覧・ボード・ガント・カレンダーに反映。「あと◯日」を自動表示</span>
+              </div>
+              <div class="field">
+                <label>状態</label>
+                <select class="select"><option>未対応</option><option>対応中</option><option>完了</option></select>
+              </div>
+              <div class="field">
+                <label>進捗</label>
+                <select class="select"><option>0%</option><option>25%</option><option>50%</option><option>75%</option><option>100%</option></select>
+                <span class="hint">子課題を持つ親課題では自動集計のため入力不要</span>
+              </div>
+              <div class="field">
+                <label>繰り返し</label>
+                <select class="select"><option>なし</option><option>毎週</option><option>毎月</option><option>毎年</option></select>
+                <span class="hint">月次締め・源泉納付などの定例業務はテンプレートから自動生成</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>詳細（説明）</h3></div>
+        <div class="panel-body gated off">
+          <div class="field col-2" style="margin-bottom:14px;">
+            <label>説明</label>
+            <textarea class="input" rows="7" placeholder="仕事の内容・手順・注意点・完了の条件などを記載します。&#10;&#10;例:&#10;・4月決算の法人税・消費税の申告一式。&#10;・電子申告は e-Tax / eLTAX。納付書の送付は不要（ダイレクト納付設定済み）。&#10;・完了条件: 受信通知の保存＋お客様への納付案内メール送信まで。"></textarea>
+            <span class="hint">チェックリストや関連資料のURLも書けます。議事録・資料は下の関連リンクで紐付け</span>
+          </div>
+          <div class="form-grid">
+            <div class="field">
+              <label>関連する議事録</label>
+              <select class="select" id="sel-note"></select>
+              <span class="hint">この企業に保存されている議事録だけが選べます</span>
+            </div>
+            <div class="field">
+              <label>関連する資料</label>
+              <select class="select" id="sel-doc"></select>
+              <span class="hint">この企業に保存されている資料だけが選べます</span>
+            </div>
+          </div>
+          <div class="banner info mt16">
+            <span>ⓘ</span>
+            <div>決算・申告の課題は<b>決算月から自動生成</b>もされます（親課題＋子課題のテンプレート）。ここでは自動生成に無い課題を手動で追加します。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row mt16" style="justify-content:flex-end;">
+        <a class="btn" href="schedule.html">キャンセル</a>
+        <button class="btn btn-primary" onclick="createTask()">作成</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="assets/app.js"></script>
+<script>
+  /* デモデータ: 企業ごとの 親課題・議事録・資料（実装では選択企業のRPCで取得） */
+  const COMPANIES = [
+    { name:'株式会社 大吉商事',    kana:'だいきちしょうじ',   industry:'卸売',   parents:[], notes:['大吉商事 月次定例 6/5'], docs:['月次試算表 2026-05.xlsx'] },
+    { name:'合同会社 海風マリン',  kana:'かいふうまりん',     industry:'レジャー', parents:['法人税・消費税 申告（4月決算）'], notes:['海風マリン 決算打合せ 6/12'], docs:['2026-04期 試算表.xlsx','申告チェックリスト.pdf'] },
+    { name:'株式会社 北斗ロジ',    kana:'ほくとろじ',         industry:'物流',   parents:['決算準備（7月決算）'], notes:['北斗ロジ 配送協業ミーティング 6/18'], docs:['決算準備 資料一覧.xlsx'] },
+    { name:'みどり食堂',           kana:'みどりしょくどう',   industry:'飲食',   parents:[], notes:['みどり食堂 初回面談 6/16'], docs:[] },
+    { name:'鈴木工務店',           kana:'すずきこうむてん',   industry:'建設',   parents:[], notes:[], docs:['源泉納付 納期特例メモ.pdf'] },
+    { name:'さくら美容室',         kana:'さくらびようしつ',   industry:'美容',   parents:[], notes:[], docs:[] },
+    { name:'山本会計サポート',     kana:'やまもとかいけい',   industry:'士業',   parents:[], notes:[], docs:['記帳資料 受領チェック表.xlsx'] },
+  ];
+  const INTERNAL = { parents:['メルマガ 7月号の企画・配信'], notes:['所内 全体会議 6/20'], docs:['メルマガ配信手順.pdf','所内経理マニュアル.pdf'] };
+
+  let scope = 'client';
+  let picked = null;   // 選択中の企業
+
+  const combo = document.getElementById('combo');
+  const cbxIn = document.getElementById('cbx-input');
+  const cbxList = document.getElementById('cbx-list');
+
+  /* 企業の検索（名称・かなの部分一致） */
+  function cbxFilter(){
+    if(scope !== 'client') return;
+    if(picked){ picked = null; combo.classList.remove('done'); refreshGates(); }  // 入力し直し＝選択解除
+    const q = cbxIn.value.trim();
+    const hits = COMPANIES.filter(c => !q || c.name.includes(q) || c.kana.includes(q));
+    cbxList.innerHTML = '';
+    if(hits.length === 0){
+      cbxList.innerHTML = '<div class="cbx-empty">該当する企業がありません（<a href="company-form.html">＋ 新規企業を登録</a>）</div>';
+    } else {
+      hits.forEach(c => {
+        const it = document.createElement('div');
+        it.className = 'cbx-item';
+        it.innerHTML = '<b>' + c.name + '</b><span class="sub">' + c.industry + '</span>';
+        it.addEventListener('mousedown', () => cbxPick(c));   // blurより先に確定
+        cbxList.appendChild(it);
+      });
+    }
+    combo.classList.add('open');
+  }
+  cbxIn.addEventListener('blur', () => setTimeout(() => combo.classList.remove('open'), 140));
+
+  /* 企業を確定 → 残りの項目を解放し、親課題・議事録・資料をこの企業のものに絞る */
+  function cbxPick(c){
+    picked = c;
+    cbxIn.value = c.name;
+    combo.classList.remove('open');
+    combo.classList.add('done');
+    document.getElementById('company-hint').innerHTML = '<b>' + c.name + '</b> の課題として作成します（変更するときは入力し直し）';
+    fillSelect('sel-parent', c.parents, 'なし（トップレベルの課題）', 'この企業の親課題はまだありません');
+    fillSelect('sel-note',   c.notes,   '（なし）', 'この企業の議事録はありません');
+    fillSelect('sel-doc',    c.docs,    '（なし）', 'この企業の資料はありません');
+    refreshGates();
+    toast(c.name + ' を選択しました');
+  }
+
+  function fillSelect(id, items, noneLabel, emptyLabel){
+    const sel = document.getElementById(id);
+    sel.innerHTML = '';
+    sel.appendChild(new Option(noneLabel));
+    if(items.length === 0){
+      const o = new Option(emptyLabel); o.disabled = true; sel.appendChild(o);
+    } else {
+      items.forEach(t => sel.appendChild(new Option(t)));
+    }
+  }
+
+  /* 顧客の課題＝企業選択まで他の欄をロック。所内の課題＝最初から入力可 */
+  function refreshGates(){
+    const open = (scope === 'internal') || !!picked;
+    document.querySelectorAll('.gated').forEach(g => g.classList.toggle('off', !open));
+  }
+
+  function pickScope(s){
+    scope = s;
+    document.getElementById('pick-client').classList.toggle('on', s === 'client');
+    document.getElementById('pick-internal').classList.toggle('on', s === 'internal');
+    const f = document.getElementById('field-company');
+    cbxIn.disabled = (s === 'internal');
+    f.style.opacity = (s === 'internal') ? .5 : 1;
+    if(s === 'internal'){
+      combo.classList.remove('open');
+      document.getElementById('company-hint').textContent = '所内の課題は企業に紐づきません（大吉会計（所内）として登録）';
+      document.getElementById('parent-hint').innerHTML = '選ぶと<b>子課題</b>として作成。所内の課題だけが選べます';
+      fillSelect('sel-parent', INTERNAL.parents, 'なし（トップレベルの課題）', '所内の親課題はまだありません');
+      fillSelect('sel-note',   INTERNAL.notes,   '（なし）', '所内の議事録はありません');
+      fillSelect('sel-doc',    INTERNAL.docs,    '（なし）', '所内の資料はありません');
+      document.getElementById('sel-type').value = '所内業務';
+    } else {
+      document.getElementById('company-hint').textContent = picked
+        ? picked.name + ' の課題として作成します（変更するときは入力し直し）'
+        : '先に企業を選択すると、残りの項目が入力できます（顧客名簿から検索）';
+      document.getElementById('parent-hint').innerHTML = '選ぶと<b>子課題</b>として作成。この企業の課題だけが選べます';
+      if(picked){
+        fillSelect('sel-parent', picked.parents, 'なし（トップレベルの課題）', 'この企業の親課題はまだありません');
+        fillSelect('sel-note',   picked.notes,   '（なし）', 'この企業の議事録はありません');
+        fillSelect('sel-doc',    picked.docs,    '（なし）', 'この企業の資料はありません');
+      }
+      document.getElementById('sel-type').value = '手動タスク';
+    }
+    refreshGates();
+  }
+
+  function createTask(){
+    if(scope === 'client' && !picked){
+      toast('先に企業を選択してください');
+      cbxIn.focus();
+      return;
+    }
+    toast('課題を作成しました');
+    setTimeout(() => location.href = 'task-detail.html', 700);
+  }
+
+  /* 初期状態: 顧客の課題・企業未選択（親課題などは空で用意） */
+  fillSelect('sel-parent', [], 'なし（トップレベルの課題）', '企業を選択してください');
+  fillSelect('sel-note',   [], '（なし）', '企業を選択してください');
+  fillSelect('sel-doc',    [], '（なし）', '企業を選択してください');
+</script>
+</body>
+</html>

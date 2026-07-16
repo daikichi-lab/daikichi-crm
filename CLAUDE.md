@@ -15,8 +15,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 現在の状態（重要）
 
-**設計・モック段階。** Next.js/Supabase の実アプリと DB はまだ未スキャフォールド（`package.json` も無い）。
-現時点の成果物は次の3つで、いずれも「実装前に合意済みの設計を形にしたもの」:
+**実装フェーズ。** 設計・モックに加えて、**実アプリを scaffold 済み**（Next.js 15 + TS、`app/`・`lib/`・`components/`・`supabase/migrations/`・`tests/`。DBは dev/test=PGlite, 本番=Supabase。単体/E2Eテストあり。`docs/DEPLOY.md`）。本番デプロイ（Cloudflare/Supabase Tokyo）と Supabase Auth 連携の完成が残作業。
+設計・モックの成果物（実装の正典・UI指針）は引き続き次の3つ:
 
 - **`docs/` — 仕様の正典。** `requirements.md`（要件定義 v0.4・最上位）→ `screen-design.md`（画面）→ `newsletter-feature.md`（メルマガ）→ `claude-integration.md`（Claude連携＝カスタムMCP）。**仕様で迷ったら、まず docs/、次に本ファイル**（矛盾時は CLAUDE.md > requirements.md > 各機能仕様）。
 - **`mockups/` — 全画面の静的HTMLモック＋デザインシステム**（下記「モックの作法」）。実装時のUI指針。
@@ -169,9 +169,25 @@ business_cards（名刺画像＋OCR）
 
 ## 開発コマンド
 
-**実アプリ（Next.js + OpenNext on Cloudflare + Supabase）は未スキャフォールド。** `install` / `dev` / `build` / `lint` / `typecheck` / `test`（単体テスト含む）/ デプロイ / マイグレーションは初期化後にここへ追記する（推測で埋めない）。
+**実アプリは scaffold 済み**（Next.js 15 App Router + TS。DBは dev/test=PGlite, 本番=Supabase。詳細手順は `docs/DEPLOY.md`）。
 
-現時点で実在する作業:
+```bash
+npm install
+# dev（PGlite埋め込みPostgres + dev認証 + seed。要 APP_SESSION_SECRET は dev では自動）
+APP_DATA_DRIVER=pglite APP_AUTH=dev APP_SEED=1 npm run dev     # http://localhost:3000
+npm run build           # next build（型チェック込み）
+npm run typecheck       # tsc --noEmit
+npm run lint            # next lint
+npm test                # 単体（Vitest）: CSVロジック + PGlite経由のRPC/RLS
+npm run test:e2e        # E2E（Playwright）: 全画面・全操作
+node scripts/db-validate.mjs   # migrations+seed+RPC の適用確認（PGlite）
+```
+
+- **アーキテクチャ**: 全DB操作は SQL RPC 経由（`supabase/migrations/`）＝C-6。`lib/data`(DAL)＋`lib/auth`(認証)。画面は `app/`（App Router）。共通UIは `components/`。設計詳細は `docs/DEPLOY.md`。
+- **本番化（Cloudflare/Supabase Tokyo）**: `docs/DEPLOY.md` 参照（OpenNext: `wrangler.jsonc`/`open-next.config.ts`、Supabase Auth連携の完成、Storage署名URL）。
+- dev ログインは `yamada@daikichi.example`（admin）等の seed メール（パスワード任意）。本番は Supabase Auth。
+
+現時点で実在する作業（モック・デモMCP）:
 
 **モックのプレビュー**（`mockups/` 内で実行）
 - 配信: `python3 -m http.server 8765` → ブラウザで `http://localhost:8765/index.html`（全画面カタログ）。

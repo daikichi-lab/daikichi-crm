@@ -1,0 +1,9 @@
+.topic{ display:inline-flex; align-items:center; height:22px; padding:0 9px; border-radius:6px;
+  font-size:12px; font-weight:700; color:var(--brand-700); background:var(--brand-tint); border:1px solid #cfe0ef; }
+.badge.draft{ color:var(--ink-3); background:var(--surface-3); border-color:var(--line); }
+.badge.scheduled{ color:var(--brand-700); background:var(--brand-50); border-color:#cfe0ef; }
+.badge.sending{ color:var(--amber-600); background:var(--amber-50); border-color:#ecdcb4; }
+.badge.sent{ color:var(--green-700); background:var(--green-50); border-color:#cce7d6; }
+.badge.failed{ color:var(--red-600); background:var(--red-50); border-color:#e6c4c1; }
+.badge.skip{ color:var(--ink-3); background:var(--surface-3); border-color:var(--line); }
+.badge.bounce{ color:var(--amber-600); background:var(--amber-50); border-color:#ecdcb4; }

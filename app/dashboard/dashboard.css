@@ -1,0 +1,6 @@
+.dash-row { display: grid; grid-template-columns: 2.3fr 1fr; gap: 16px; }
+.todo-card { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: inherit; }
+.todo-card:hover { box-shadow: var(--shadow-1); text-decoration: none; }
+.todo-card .n { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; font-weight: 800; flex: none; }
+.stat.gold { border-color: #ecdcb4; }
+@media (max-width: 880px) { .dash-row { grid-template-columns: 1fr; } }

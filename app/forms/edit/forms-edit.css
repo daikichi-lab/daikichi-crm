@@ -1,0 +1,32 @@
+/* フォーム編集 固有スタイル（mockups/form-edit.html より移植） */
+.admin-tabs{ display:flex; gap:4px; border-bottom:1px solid var(--line); margin-bottom:18px;}
+.admin-tabs a{ padding:10px 16px; font-size:13.5px; font-weight:700; color:var(--ink-3); border-bottom:2px solid transparent;}
+.admin-tabs a:hover{ text-decoration:none; color:var(--brand-600);}
+.admin-tabs a.on{ color:var(--brand-700); border-bottom-color:var(--brand-700);}
+/* 項目テーブルのトグル */
+.tg{ position:relative; width:38px; height:22px; display:inline-block; vertical-align:middle; }
+.tg input{ display:none; }
+.tg .tk{ position:absolute; inset:0; background:var(--line-strong); border-radius:999px; cursor:pointer; transition:background .15s; }
+.tg .tk::after{ content:""; position:absolute; top:2px; left:2px; width:18px; height:18px; background:#fff; border-radius:50%; transition:left .15s; box-shadow:var(--shadow-1); }
+.tg input:checked + .tk{ background:var(--green-600); }
+.tg input:checked + .tk::after{ left:18px; }
+.tg.lock .tk{ background:var(--brand-600); cursor:not-allowed; opacity:.7; }
+.grip{ color:var(--ink-3); cursor:grab; font-size:15px; user-select:none; }
+.ftype{ height:30px; }
+/* 項目カード（フォームビルダー） */
+.fcards{ display:flex; flex-direction:column; gap:10px; }
+.fcard{ border:1px solid var(--line); border-radius:var(--radius); background:#fff; box-shadow:var(--shadow-1); }
+.fcard .fh{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
+.fcard .fh .lbl{ font-weight:700; color:var(--ink); }
+.fcard .tpill{ font-size:11px; font-weight:700; color:var(--ink-2); background:var(--surface-3);
+  border:1px solid var(--line-strong); border-radius:999px; padding:2px 9px; }
+.fcard .tpill.master{ color:var(--brand-700); background:var(--brand-tint); border-color:#cfe0ef; }
+.fcard .tpill.custom{ color:var(--gold-700); background:var(--gold-50); border-color:#ecdcb4; }
+.fcard .togs{ margin-left:auto; display:flex; align-items:center; gap:14px; }
+.fcard .tog{ display:inline-flex; align-items:center; gap:6px; font-size:11.5px; color:var(--ink-2); font-weight:600; }
+.fcard .fb{ padding:12px; display:flex; flex-direction:column; gap:10px; }
+.prev{ background:var(--surface-2); border:1px dashed var(--line-strong); border-radius:var(--radius-sm); padding:10px 12px; }
+.prev .pl{ font-size:10.5px; font-weight:700; color:var(--ink-3); margin-bottom:7px; letter-spacing:.06em; }
+.prev .input, .prev .select{ width:100%; max-width:340px; }
+.choice{ font-size:12.5px; color:var(--ink-2); }
+.choice .src{ font-weight:700; color:var(--ink); }

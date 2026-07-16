@@ -1,0 +1,3 @@
+.dup-opt{ display:flex; gap:10px; align-items:flex-start; padding:8px 2px; cursor:pointer; font-size:13px; }
+.dup-opt + .dup-opt{ border-top:1px solid #ecdcb4; }
+.dup-opt input{ margin-top:3px; width:16px; height:16px; flex:none; }

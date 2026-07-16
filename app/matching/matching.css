@@ -1,0 +1,27 @@
+.match-layout{ display:grid; grid-template-columns:1fr 240px; gap:16px; align-items:start; }
+@media (max-width:980px){ .match-layout{ grid-template-columns:1fr; } }
+.match-filter{ position:sticky; top:76px; }
+.match-filter .fgroup{ margin-bottom:14px; } .match-filter .lab{ font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px;display:block; }
+.match-filter label.ck{ display:flex;align-items:center;gap:8px;font-size:13px;padding:3px 0;cursor:pointer; }
+
+/* 紹介レコメンドカード */
+.reco{ padding:16px 18px; }
+.reco + .reco{ margin-top:14px; }
+.reco.skipped{ opacity:.45; }
+.reco-top{ display:flex; align-items:center; gap:10px; }
+.fit{ display:inline-flex;align-items:center;gap:7px;height:25px;padding:0 11px;border-radius:999px;font-size:12px;font-weight:800;border:1px solid; }
+.fit .dots{ font-size:9px;letter-spacing:1px;opacity:.9; }
+.fit-hi{ color:var(--green-700);background:var(--green-50);border-color:#cce7d6; }
+.fit-mid{ color:var(--brand-600);background:var(--brand-50);border-color:#cfe0ef; }
+.kind{ font-size:11.5px;font-weight:700;color:var(--ink-3);border:1px solid var(--line);border-radius:5px;padding:1px 7px; }
+.reco-top .actions{ margin-left:auto;display:flex;gap:8px; }
+.reco-flow{ display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:17px;font-weight:800;margin:12px 0 8px; }
+.reco-flow .nm{ color:var(--ink); }
+.reco-flow .bring{ color:#fff;background:var(--brand-700);padding:2px 12px;border-radius:8px; }
+.reco-flow .lk{ color:var(--ink-3);font-size:13px;font-weight:600; }
+.reco-why{ color:var(--ink-2);font-size:13px;margin:0 0 12px; }
+.reco-why b{ color:var(--ink); }
+.reco-pairs{ display:flex;flex-direction:column;gap:7px;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px; }
+.pp{ display:flex;align-items:center;gap:10px;font-size:12.5px;flex-wrap:wrap; }
+.pp .to{ color:var(--gold-600);font-weight:800; }
+.pp .lb{ color:var(--ink-3);width:128px; }
