@@ -1,7 +1,9 @@
 'use client';
-import { useTransition } from 'react';
+import { useRef, useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { useUI } from '@/components/ui';
 import { setPrimaryContactAction, softDeleteContactAction } from './actions';
+import { cardSignedUrlAction, uploadBusinessCardAction } from '@/app/storage-actions';
 
 /** topbar の削除ボタン（確認ダイアログ → soft delete） */
 export function DeleteContactButton({ id, name, companyId }: { id: string; name: string; companyId?: string }) {
@@ -63,13 +65,54 @@ export function UnsetPrimaryButton({ companyId }: { companyId?: string }) {
   );
 }
 
-/** 名刺画像（クリックで拡大＝署名URLのデモ）。dev は擬似カードを表示 */
-export function CardViewer({ children }: { children: React.ReactNode }) {
+/** 名刺画像（クリックで署名URLを発行し新規タブで拡大）。dev/未保存は擬似カードのみ表示 */
+export function CardViewer({ children, path }: { children: React.ReactNode; path?: string | null }) {
   const { toast } = useUI();
+  const open = async () => {
+    toast('名刺を拡大表示（署名URL・期限付き）');
+    if (!path) return;
+    const r = await cardSignedUrlAction(path);
+    if (r.url && /^https?:\/\//.test(r.url)) window.open(r.url, '_blank', 'noopener');
+  };
   return (
-    <div className="card" onClick={() => toast('名刺を拡大表示（署名URL・期限付き）')}>
+    <div className="card" onClick={open}>
       {children}
     </div>
+  );
+}
+
+/** 名刺の差し替え（実ファイルを Storage へアップロード → business_cards に保存）。 */
+export function CardReplaceButton({ contactId, companyId }: { contactId: string; companyId?: string }) {
+  const { toast } = useUI();
+  const router = useRouter();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const onFile = async (files: FileList | null) => {
+    const file = files?.[0];
+    if (!file) return;
+    setBusy(true);
+    try {
+      const fd = new FormData();
+      fd.set('file', file); fd.set('kind', 'card');
+      const res = await fetch('/api/storage/upload', { method: 'POST', body: fd });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok || !j.path) { toast(j.error || '名刺のアップロードに失敗しました'); return; }
+      const r = await uploadBusinessCardAction(contactId, j.path, companyId);
+      if (r?.error) { toast(r.error); return; }
+      toast('名刺を差し替えました');
+      router.refresh();
+    } finally {
+      setBusy(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  };
+  return (
+    <>
+      <input ref={fileRef} type="file" hidden accept=".jpg,.jpeg,.png,.webp,.heic,.heif" onChange={(e) => onFile(e.target.files)} />
+      <button className="btn btn-sm" data-icon="card" data-iw="14" disabled={busy} onClick={() => fileRef.current?.click()}>
+        {busy ? 'アップロード中…' : '差し替え'}
+      </button>
+    </>
   );
 }
 

@@ -146,6 +146,18 @@ test.describe('企業詳細 /companies/[id]', () => {
     await expect(page.locator('.toast', { hasText: '署名URL' })).toBeVisible();
   });
 
+  test('資料タブ: 実ファイルをアップロードすると一覧に追加される（Storage）', async ({ page }) => {
+    await page.goto(`/companies/${SEED.daikichi}#files`);
+    await page.locator('nav.tabs button', { hasText: '資料' }).click();
+    const fname = `E2Eアップロード_${Date.now()}.pdf`;
+    // 隠しファイル入力へ直接投入（dev は擬似ストレージ・メタは create_document で永続化）
+    const input = page.locator('input[type=file][accept*=".pdf"]');
+    await input.setInputFiles({ name: fname, mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4 fake') });
+    await expect(page.locator('.toast', { hasText: 'アップロードしました' })).toBeVisible();
+    // 一覧に新規行が現れる（router.refresh 後）
+    await expect(page.locator('table.table tbody tr', { hasText: fname })).toBeVisible();
+  });
+
   test('概要タブ: タスク追加ダイアログ→追加でトースト', async ({ page }) => {
     // SEED.daikichi に手動タスクを足す（タスクは relative 確認のみ・seed 件数は断定しない）
     await page.goto(`/companies/${SEED.daikichi}`);

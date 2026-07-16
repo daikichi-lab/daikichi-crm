@@ -6,7 +6,7 @@ import { getContact } from '@/lib/data/dal';
 import { AppShell } from '@/components/AppShell';
 import { TourButton, type GuideTourStep } from '@/components/TourButton';
 import { StatusBadge, UserAvatar } from '@/components/ui-bits';
-import { DeleteContactButton, SetPrimaryButton, UnsetPrimaryButton, CardViewer, CardActionButton } from './parts';
+import { DeleteContactButton, SetPrimaryButton, UnsetPrimaryButton, CardViewer, CardActionButton, CardReplaceButton } from './parts';
 
 const GUIDE_TOUR: GuideTourStep[] = [
   { sel: '.grid-2', title: '先方担当者の詳細',
@@ -104,14 +104,14 @@ export default async function ContactDetailPage({ params }: { params: Promise<{ 
           <div className="panel">
             <div className="panel-head"><h3>名刺</h3><span className="count">表 / 裏</span>
               <div className="actions">
-                <CardActionButton label="差し替え" msg="差し替え用の名刺を撮影/選択" icon />
+                <CardReplaceButton contactId={id} companyId={companyId} />
                 <CardActionButton label="履歴" msg="過去の名刺（履歴）を表示" />
               </div>
             </div>
             <div className="panel-body">
               <div className="bizset">
                 <div className="biz"><div className="lbl">表面</div>
-                  <CardViewer>
+                  <CardViewer path={front?.front_path}>
                     <div className="fakecard"><div className="lines" style={{ padding: '14px 16px' }}>
                       <div style={{ fontWeight: 800, fontSize: 13 }}>{companyName}</div>
                       <div style={{ marginTop: 5, fontSize: 11 }}>{[c.department, c.title].filter(Boolean).join(' ')}</div>
@@ -122,7 +122,7 @@ export default async function ContactDetailPage({ params }: { params: Promise<{ 
                 </div>
                 {back && (
                   <div className="biz"><div className="lbl">裏面</div>
-                    <CardViewer>
+                    <CardViewer path={back.back_path ?? back.front_path}>
                       <div className="fakecard"><div className="lines" style={{ padding: '14px 16px', color: '#5a6b7d', fontSize: 10 }}>
                         <div style={{ fontWeight: 700, color: '#33414f' }}>裏面</div>
                         <div style={{ marginTop: 5 }}>{back.back_path ?? back.front_path ?? ''}</div>

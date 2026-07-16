@@ -5,7 +5,16 @@
   "name": "daikichi-crm",
   "main": ".open-next/worker.js",
   "compatibility_date": "2025-03-01",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
-  "observability": { "enabled": true }
+  "observability": { "enabled": true },
+  // 非機微の実行時設定（本番は supabase ドライバ＋Supabase Auth）。
+  // NEXT_PUBLIC_* / URL は公開設計の値（ブラウザにも出る）なので vars に記載可。
+  // 機微鍵(SUPABASE_SERVICE_ROLE_KEY / APP_SESSION_SECRET)は絶対にここに書かず、wrangler secret put で設定する。
+  "vars": {
+    "APP_DATA_DRIVER": "supabase",
+    "APP_AUTH": "supabase",
+    "NEXT_PUBLIC_SUPABASE_URL": "https://eplgoecbfwdflwklylgr.supabase.co",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_Pllkb6cEcWWnJNdqBoGqQg_J8dAdtN9"
+  }
 }

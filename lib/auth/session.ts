@@ -70,8 +70,25 @@ function toUser(u: UserRow | null): SessionUser | null {
   return { id: u.id, name: u.name, email: u.email, role: u.role, avatar: u.avatar_initial };
 }
 
-/** 現在のログインユーザー。未ログイン/改ざんcookieは null。 */
+/** 現在のログインユーザー。未ログイン/改ざんcookie/無効化ユーザーは null。 */
 export async function getCurrentUser(): Promise<SessionUser | null> {
+  if (authMode === 'supabase') {
+    // Supabase 未設定（ビルド時・未構築環境）は未ログイン扱いで null（例外にしない）。実RPCの実行時throwは維持。
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return null;
+    // Supabase Auth: getUser() で JWT を検証し（getSession は非検証のため使わない）、profile を突合。
+    // Supabase 到達不可・トークン不正は未ログイン扱い（fail-closed）。
+    try {
+      const { supabaseServerClient } = await import('../data/supabase-server');
+      const supabase = await supabaseServerClient();
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) return null;
+      const u = await callRpc<UserRow | null>('app_get_user', { p_id: user.id }, { uid: user.id, role: 'authenticated' });
+      return toUser(u); // app_get_user は and active でフィルタ済み＋toUser でも二重チェック
+    } catch {
+      return null;
+    }
+  }
+  // dev: HMAC 署名 cookie
   const c = await cookies();
   const uid = verify(c.get(COOKIE)?.value);
   if (!uid) return null;
@@ -118,4 +135,35 @@ export async function devSignIn(email: string): Promise<SessionUser | null> {
 
 export async function signOut(): Promise<void> {
   (await cookies()).delete(COOKIE);
+}
+
+/**
+ * 本番ログイン（Supabase Auth・メール+パスワード）。authMode==='supabase' のときのみ有効。
+ * 成功時に @supabase/ssr が認証 cookie を書き込む（サーバーアクション内で呼ぶこと）。
+ */
+export async function supabaseSignIn(email: string, password: string): Promise<{ ok: boolean; error?: string }> {
+  if (authMode !== 'supabase') return { ok: false, error: 'not supabase mode' };
+  const { supabaseServerClient } = await import('../data/supabase-server');
+  const supabase = await supabaseServerClient();
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
+/** 本番サインアウト（Supabase の認証 cookie をクリア）。 */
+export async function supabaseSignOut(): Promise<void> {
+  if (authMode !== 'supabase') return;
+  const { supabaseServerClient } = await import('../data/supabase-server');
+  const supabase = await supabaseServerClient();
+  await supabase.auth.signOut();
+}
+
+/** パスワードリセットメールを送信（Supabase Auth）。 */
+export async function supabaseResetPassword(email: string, redirectTo?: string): Promise<{ ok: boolean; error?: string }> {
+  if (authMode !== 'supabase') return { ok: false, error: 'not supabase mode' };
+  const { supabaseServerClient } = await import('../data/supabase-server');
+  const supabase = await supabaseServerClient();
+  const { error } = await supabase.auth.resetPasswordForEmail(email, redirectTo ? { redirectTo } : undefined);
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
 }

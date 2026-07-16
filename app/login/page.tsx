@@ -1,12 +1,19 @@
 import './login.css';
 import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth/session';
+import { getCurrentUser, authMode } from '@/lib/auth/session';
 import { loginAction } from '@/app/actions/auth';
 import { ForgotPasswordLink } from '@/components/ForgotPasswordLink';
 
-export default async function LoginPage({ searchParams }: { searchParams: Promise<{ e?: string }> }) {
+const ERR: Record<string, string> = {
+  notfound: 'そのメールのユーザーが見つかりません（dev: 例 yamada@daikichi.example）',
+  badcreds: 'メールアドレスまたはパスワードが正しくありません',
+  empty: 'メールアドレスとパスワードを入力してください',
+};
+
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ e?: string; reset?: string }> }) {
   if (await getCurrentUser()) redirect('/dashboard');
-  const { e } = await searchParams;
+  const { e, reset } = await searchParams;
+  const isDev = authMode === 'dev';
 
   return (
     <div className="auth">
@@ -31,20 +38,25 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
 
           {e && (
             <div className="banner warn mt8" style={{ fontSize: 12 }}>
-              <span>{e === 'notfound' ? 'そのメールのユーザーが見つかりません（dev: 例 yamada@daikichi.example）' : 'ログインに失敗しました'}</span>
+              <span>{ERR[e] ?? 'ログインに失敗しました'}</span>
+            </div>
+          )}
+          {reset === 'sent' && (
+            <div className="banner ok mt8" style={{ fontSize: 12 }}>
+              <span>登録済みのメールアドレス宛にパスワード再設定メールを送信しました。</span>
             </div>
           )}
 
           <div className="field">
             <label htmlFor="email">メールアドレス</label>
-            <input id="email" name="email" className="input" type="email" placeholder="you@daikichi.example" defaultValue="yamada@daikichi.example" />
+            <input id="email" name="email" className="input" type="email" placeholder="you@daikichi.example" defaultValue={isDev ? 'yamada@daikichi.example' : ''} required />
           </div>
           <div className="field">
             <div className="row-between">
               <label htmlFor="password" style={{ margin: 0 }}>パスワード</label>
               <ForgotPasswordLink />
             </div>
-            <input id="password" name="password" className="input" type="password" placeholder="••••••••" defaultValue="password" style={{ marginTop: 6 }} />
+            <input id="password" name="password" className="input" type="password" placeholder={isDev ? '（dev: 任意）' : '••••••••'} defaultValue={isDev ? 'password' : ''} required={!isDev} style={{ marginTop: 6 }} />
           </div>
 
           <button className="btn btn-primary" type="submit">ログイン</button>

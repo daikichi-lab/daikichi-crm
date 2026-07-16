@@ -1,18 +1,19 @@
 'use client';
 
 import Link from 'next/link';
-import { Fragment, useState, useTransition } from 'react';
+import { Fragment, useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUI } from '@/components/ui';
 import { Icon } from '@/components/icons';
 import { StatusBadge, TagChip } from '@/components/ui-bits';
 import { setPrimaryContactAction, createCompanyTaskAction } from './actions';
+import { documentSignedUrlAction, deleteDocumentAction } from '@/app/storage-actions';
 
 type Contact = {
   id: string; name: string; kana: string | null; title: string | null; department: string | null;
   is_primary: boolean; email: string | null; phone: string | null; mobile: string | null;
 };
-type Doc = { company: string; company_id: string; file_name: string; category: string; size: string; uploaded_by: string | null; created_at: string };
+type Doc = { id: string; company: string; company_id: string; file_name: string; category: string; size: string; uploaded_by: string | null; created_at: string };
 type ScheduleItem = { id: string; title: string; due_date: string | null; assignee: string | null; source: string; bucket: string; kind: string };
 type TimelineItem = { when: string; kind: string; title: string; status: string | null; contact: string | null; actor: string | null; source: string };
 type NoteRow = { id: string; title: string; summary: string | null; occurred_at: string; source: string };
@@ -82,7 +83,7 @@ export function CompanyTabs(props: {
       )}
 
       {tab === 'files' && (
-        <FilesPane documents={props.documents} count={props.documentsCount} size={props.documentsSize} cat={cat} setCat={setCat} categories={props.documentCategories} />
+        <FilesPane companyId={props.companyId} documents={props.documents} count={props.documentsCount} size={props.documentsSize} cat={cat} setCat={setCat} categories={props.documentCategories} />
       )}
 
       {tab === 'notes' && <NotesPane notes={props.notes} />}
@@ -266,22 +267,64 @@ function ContactsPane({ companyId, companyName, contacts }: { companyId: string;
   );
 }
 
-function FilesPane({ documents, count, size, cat, setCat, categories }: { documents: Doc[]; count: number; size: string; cat: string; setCat: (c: string) => void; categories: string[] }) {
+function FilesPane({ companyId, documents, count, size, cat, setCat, categories }: { companyId: string; documents: Doc[]; count: number; size: string; cat: string; setCat: (c: string) => void; categories: string[] }) {
   const { toast, confirm } = useUI();
+  const router = useRouter();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [upCat, setUpCat] = useState('その他');
   const cats = ['すべて', ...categories];
   const catCount = (c: string) => c === 'すべて' ? documents.length : documents.filter((d) => d.category === c).length;
   const shown = cat === 'すべて' ? documents : documents.filter((d) => d.category === cat);
 
+  const pick = () => fileRef.current?.click();
+  const onFile = async (files: FileList | null) => {
+    const file = files?.[0];
+    if (!file) return;
+    setBusy(true);
+    try {
+      const fd = new FormData();
+      fd.set('file', file); fd.set('kind', 'document'); fd.set('company_id', companyId); fd.set('category', upCat);
+      const res = await fetch('/api/storage/upload', { method: 'POST', body: fd });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) { toast(j.error || 'アップロードに失敗しました'); return; }
+      toast(`「${file.name}」をアップロードしました`);
+      router.refresh();
+    } finally {
+      setBusy(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  };
+  const openSigned = async (id: string, label: string) => {
+    const r = await documentSignedUrlAction(id);
+    if (r.error) { toast('署名URLの発行に失敗しました'); return; }
+    toast(label);
+    if (r.url && /^https?:\/\//.test(r.url)) window.open(r.url, '_blank', 'noopener');
+  };
+  const removeDoc = (d: Doc) => confirm({
+    title: '資料を削除しますか？', confirmLabel: '削除', danger: true,
+    body: `「${d.file_name}」をゴミ箱へ移動します。発行済みの署名URLは無効化されます。`,
+    onConfirm: async () => { await deleteDocumentAction(d.id, companyId); toast('資料を削除しました'); router.refresh(); },
+  });
+
   return (
     <div className="panel">
       <div className="panel-head"><h3>資料・ファイル</h3><span className="count num">{count}件 ・ {size}</span>
-        <div className="actions"><button className="btn btn-sm btn-primary" onClick={() => toast('ファイルを選択してアップロード（デモ）')}><Icon name="doc" size={14} />＋ アップロード</button></div>
+        <div className="actions">
+          <select className="select btn-sm" aria-label="アップロード種別" value={upCat} onChange={(e) => setUpCat(e.target.value)}>
+            {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <button className="btn btn-sm btn-primary" disabled={busy} onClick={pick}><Icon name="doc" size={14} />{busy ? 'アップロード中…' : '＋ アップロード'}</button>
+        </div>
       </div>
       <div className="panel-body">
-        <label className="dropzone" onClick={() => toast('ファイル選択ダイアログ（デモ）')}>
+        <input ref={fileRef} type="file" hidden accept=".pdf,.jpg,.jpeg,.png,.webp,.xlsx,.xls,.docx,.doc,.pptx,.ppt,.csv,.txt" onChange={(e) => onFile(e.target.files)} />
+        <label className="dropzone" onClick={pick}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => { e.preventDefault(); onFile(e.dataTransfer.files); }}>
           <div className="big">⤓</div>
-          <div><b>ファイルをドラッグ＆ドロップ</b> または クリックして選択</div>
-          <div className="muted" style={{ fontSize: 12 }}>PDF / JPG / PNG / Excel / Word ・ 1ファイル最大 20MB</div>
+          <div><b>ファイルをドラッグ＆ドロップ</b> または クリックして選択（種別: {upCat}）</div>
+          <div className="muted" style={{ fontSize: 12 }}>PDF / JPG / PNG / Excel / Word ・ 1ファイル最大 25MB</div>
         </label>
 
         <div className="catfilter">
@@ -295,19 +338,20 @@ function FilesPane({ documents, count, size, cat, setCat, categories }: { docume
             <thead><tr><th>ファイル</th><th>種別</th><th className="right">サイズ</th><th>登録日</th><th>登録者</th><th className="right">操作</th></tr></thead>
             <tbody>
               {shown.length === 0 && <tr><td colSpan={6} className="muted" style={{ textAlign: 'center', padding: 24 }}>該当する資料がありません。</td></tr>}
-              {shown.map((d, i) => {
+              {shown.map((d) => {
                 const ft = fileType(d.file_name);
+                const previewDialog = () => confirm({ title: 'プレビュー: ' + d.file_name, body: '署名URL（短い有効期限）で取得したファイルをビューア表示します（PDF・画像）。', confirmLabel: 'ダウンロード', onConfirm: () => openSigned(d.id, '署名URLを発行しました（ダウンロード開始）') });
                 return (
-                  <tr key={i} onClick={() => confirm({ title: 'プレビュー: ' + d.file_name, body: '署名URL（短い有効期限）で取得したファイルをビューア表示します（PDF・画像）。デモのため本文プレビューは省略しています。', confirmLabel: 'ダウンロード', onConfirm: () => toast('署名URLを発行しました（ダウンロード開始）') })}>
+                  <tr key={d.id} onClick={previewDialog}>
                     <td><div className="fname"><span className={`ft ${ft.cls}`}>{ft.label}</span><span className="nm">{d.file_name}</span></div></td>
                     <td><span className="cat"><span className="d" style={{ background: CAT_DOT[d.category] ?? 'var(--ink-3)' }} />{d.category}</span></td>
                     <td className="right num">{d.size}</td>
                     <td className="num muted">{d.created_at}</td>
                     <td className="muted">{d.uploaded_by ?? '—'}</td>
                     <td className="right" style={{ whiteSpace: 'nowrap' }}>
-                      <button className="btn btn-sm" onClick={(e) => { e.stopPropagation(); confirm({ title: 'プレビュー: ' + d.file_name, body: '署名URLで取得したファイルをビューア表示します。', confirmLabel: 'ダウンロード', onConfirm: () => toast('署名URLを発行しました（ダウンロード開始）') }); }}>プレビュー</button>
-                      <button className="btn btn-sm btn-icon" title="ダウンロード" onClick={(e) => { e.stopPropagation(); toast('署名URLを発行しました（ダウンロード開始）'); }}>⤓</button>
-                      <button className="btn btn-sm btn-icon btn-danger" title="削除" onClick={(e) => { e.stopPropagation(); confirm({ title: '資料を削除しますか？', body: `「${d.file_name}」をゴミ箱へ移動します。発行済みの署名URLは無効化されます。`, confirmLabel: '削除', danger: true, onConfirm: () => toast('資料を削除しました') }); }}>🗑</button>
+                      <button className="btn btn-sm" onClick={(e) => { e.stopPropagation(); previewDialog(); }}>プレビュー</button>
+                      <button className="btn btn-sm btn-icon" title="ダウンロード" onClick={(e) => { e.stopPropagation(); openSigned(d.id, '署名URLを発行しました（ダウンロード開始）'); }}>⤓</button>
+                      <button className="btn btn-sm btn-icon btn-danger" title="削除" onClick={(e) => { e.stopPropagation(); removeDoc(d); }}>🗑</button>
                     </td>
                   </tr>
                 );

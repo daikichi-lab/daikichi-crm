@@ -22,3 +22,7 @@ playwright-report/
 # --- OS / エディタ ---
 .DS_Store
 *.log
+
+# --- Cloudflare / wrangler ローカル秘密 ---
+.dev.vars
+cloudflare-env.d.ts

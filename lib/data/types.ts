@@ -77,6 +77,7 @@ export type NewsletterSegment = {
 };
 
 export type DocumentMeta = {
+  id: string;
   company: string;
   company_id: string;
   file_name: string;

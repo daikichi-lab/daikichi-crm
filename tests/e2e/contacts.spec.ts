@@ -69,10 +69,13 @@ test.describe('担当者詳細 /contacts/[id]', () => {
     await expect(page.locator('.toast', { hasText: '名刺を拡大表示' })).toBeVisible();
   });
 
-  test('名刺の「差し替え」「履歴」ボタンがそれぞれトーストを出す', async ({ page }) => {
+  test('名刺の「差し替え」で実ファイルをアップロードするとトーストが出る（Storage）', async ({ page }) => {
     await page.goto(`/contacts/${PRIMARY_CONTACT}`);
-    await page.getByRole('button', { name: '差し替え' }).click();
-    await expect(page.locator('.toast', { hasText: '差し替え用の名刺' })).toBeVisible();
+    // 差し替え = 隠しファイル入力（画像）。setInputFiles で直接投入（dev は擬似ストレージ）
+    const input = page.locator('input[type=file][accept*=".jpg"]');
+    await input.setInputFiles({ name: 'meishi.jpg', mimeType: 'image/jpeg', buffer: Buffer.from('fake-image-bytes') });
+    await expect(page.locator('.toast', { hasText: '名刺を差し替えました' })).toBeVisible();
+    // 履歴（デモ）は従来どおりトースト
     await page.getByRole('button', { name: '履歴', exact: true }).click();
     await expect(page.locator('.toast', { hasText: '過去の名刺' })).toBeVisible();
   });

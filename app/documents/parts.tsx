@@ -2,6 +2,15 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { useUI } from '@/components/ui';
+import { documentSignedUrlAction } from '@/app/storage-actions';
+
+/** 署名URLを取得して開く（実URLのみ新規タブ。dev擬似URLはトーストのみ）。 */
+async function openSigned(id: string, toast: (m: string) => void, label: string) {
+  const r = await documentSignedUrlAction(id);
+  if (r.error) { toast('署名URLの発行に失敗しました'); return; }
+  toast(label);
+  if (r.url && /^https?:\/\//.test(r.url)) window.open(r.url, '_blank', 'noopener');
+}
 
 const CATEGORIES = ['契約書', '決算書', '商品・サービス資料', '提案資料', 'その他'];
 const SORTS: { value: string; label: string }[] = [
@@ -41,14 +50,14 @@ export function DocumentFilterBar({ companies }: { companies: string[] }) {
 
 /* 行クリック・プレビュー・DL → toast（署名URL発行のデモ） */
 export function DocRow({
-  fileName, ftClass, ftLabel, company, companyId, catColor, category, size, createdAt, uploadedBy,
+  id, fileName, ftClass, ftLabel, company, companyId, catColor, category, size, createdAt, uploadedBy,
 }: {
-  fileName: string; ftClass: string; ftLabel: string; company: string; companyId: string | null;
+  id: string; fileName: string; ftClass: string; ftLabel: string; company: string; companyId: string | null;
   catColor: string; category: string; size: string; createdAt: string; uploadedBy: string | null;
 }) {
   const { toast } = useUI();
-  const preview = () => toast(`プレビュー: ${fileName}（署名URLを発行しました）`);
-  const download = () => toast('署名URLを発行しました');
+  const preview = () => openSigned(id, toast, `プレビュー: ${fileName}（署名URLを発行しました）`);
+  const download = () => openSigned(id, toast, '署名URLを発行しました');
   return (
     <tr onClick={preview} style={{ cursor: 'pointer' }}>
       <td><div className="fname"><span className={`ft ${ftClass}`}>{ftLabel}</span><span className="nm">{fileName}</span></div></td>

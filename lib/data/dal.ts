@@ -122,6 +122,11 @@ export async function detectDuplicateCompany(name: string, email?: string): Prom
 export async function uploadBusinessCard(contactId: string, front: string, back?: string): Promise<any> { return callRpc('upload_business_card', { p_contact_id: contactId, p_front: front, p_back: back }, await authedCtx()); }
 export async function deleteBusinessCard(id: string): Promise<any> { return callRpc('delete_business_card', { p_id: id }, await authedCtx()); }
 
+// ===== company_documents（資料・Storage） =====
+export async function createDocument(p: J): Promise<{ id?: string; error?: string }> { return callRpc('create_document', { p }, await authedCtx()); }
+export async function deleteDocument(id: string): Promise<{ ok?: boolean; storage_path?: string | null }> { return callRpc('delete_document', { p_id: id }, await authedCtx()); }
+export async function getDocument(id: string): Promise<any> { return callRpc('app_get_document', { p_id: id }, await authedCtx()); }
+
 // ===== referrals =====
 export async function createReferral(p: J): Promise<any> { return callRpc('create_referral', { p }, await authedCtx()); }
 export async function updateReferralStatus(id: string, status: string): Promise<any> { return callRpc('update_referral_status', { p_id: id, p_status: status }, await authedCtx()); }

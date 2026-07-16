@@ -117,7 +117,8 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
                 const ft = fileType(d.file_name);
                 return (
                   <DocRow
-                    key={`${d.company_id}-${d.file_name}`}
+                    key={d.id}
+                    id={d.id}
                     fileName={d.file_name} ftClass={ft.cls} ftLabel={ft.label}
                     company={d.company} companyId={d.company_id}
                     catColor={CAT_COLOR[d.category] ?? 'var(--ink-3)'} category={d.category}
