@@ -121,6 +121,7 @@ export async function createCompanyWithContact(company: J, contact: J): Promise<
 export async function detectDuplicateCompany(name: string, email?: string): Promise<any> { return callRpc('detect_duplicate_company', { p_name: name, p_email: email }, await authedCtx()); }
 export async function uploadBusinessCard(contactId: string, front: string, back?: string): Promise<any> { return callRpc('upload_business_card', { p_contact_id: contactId, p_front: front, p_back: back }, await authedCtx()); }
 export async function deleteBusinessCard(id: string): Promise<any> { return callRpc('delete_business_card', { p_id: id }, await authedCtx()); }
+export async function listContactCards(contactId: string): Promise<any> { return callRpc('list_contact_cards', { p_contact_id: contactId }, await authedCtx()); }
 
 // ===== company_documents（資料・Storage） =====
 export async function createDocument(p: J): Promise<{ id?: string; error?: string }> { return callRpc('create_document', { p }, await authedCtx()); }

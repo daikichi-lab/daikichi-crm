@@ -113,6 +113,20 @@ begin
   return jsonb_build_object('ok', true);
 end $$;
 
+-- ========== 5) 名刺の履歴（メタのみ・生パスは返さない＝IDOR対策） ==========
+-- 生の Storage パスはクライアントへ渡さない。閲覧は cardHistorySignedUrlAction が
+-- サーバ側で認可済みレコードから解決して署名URLを発行する。
+create or replace function list_contact_cards(p_contact_id text) returns jsonb language sql stable as $$
+  select coalesce(jsonb_agg(jsonb_build_object(
+      'id', b.id,
+      'ocr_status', b.ocr_status,
+      'has_front', (b.front_path is not null and b.front_path <> ''),
+      'has_back', (b.back_path is not null and b.back_path <> ''),
+      'created_at', to_char(b.created_at at time zone 'Asia/Tokyo', 'YYYY-MM-DD HH24:MI')
+    ) order by b.created_at desc), '[]'::jsonb)
+  from business_cards b where b.contact_id = p_contact_id::uuid;
+$$;
+
 -- ========== 権限 ==========
 revoke execute on all functions in schema public from public;
 grant execute on all functions in schema public to authenticated;

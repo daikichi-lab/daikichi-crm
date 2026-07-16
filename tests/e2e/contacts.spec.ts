@@ -11,6 +11,12 @@ import { login, SEED, trackErrors } from './_helpers';
 // ステップ遷移／フォーム検証」を対象にし、作成行のDB読み戻しには依存しない。
 // seed 行（常に全インスタンスに存在）は読み込みも確実なので、表示・遷移はそれで検証する。
 
+// 1x1 の有効なPNG（実ファイルアップロードのフィクスチャ・全テスト共用）。
+const CARD_PNG = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+  'base64',
+);
+
 const PRIMARY_CONTACT = SEED.pSato; // 佐藤 太郎（大吉商事の主担当・名刺あり）
 // seed の非主担当 = 海風水産（…009）の唯一の担当者「大島 涼」。詳細が確実に読める。
 const NON_PRIMARY_CONTACT = 'bbbbbbbb-0000-0000-0000-000000000009';
@@ -75,9 +81,17 @@ test.describe('担当者詳細 /contacts/[id]', () => {
     const input = page.locator('input[type=file][accept*=".jpg"]');
     await input.setInputFiles({ name: 'meishi.jpg', mimeType: 'image/jpeg', buffer: Buffer.from('fake-image-bytes') });
     await expect(page.locator('.toast', { hasText: '名刺を差し替えました' })).toBeVisible();
-    // 履歴（デモ）は従来どおりトースト
+  });
+
+  test('名刺の「履歴」で過去の名刺一覧モーダルが開く', async ({ page }) => {
+    await page.goto(`/contacts/${PRIMARY_CONTACT}`);
     await page.getByRole('button', { name: '履歴', exact: true }).click();
-    await expect(page.locator('.toast', { hasText: '過去の名刺' })).toBeVisible();
+    const modal = page.locator('.scrim .modal', { hasText: '過去の名刺' });
+    await expect(modal).toBeVisible();
+    // seed の主担当は名刺ありなので、最低1件＋「表面」ボタンが出る
+    await expect(modal.getByRole('button', { name: '表面' }).first()).toBeVisible({ timeout: 7500 });
+    await modal.getByRole('button', { name: '閉じる' }).click();
+    await expect(modal).toHaveCount(0);
   });
 
   test('主担当の担当者には「主担当を解除」ボタンが出て、確認ダイアログが開く', async ({ page }) => {
@@ -187,11 +201,26 @@ test.describe('担当者フォーム /contacts/[id]/edit・/companies/[id]/conta
     await expect(page.locator('input[placeholder="サトウ タロウ"]')).toBeVisible();
     // 名刺から自動入力（OCR）導線
     await expect(page.getByRole('link', { name: /名刺から自動入力/ })).toBeVisible();
-    // 表面の名刺スロット（空）をクリックして取込トースト
-    const slot = page.locator('.card-slot').first();
-    await expect(slot).toBeVisible();
-    await slot.click();
+    // 表面の名刺スロット（空）に実ファイルを投入 → 取込トースト＋プレビュー画像
+    await expect(page.locator('.card-slot').first()).toBeVisible();
+    await page.locator('input[type=file][accept="image/*"]').first()
+      .setInputFiles({ name: 'card.png', mimeType: 'image/png', buffer: CARD_PNG });
     await expect(page.locator('.toast', { hasText: '表面の名刺を取り込みました' })).toBeVisible();
+    await expect(page.locator('.card-slot.filled img')).toBeVisible();
+  });
+
+  test('編集フォームで表面名刺を実ファイルで差し替えて保存できる（実アップロード）', async ({ page }) => {
+    await page.goto(`/contacts/${PRIMARY_CONTACT}/edit`);
+    // 隠しfront入力に画像を投入 → プレビュー
+    await page.locator('input[type=file][accept="image/*"]').first()
+      .setInputFiles({ name: 'newcard.png', mimeType: 'image/png', buffer: CARD_PNG });
+    await expect(page.locator('.card-slot.filled img')).toBeVisible();
+    // 保存 → uploadScanImageAction で実アップロード後、詳細へ redirect
+    await Promise.all([
+      page.waitForURL(new RegExp(`/contacts/${PRIMARY_CONTACT}$`)),
+      page.getByRole('button', { name: '保存', exact: true }).click(),
+    ]);
+    await expect(page).toHaveURL(new RegExp(`/contacts/${PRIMARY_CONTACT}$`));
   });
 
   test('氏名未入力で保存 → バリデーションのトースト', async ({ page }) => {
@@ -227,12 +256,6 @@ test.describe('担当者フォーム /contacts/[id]/edit・/companies/[id]/conta
   });
 });
 
-// 1x1 の有効なPNG（実ファイルアップロードのフィクスチャ）。
-const PNG_1x1 = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
-  'base64',
-);
-
 test.describe('名刺スキャン /scan', () => {
   test.beforeEach(async ({ page }) => {
     await login(page);
@@ -240,7 +263,7 @@ test.describe('名刺スキャン /scan', () => {
 
   // 隠しファイル入力に画像を投入（front=.first / back=.nth(1)）。
   const uploadFront = (page: import('@playwright/test').Page) =>
-    page.locator('input[type=file][capture]').first().setInputFiles({ name: 'card.png', mimeType: 'image/png', buffer: PNG_1x1 });
+    page.locator('input[type=file][capture]').first().setInputFiles({ name: 'card.png', mimeType: 'image/png', buffer: CARD_PNG });
 
   // 実OCR（Tesseract.js）は言語データの取得が重くCIで非決定的なため、E2Eは「OCRせず手入力で進む」
   // の決定的パスで capture→upload→create を検証する。OCRテキストの項目振り分けは
@@ -293,7 +316,7 @@ test.describe('名刺スキャン /scan', () => {
     await page.goto('/scan');
     await uploadFront(page);
     await page.locator('input[type=file][capture]').nth(1)
-      .setInputFiles({ name: 'back.png', mimeType: 'image/png', buffer: PNG_1x1 });
+      .setInputFiles({ name: 'back.png', mimeType: 'image/png', buffer: CARD_PNG });
     await expect(page.locator('.toast', { hasText: '裏面を追加しました' })).toBeVisible();
     await expect(page.getByText('追加済み')).toBeVisible();
   });

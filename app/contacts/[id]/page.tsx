@@ -6,7 +6,7 @@ import { getContact } from '@/lib/data/dal';
 import { AppShell } from '@/components/AppShell';
 import { TourButton, type GuideTourStep } from '@/components/TourButton';
 import { StatusBadge, UserAvatar } from '@/components/ui-bits';
-import { DeleteContactButton, SetPrimaryButton, UnsetPrimaryButton, CardViewer, CardActionButton, CardReplaceButton } from './parts';
+import { DeleteContactButton, SetPrimaryButton, UnsetPrimaryButton, CardViewer, CardReplaceButton, CardHistoryButton } from './parts';
 
 const GUIDE_TOUR: GuideTourStep[] = [
   { sel: '.grid-2', title: '先方担当者の詳細',
@@ -105,7 +105,7 @@ export default async function ContactDetailPage({ params }: { params: Promise<{ 
             <div className="panel-head"><h3>名刺</h3><span className="count">表 / 裏</span>
               <div className="actions">
                 <CardReplaceButton contactId={id} />
-                <CardActionButton label="履歴" msg="過去の名刺（履歴）を表示" />
+                <CardHistoryButton contactId={id} />
               </div>
             </div>
             <div className="panel-body">
