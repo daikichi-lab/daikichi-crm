@@ -2,7 +2,7 @@ import './notes.css';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth/session';
-import { listNotes } from '@/lib/data/dal';
+import { listNotes, searchCompanies } from '@/lib/data/dal';
 import { AppShell } from '@/components/AppShell';
 import { Icon } from '@/components/icons';
 import { TourButton, type GuideTourStep } from '@/components/TourButton';
@@ -35,6 +35,8 @@ export default async function NotesPage() {
 
   const res = await listNotes();
   const notes: Note[] = res.items ?? [];
+  const cos = await searchCompanies({ limit: 100 });
+  const companies = (cos?.companies ?? []).map((c: { id: string; name: string }) => ({ id: c.id, name: c.name }));
 
   const topbar = (
     <>
@@ -45,7 +47,7 @@ export default async function NotesPage() {
       </form>
       <div className="spacer" />
       <TourButton steps={GUIDE_TOUR} />
-      <ImportButton />
+      <ImportButton companies={companies} />
       <UserAvatar initial={user.avatar} />
     </>
   );
@@ -69,7 +71,7 @@ export default async function NotesPage() {
               <div style={{ flex: 1 }}>
                 <h4>その場で取り込む</h4>
                 <p>Nottaの議事録テキストを貼り付け、または TXT をアップロード。会社を選んで保存。</p>
-                <ImportButton small />
+                <ImportButton small companies={companies} />
               </div>
             </div>
             <div className="way">

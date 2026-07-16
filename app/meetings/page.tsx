@@ -7,7 +7,7 @@ import { AppShell } from '@/components/AppShell';
 import { Icon } from '@/components/icons';
 import { TourButton, type GuideTourStep } from '@/components/TourButton';
 import { UserAvatar } from '@/components/ui-bits';
-import { ResyncButton } from './parts';
+import { MeetingsExportButton } from './parts';
 
 const GUIDE_TOUR: GuideTourStep[] = [
   { sel: '.banner.ok', title: 'Googleカレンダー連携',
@@ -113,7 +113,7 @@ export default async function MeetingsPage() {
           <div className="sub">Google カレンダーと連携し、打ち合わせの相手を顧客（CRM）につなげます。<b>カレンダーに名前しか無い予定は、ここから顧客を手動で指定</b>できます。終了後の議事録は <Link href="/notes">議事録</Link> に残ります。</div>
         </div>
         <div className="actions">
-          <ResyncButton />
+          <MeetingsExportButton />
         </div>
       </div>
 

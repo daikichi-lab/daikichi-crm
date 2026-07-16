@@ -217,5 +217,5 @@ insert into schedule_comments (item_id, kind, body, author, author_label, create
  ('eeeeeeee-0000-0000-0000-000000000004','comment','ドラフト作成完了しました。消費税の中間納付額の充当を反映済み。レビューお願いします → @山田','22222222-2222-2222-2222-222222222222',null,
    (((now() at time zone 'Asia/Tokyo')::date - 1) + time '18:04') at time zone 'Asia/Tokyo'),
  ('eeeeeeee-0000-0000-0000-000000000004','comment','承知しました。期日までにレビューします。役員貸付の利息計上だけ先に確認させてください。','11111111-1111-1111-1111-111111111111',null,
-   (((now() at time zone 'Asia/Tokyo')::date) + time '09:30') at time zone 'Asia/Tokyo')
+   (((now() at time zone 'Asia/Tokyo')::date - 1) + time '20:00') at time zone 'Asia/Tokyo')
 on conflict do nothing;

@@ -67,13 +67,17 @@ test.describe('打ち合わせ /meetings', () => {
     await expect(page).toHaveURL(new RegExp(`/companies/${SEED.daikichi}`));
   });
 
-  test('再同期ボタンで toast が出る', async ({ page }) => {
+  test('カレンダー書出ボタンで .ics がダウンロードされる', async ({ page }) => {
     await page.goto('/meetings');
-    const btn = page.getByRole('button', { name: '再同期' });
+    const btn = page.getByRole('button', { name: 'カレンダーに書き出す' });
     await expect(btn).toBeVisible();
     await expect(btn).toBeEnabled();
-    await btn.click();
-    await expect(page.locator('.toast')).toContainText('カレンダーを再同期しました');
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      btn.click(),
+    ]);
+    expect(download.suggestedFilename()).toMatch(/\.ics$/);
+    await expect(page.locator('.toast')).toContainText('.ics');
   });
 
   test('検索フォームは送信で /meetings?q= に遷移する', async ({ page }) => {

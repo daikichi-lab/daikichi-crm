@@ -57,6 +57,7 @@ export function PublicForm({ config }: { config: Config }) {
 
   const [error, setError] = useState('');
   const [done, setDone] = useState(false);
+  const [hp, setHp] = useState(''); // ハニーポット（人間は触らない・ボット除け）
   const [pending, start] = useTransition();
 
   const submit = () => {
@@ -64,7 +65,7 @@ export function PublicForm({ config }: { config: Config }) {
     if (!consent) { setError('個人情報の取り扱いに同意してください。'); return; }
     start(async () => {
       const res = await submitPublicFormAction({
-        type, industry, name, contact, kana, email, phone, area, size, needs, offers, sns, message, newsletter,
+        type, industry, name, contact, kana, email, phone, area, size, needs, offers, sns, message, newsletter, _hp: hp,
       });
       if (res.error) setError(res.error);
       else { setDone(true); window.scrollTo(0, 0); }
@@ -87,6 +88,12 @@ export function PublicForm({ config }: { config: Config }) {
 
   return (
     <div className="panel" id="formCard">
+      {/* ハニーポット: 画面外の隠しフィールド。人間は空のまま、ボットが埋めると送信は破棄される。 */}
+      <input
+        type="text" name="company_website" tabIndex={-1} autoComplete="off" aria-hidden="true"
+        value={hp} onChange={(e) => setHp(e.target.value)}
+        style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }}
+      />
       <div className="panel-body">
         <div className="form-grid">
           {has('type') && (
