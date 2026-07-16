@@ -15,7 +15,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 現在の状態（重要）
 
-**実装フェーズ。** 設計・モックに加えて、**実アプリを scaffold 済み**（Next.js 15 + TS、`app/`・`lib/`・`components/`・`supabase/migrations/`・`tests/`。DBは dev/test=PGlite, 本番=Supabase。単体/E2Eテストあり。`docs/DEPLOY.md`）。本番デプロイ（Cloudflare/Supabase Tokyo）と Supabase Auth 連携の完成が残作業。
+**実装フェーズ。** 設計・モックに加えて、**実アプリを scaffold 済み**（Next.js 15 + TS、`app/`・`lib/`・`components/`・`supabase/migrations/`・`tests/`。DBは dev/test=PGlite, 本番=Supabase。単体/E2Eテストあり。`docs/DEPLOY.md`）。Supabase Auth 連携は**アプリ層まで実装済み**（`supabaseSignIn`＝`signInWithPassword`／`@supabase/ssr` の Cookie セッション／サインアウト・パスワードリセット）。残作業は**本番デプロイ（Cloudflare/Supabase Tokyo）＝実 Supabase を相手にした環境構築・マイグレーション適用・秘密鍵登録・疎通確認**（`docs/production-checklist.md`）。
 設計・モックの成果物（実装の正典・UI指針）は引き続き次の3つ:
 
 - **`docs/` — 仕様の正典。** `requirements.md`（要件定義 v0.4・最上位）→ `screen-design.md`（画面）→ `newsletter-feature.md`（メルマガ）→ `claude-integration.md`（Claude連携＝カスタムMCP）。**仕様で迷ったら、まず docs/、次に本ファイル**（矛盾時は CLAUDE.md > requirements.md > 各機能仕様）。
