@@ -3,7 +3,7 @@ import { useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUI } from '@/components/ui';
 import { setPrimaryContactAction, softDeleteContactAction } from './actions';
-import { cardSignedUrlAction, uploadBusinessCardAction } from '@/app/storage-actions';
+import { cardSignedUrlAction } from '@/app/storage-actions';
 
 /** topbar の削除ボタン（確認ダイアログ → soft delete） */
 export function DeleteContactButton({ id, name, companyId }: { id: string; name: string; companyId?: string }) {
@@ -65,13 +65,12 @@ export function UnsetPrimaryButton({ companyId }: { companyId?: string }) {
   );
 }
 
-/** 名刺画像（クリックで署名URLを発行し新規タブで拡大）。dev/未保存は擬似カードのみ表示 */
-export function CardViewer({ children, path }: { children: React.ReactNode; path?: string | null }) {
+/** 名刺画像（クリックで署名URLを発行し新規タブで拡大）。パスはサーバー側で解決（IDOR対策）。 */
+export function CardViewer({ children, contactId, face = 'front' }: { children: React.ReactNode; contactId: string; face?: 'front' | 'back' }) {
   const { toast } = useUI();
   const open = async () => {
     toast('名刺を拡大表示（署名URL・期限付き）');
-    if (!path) return;
-    const r = await cardSignedUrlAction(path);
+    const r = await cardSignedUrlAction(contactId, face);
     if (r.url && /^https?:\/\//.test(r.url)) window.open(r.url, '_blank', 'noopener');
   };
   return (
@@ -82,7 +81,7 @@ export function CardViewer({ children, path }: { children: React.ReactNode; path
 }
 
 /** 名刺の差し替え（実ファイルを Storage へアップロード → business_cards に保存）。 */
-export function CardReplaceButton({ contactId, companyId }: { contactId: string; companyId?: string }) {
+export function CardReplaceButton({ contactId }: { contactId: string }) {
   const { toast } = useUI();
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -93,12 +92,10 @@ export function CardReplaceButton({ contactId, companyId }: { contactId: string;
     setBusy(true);
     try {
       const fd = new FormData();
-      fd.set('file', file); fd.set('kind', 'card');
+      fd.set('file', file); fd.set('kind', 'card'); fd.set('contact_id', contactId);
       const res = await fetch('/api/storage/upload', { method: 'POST', body: fd });
       const j = await res.json().catch(() => ({}));
-      if (!res.ok || !j.path) { toast(j.error || '名刺のアップロードに失敗しました'); return; }
-      const r = await uploadBusinessCardAction(contactId, j.path, companyId);
-      if (r?.error) { toast(r.error); return; }
+      if (!res.ok) { toast(j.error || '名刺のアップロードに失敗しました'); return; }
       toast('名刺を差し替えました');
       router.refresh();
     } finally {

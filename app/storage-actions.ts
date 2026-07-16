@@ -14,21 +14,19 @@ export async function documentSignedUrlAction(id: string): Promise<{ url?: strin
   return { url: url ?? undefined, file_name: doc.file_name };
 }
 
-/** 名刺画像の署名URL（保存済みパスから直接発行）。 */
-export async function cardSignedUrlAction(path: string | null | undefined): Promise<{ url?: string }> {
+/** 名刺画像の署名URL。クライアントは contactId＋面のみ渡し、パスは**サーバー側で認可済みレコードから解決**する
+ *  （IDOR対策: 生のパスを受け取らない）。get_contact は RLS 配下の read。 */
+export async function cardSignedUrlAction(contactId: string, face: 'front' | 'back' = 'front'): Promise<{ url?: string }> {
   if (!(await getCurrentUser())) return {};
+  const { getContact } = await import('@/lib/data/dal');
+  const c = await getContact(contactId, true);
+  if (!c || c.error) return {};
+  const cards: Array<{ front_path?: string | null; back_path?: string | null }> = c.cards ?? c.business_cards ?? [];
+  const path = face === 'back'
+    ? (cards.map((x) => x.back_path).find(Boolean) ?? cards.map((x) => x.front_path).find(Boolean))
+    : cards.map((x) => x.front_path).find(Boolean);
   const url = await signedUrl(CARDS_BUCKET, path, 120);
   return { url: url ?? undefined };
-}
-
-/** 名刺の登録/差し替え（Storage アップロード後のパスを business_cards に保存）。 */
-export async function uploadBusinessCardAction(contactId: string, path: string, companyId?: string): Promise<{ id?: string; error?: string }> {
-  if (!(await getCurrentUser())) return { error: 'unauthorized' };
-  const { uploadBusinessCard } = await import('@/lib/data/dal');
-  const r = await uploadBusinessCard(contactId, path);
-  revalidatePath(`/contacts/${contactId}`);
-  if (companyId) revalidatePath(`/companies/${companyId}`);
-  return r;
 }
 
 /** 資料の削除（論理削除＋実体掃除）。 */

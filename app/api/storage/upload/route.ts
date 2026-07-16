@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth/session';
-import { createDocument } from '@/lib/data/dal';
+import { createDocument, uploadBusinessCard } from '@/lib/data/dal';
 import {
   CARDS_BUCKET, DOCS_BUCKET, validateUpload, objectPath, uploadFile, type UploadKind,
 } from '@/lib/data/storage';
@@ -29,10 +29,15 @@ export async function POST(req: Request) {
   const rid = crypto.randomUUID();
 
   if (kind === 'card') {
-    const path = objectPath(`cards`, file.name, rid);
+    // 名刺: 画像を保存し、business_cards への登録まで**サーバー側で完結**（パスをクライアントに往復させない）。
+    const contactId = String(form.get('contact_id') || '');
+    if (!contactId) return NextResponse.json({ error: '担当者が指定されていません' }, { status: 400 });
+    const path = objectPath(`cards/${contactId}`, file.name, rid);
     const up = await uploadFile(CARDS_BUCKET, path, await file.arrayBuffer(), file.type || 'application/octet-stream');
     if ('error' in up) return NextResponse.json({ error: up.error }, { status: 502 });
-    return NextResponse.json({ path: up.path });
+    const rec = await uploadBusinessCard(contactId, up.path);
+    if (rec?.error) return NextResponse.json({ error: rec.error }, { status: 400 });
+    return NextResponse.json({ id: rec?.id });
   }
 
   // document

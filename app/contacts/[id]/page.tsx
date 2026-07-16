@@ -104,14 +104,14 @@ export default async function ContactDetailPage({ params }: { params: Promise<{ 
           <div className="panel">
             <div className="panel-head"><h3>名刺</h3><span className="count">表 / 裏</span>
               <div className="actions">
-                <CardReplaceButton contactId={id} companyId={companyId} />
+                <CardReplaceButton contactId={id} />
                 <CardActionButton label="履歴" msg="過去の名刺（履歴）を表示" />
               </div>
             </div>
             <div className="panel-body">
               <div className="bizset">
                 <div className="biz"><div className="lbl">表面</div>
-                  <CardViewer path={front?.front_path}>
+                  <CardViewer contactId={id} face="front">
                     <div className="fakecard"><div className="lines" style={{ padding: '14px 16px' }}>
                       <div style={{ fontWeight: 800, fontSize: 13 }}>{companyName}</div>
                       <div style={{ marginTop: 5, fontSize: 11 }}>{[c.department, c.title].filter(Boolean).join(' ')}</div>
@@ -122,7 +122,7 @@ export default async function ContactDetailPage({ params }: { params: Promise<{ 
                 </div>
                 {back && (
                   <div className="biz"><div className="lbl">裏面</div>
-                    <CardViewer path={back.back_path ?? back.front_path}>
+                    <CardViewer contactId={id} face="back">
                       <div className="fakecard"><div className="lines" style={{ padding: '14px 16px', color: '#5a6b7d', fontSize: 10 }}>
                         <div style={{ fontWeight: 700, color: '#33414f' }}>裏面</div>
                         <div style={{ marginTop: 5 }}>{back.back_path ?? back.front_path ?? ''}</div>
