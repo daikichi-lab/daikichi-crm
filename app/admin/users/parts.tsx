@@ -4,14 +4,23 @@ import { useState, useTransition } from 'react';
 import { useUI } from '@/components/ui';
 import { createUserAction, setUserRoleAction, setUserActiveAction } from './actions';
 
-/** 強いランダム仮パスワードを生成（英大小・数字・記号）。 */
-function genPassword(len = 12): string {
+/** 強いランダム仮パスワードを生成（英大小・数字・記号）。CSPRNG（Web Crypto）を使用。 */
+function genPassword(len = 14): string {
   const sets = ['ABCDEFGHJKLMNPQRSTUVWXYZ', 'abcdefghijkmnpqrstuvwxyz', '23456789', '!@#$%&*?'];
   const all = sets.join('');
-  const pick = (s: string) => s[Math.floor(Math.random() * s.length)];
-  const chars = sets.map(pick); // 各種別を最低1文字
-  for (let i = chars.length; i < len; i++) chars.push(pick(all));
-  return chars.sort(() => Math.random() - 0.5).join('');
+  const rnd = new Uint32Array(len);
+  crypto.getRandomValues(rnd);
+  const chars: string[] = [];
+  for (let i = 0; i < sets.length && i < len; i++) chars.push(sets[i][rnd[i] % sets[i].length]); // 各種別を最低1文字
+  for (let i = sets.length; i < len; i++) chars.push(all[rnd[i] % all.length]);
+  // Fisher–Yates シャッフル（CSPRNG）
+  const sh = new Uint32Array(chars.length);
+  crypto.getRandomValues(sh);
+  for (let i = chars.length - 1; i > 0; i--) {
+    const j = sh[i] % (i + 1);
+    [chars[i], chars[j]] = [chars[j], chars[i]];
+  }
+  return chars.join('');
 }
 
 /** ユーザー追加フォーム（氏名・メール・仮パスワード・ロール）。バー/モーダル共用。 */

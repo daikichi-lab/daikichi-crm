@@ -41,6 +41,10 @@ export function PasswordForm() {
   const [conf, setConf] = useState('');
   const [pending, start] = useTransition();
   const submit = () => {
+    if (!cur) {
+      toast('現在のパスワードを入力してください');
+      return;
+    }
     if (!next || !conf) {
       toast('新しいパスワードを入力してください');
       return;
@@ -54,7 +58,7 @@ export function PasswordForm() {
       return;
     }
     start(async () => {
-      const res = await changePasswordAction(next);
+      const res = await changePasswordAction(cur, next);
       if (res.error) { toast(`変更できません: ${res.error}`); return; }
       setCur('');
       setNext('');
