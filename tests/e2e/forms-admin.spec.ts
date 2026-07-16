@@ -260,28 +260,30 @@ test.describe('管理: ユーザー /admin/users（admin）', () => {
     expect(errors, errors.join('\n')).toHaveLength(0);
   });
 
-  test('インラインバーから招待→toast＋入力欄クリア', async ({ page }) => {
+  test('インライン追加フォームでユーザー追加→toast', async ({ page }) => {
     await page.goto('/admin/users');
-    const bar = page.locator('.filterbar', { hasText: 'メールで招待' });
-    await bar.locator('input').fill(`invite${Date.now()}@daikichi.example`);
-    await bar.getByRole('button', { name: '招待を送信' }).click();
-    await expect(page.locator('.toast', { hasText: '招待メールを送信しました' })).toBeVisible();
-    await expect(bar.locator('input')).toHaveValue('');
+    // インラインの追加フォーム（スタッフ一覧パネル内）でメール＋自動生成パスワードを入れて追加
+    const panel = page.locator('.panel', { hasText: 'スタッフ' });
+    await panel.locator('input[type=email]').fill(`add${Date.now()}@daikichi.example`);
+    await panel.getByRole('button', { name: '自動生成' }).click();
+    await panel.getByRole('button', { name: 'ユーザーを追加', exact: true }).click();
+    await expect(page.locator('.toast', { hasText: 'ユーザーを追加しました' })).toBeVisible();
   });
 
-  test('招待モーダル（＋スタッフを招待）の開閉と送信', async ({ page }) => {
+  test('追加モーダル（＋ユーザーを追加）の開閉と追加', async ({ page }) => {
     await page.goto('/admin/users');
-    await page.getByRole('button', { name: '＋ スタッフを招待' }).click();
+    await page.getByRole('button', { name: '＋ ユーザーを追加' }).click();
     const modal = page.locator('.scrim .modal');
-    await expect(modal.locator('.m-head h3')).toContainText('スタッフを招待');
-    await modal.getByRole('button', { name: 'キャンセル' }).click();
+    await expect(modal.locator('.m-head h3')).toContainText('ユーザーを追加');
+    await modal.getByRole('button', { name: 'とじる' }).click();
     await expect(modal).toHaveCount(0);
 
-    await page.getByRole('button', { name: '＋ スタッフを招待' }).click();
+    await page.getByRole('button', { name: '＋ ユーザーを追加' }).click();
     const modal2 = page.locator('.scrim .modal');
-    await modal2.locator('input.input').fill(`modal${Date.now()}@daikichi.example`);
-    await modal2.getByRole('button', { name: '招待を送信' }).click();
-    await expect(page.locator('.toast', { hasText: '招待メールを送信しました' })).toBeVisible();
+    await modal2.locator('input[type=email]').fill(`modal${Date.now()}@daikichi.example`);
+    await modal2.getByRole('button', { name: '自動生成' }).click();
+    await modal2.getByRole('button', { name: 'ユーザーを追加' }).click();
+    await expect(page.locator('.toast', { hasText: 'ユーザーを追加しました' })).toBeVisible();
   });
 
   test('他ユーザーのロール変更→toast（staff→admin→staffで復元）', async ({ page }) => {

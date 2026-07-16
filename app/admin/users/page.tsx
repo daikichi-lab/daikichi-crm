@@ -7,13 +7,13 @@ import { AppShell } from '@/components/AppShell';
 import { Icon } from '@/components/icons';
 import { TourButton, type GuideTourStep } from '@/components/TourButton';
 import { UserAvatar } from '@/components/ui-bits';
-import { InviteBar, InviteButton, RoleSelect, ActiveToggleButton } from './parts';
+import { AddUserBar, AddUserButton, RoleSelect, ActiveToggleButton } from './parts';
 
 const GUIDE_TOUR: GuideTourStep[] = [
   { sel: 'nav.admin-tabs', title: '管理メニュー',
     body: 'ユーザーとタグ・業種マスタを切替（管理者のみ）。' },
-  { sel: '.panel.mt16', title: 'スタッフの招待と権限',
-    body: '上の欄からメールで招待。行内でロール（staff/admin）の変更、無効化／有効化ができます。' },
+  { sel: '.panel.mt16', title: 'スタッフの追加と権限',
+    body: '上の欄から<b>氏名・メール・仮パスワード</b>でユーザーを追加。メールとパスワードを本人に伝えてください。行内でロール（staff/admin）の変更、無効化／有効化ができます。' },
   { title: '多層防御',
     body: '画面の出し分けはUX、強制力は<b>RLS＋サーバー側チェック</b>。adminのみの操作はDB側でも検証されます。' },
 ];
@@ -43,7 +43,7 @@ export default async function AdminUsersPage() {
     <AppShell active="admin" topbar={topbar}>
       <div className="page-head">
         <div><h2>管理</h2><div className="sub">管理者（admin）のみがアクセスできます。</div></div>
-        <div className="actions"><InviteButton /></div>
+        <div className="actions"><AddUserButton /></div>
       </div>
 
       <nav className="admin-tabs">
@@ -58,7 +58,7 @@ export default async function AdminUsersPage() {
 
       <div className="panel mt16">
         <div className="panel-head"><h3>スタッフ</h3><span className="count num">{users.length}名（有効 {activeCount} / 無効 {inactiveCount}）</span></div>
-        <InviteBar />
+        <AddUserBar />
         <div className="table-wrap">
           <table className="table">
             <thead>
@@ -97,7 +97,7 @@ export default async function AdminUsersPage() {
 
       <div className="banner info mt16">
         <Icon name="user" size={16} />
-        <div>アカウント発行は <span className="b">招待制</span>（サインアップは一般開放しない）。当面は Supabase ダッシュボード運用も可。アプリ内招待画面の提供範囲は要件 §12 で確定予定（FR-A4）。</div>
+        <div>アカウントは<span className="b">管理者が追加</span>（サインアップは一般開放しない）。メール招待は使わず、<b>メール＋仮パスワードを本人に直接お伝えください</b>。本人は初回ログイン後にアカウント画面でパスワード変更できます。</div>
       </div>
     </AppShell>
   );
