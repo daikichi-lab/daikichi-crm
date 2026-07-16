@@ -227,100 +227,86 @@ test.describe('担当者フォーム /contacts/[id]/edit・/companies/[id]/conta
   });
 });
 
+// 1x1 の有効なPNG（実ファイルアップロードのフィクスチャ）。
+const PNG_1x1 = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+  'base64',
+);
+
 test.describe('名刺スキャン /scan', () => {
   test.beforeEach(async ({ page }) => {
     await login(page);
   });
 
-  test('ウィザード初期表示（ステップ1）と取込→読み取りの遷移', async ({ page }) => {
+  // 隠しファイル入力に画像を投入（front=.first / back=.nth(1)）。
+  const uploadFront = (page: import('@playwright/test').Page) =>
+    page.locator('input[type=file][capture]').first().setInputFiles({ name: 'card.png', mimeType: 'image/png', buffer: PNG_1x1 });
+
+  // 実OCR（Tesseract.js）は言語データの取得が重くCIで非決定的なため、E2Eは「OCRせず手入力で進む」
+  // の決定的パスで capture→upload→create を検証する。OCRテキストの項目振り分けは
+  // tests/unit/ocr-parse.test.ts で純関数として網羅する。
+
+  test('ウィザード初期表示→画像取込（実ファイル）→手入力でステップ3', async ({ page }) => {
     const errors = trackErrors(page);
     await page.goto('/scan');
     await expect(page.locator('.page-head h2')).toContainText('名刺から顧客を作成');
-    // ステップ1がアクティブ、右ペインは未取込メッセージ
     await expect(page.locator('[data-scan-steps] .s.on')).toHaveCount(1);
-    await expect(page.locator('.scan-split')).toContainText('読み取りを実行');
 
-    // 取り込み（shot をクリック）→ ステップ2
-    await page.locator('.shot').click();
-    await expect(page.locator('.toast', { hasText: '名刺を取り込みました' })).toBeVisible();
+    await uploadFront(page); // → ステップ2、プレビュー画像
     await expect(page.locator('[data-scan-steps] .s.on')).toHaveCount(2);
+    await expect(page.locator('.shot img')).toBeVisible();
 
-    // 読み取りを実行 → ステップ3（確認・補正フォーム表示）
-    await page.getByRole('button', { name: '読み取りを実行' }).click();
+    await page.getByRole('button', { name: 'OCRせず手入力で進む' }).click();
     await expect(page.locator('[data-scan-steps] .s.on')).toHaveCount(3);
     await expect(page.getByText('抽出結果を確認・補正')).toBeVisible();
     expect(errors).toHaveLength(0);
   });
 
-  test('ステップ3: 抽出値（OCR ダミー）が反映され、信頼度低の注意書きが出る', async ({ page }) => {
+  test('やり直すでステップ1へ戻る', async ({ page }) => {
     await page.goto('/scan');
-    await page.locator('.shot').click();
-    await page.getByRole('button', { name: '読み取りを実行' }).click();
-    // OCR ダミー値が会社名・氏名に反映
-    await expect(page.locator('.form-grid input').first()).toHaveValue('みどり食堂');
-    await expect(page.locator('input[value="緑川 みどり"]')).toBeVisible();
-    // 役職は信頼度低の注意書き
-    await expect(page.locator('.lowconf-note')).toBeVisible();
-    // 「やり直す」でステップ1へ戻る
-    await page.getByRole('button', { name: 'やり直す' }).click();
+    await uploadFront(page);
+    await page.getByRole('button', { name: 'OCRせず手入力で進む' }).click();
+    await page.getByRole('button', { name: 'やり直す', exact: true }).click();
     await expect(page.locator('[data-scan-steps] .s.on')).toHaveCount(1);
   });
 
-  test('重複検出: 既存企業に一致する OCR（みどり食堂）で重複候補と2択が出る', async ({ page }) => {
+  test('重複検出: 会社名がseed企業（みどり食堂）に一致すると重複候補と2択が出る', async ({ page }) => {
     await page.goto('/scan');
-    await page.locator('.shot').click();
-    await page.getByRole('button', { name: '読み取りを実行' }).click();
-    // DEMO_OCR の「みどり食堂」は seed 企業に一致 → detect_duplicate_company がヒット
-    const dupBanner = page.locator('.dup-opt').first();
-    await expect(dupBanner).toBeVisible({ timeout: 10000 });
+    await uploadFront(page);
+    await page.getByRole('button', { name: 'OCRせず手入力で進む' }).click();
+    // 会社名を手入力 → detect_duplicate_company がヒット
+    await page.locator('.form-grid input').first().fill('みどり食堂');
+    await expect(page.locator('.dup-opt').first()).toBeVisible({ timeout: 10000 });
     await expect(page.getByText(/似た企業/)).toBeVisible();
     const existingRadio = page.locator('input[name="dupmode"][value="existing"]');
     const newRadio = page.locator('input[name="dupmode"][value="new"]');
-    // 既定は「既存に追加」（おすすめ）。会社名 input は disabled（既存を引き継ぐ）。
     await expect(existingRadio).toBeChecked();
     await expect(page.locator('.form-grid input').first()).toBeDisabled();
     await expect(page.getByRole('button', { name: /担当者を追加$/ })).toBeVisible();
     // 「新規作成」へ切替 → ボタン文言と会社名 input の活性が変わる
     await newRadio.check();
-    await expect(newRadio).toBeChecked();
     await expect(page.locator('.form-grid input').first()).toBeEnabled();
     await expect(page.getByRole('button', { name: '企業＋担当者を作成' })).toBeVisible();
-    // 既存に戻す
-    await existingRadio.check();
-    await expect(page.getByRole('button', { name: /担当者を追加$/ })).toBeVisible();
   });
 
-  test('画像操作ボタン（トリミング/回転/明るさ・裏面追加）がトーストを出す', async ({ page }) => {
+  test('裏面画像を実ファイルで追加できる', async ({ page }) => {
     await page.goto('/scan');
-    await page.locator('.shot').click(); // ステップ2へ
-    await page.getByRole('button', { name: 'トリミング' }).click();
-    await expect(page.locator('.toast', { hasText: 'トリミング' })).toBeVisible();
-    await page.getByRole('button', { name: '回転' }).click();
-    await expect(page.locator('.toast', { hasText: '回転しました' })).toBeVisible();
-    await page.getByRole('button', { name: '明るさ' }).click();
-    await expect(page.locator('.toast', { hasText: '明るさを調整しました' })).toBeVisible();
-    // 裏面追加
-    await page.getByRole('button', { name: /追加/ }).click();
+    await uploadFront(page);
+    await page.locator('input[type=file][capture]').nth(1)
+      .setInputFiles({ name: 'back.png', mimeType: 'image/png', buffer: PNG_1x1 });
     await expect(page.locator('.toast', { hasText: '裏面を追加しました' })).toBeVisible();
+    await expect(page.getByText('追加済み')).toBeVisible();
   });
 
-  test('新規作成ウィザード: 重複を解消すると「企業＋担当者を作成」で企業詳細URLへ遷移する', async ({ page }) => {
+  test('新規作成: 一意な会社名で作成し企業詳細URLへ遷移する（実画像アップロード込み）', async ({ page }) => {
     await page.goto('/scan');
-    await page.locator('.shot').click();
-    await page.getByRole('button', { name: '読み取りを実行' }).click();
-    // DEMO_OCR は会社名・メールとも重複ヒットするので、両方を一意値へ書き換える。
-    // （detect_duplicate_company は社名 ilike とメール完全一致で判定するため、両方の一意化が必要）
+    await uploadFront(page);
+    await page.getByRole('button', { name: 'OCRせず手入力で進む' }).click();
     const nonce = `${Date.now()}${Math.floor(Math.random() * 1e6)}`;
-    const uniqueCompany = `スキャン新規_${nonce}`;
-    // まず「新規作成」を選んで会社名 input を活性化
-    await page.locator('input[name="dupmode"][value="new"]').check();
-    await page.locator('.form-grid input').first().fill(uniqueCompany); // 会社名 / 屋号
-    // メール（form-grid の4番目）を一意化して重複を完全に解消
-    await page.locator('.form-grid input').nth(3).fill(`scan_${nonce}@example.com`);
-    // 重複が解消され、確定ボタンが「企業＋担当者を作成」になる
+    await page.locator('.form-grid input').first().fill(`スキャン新規_${nonce}`); // 会社名 / 屋号
+    await page.locator('.form-grid input').nth(1).fill('担当 太郎'); // 氏名（必須）
     const createBtn = page.getByRole('button', { name: '企業＋担当者を作成' });
     await expect(createBtn).toBeVisible({ timeout: 10000 });
-    // 作成 → createCompanyWithContactAction が企業詳細へ push（URL 遷移を検証）。
     await Promise.all([
       page.waitForURL(/\/companies\/[0-9a-f-]+/),
       createBtn.click(),
