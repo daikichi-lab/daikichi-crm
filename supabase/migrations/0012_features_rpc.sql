@@ -76,6 +76,43 @@ begin
   return jsonb_build_object('ok', true);
 end $$;
 
+-- ========== 4) 公開フォームの設定: 部分マージ保存＋公開設定の反映 ==========
+-- 0007 の update_form_config は value を全置換していたため、{published:false} 等の
+-- 部分保存で既存設定を消してしまう不具合があった。ここで浅いマージ（||）へ修正。
+create or replace function update_form_config(p jsonb) returns jsonb language sql as $$
+  insert into app_settings(key, value, updated_at) values('public_form', p, now())
+  on conflict (key) do update set value = app_settings.value || excluded.value, updated_at = now();
+  select jsonb_build_object('ok', true);
+$$;
+
+-- submit_public_form を公開設定（published / rate_limit）連動へ差し替え。
+-- - published=false: 受付停止（fail-closed でサーバ側でも拒否）。
+-- - rate_limit=false: 明示的に無効化されている場合のみレート制限をスキップ（既定=有効）。
+create or replace function submit_public_form(p jsonb, p_ip text default null) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare v form_submissions; recent int; cfg jsonb;
+begin
+  select value into cfg from app_settings where key = 'public_form';
+  -- 受付停止中は拒否（UIでも停止表示するが、サーバ側でも二重に防ぐ）。
+  if coalesce(cfg->>'published','true') = 'false' then
+    return jsonb_build_object('error','現在このフォームは受付を停止しています。');
+  end if;
+  -- ハニーポット: ボットが埋める隠しフィールド _hp が埋まっていたら、受理したように見せて破棄。
+  if coalesce(p->>'_hp','') <> '' then return jsonb_build_object('ok', true); end if;
+  -- 簡易レート制限: 同一IPから10分に5件まで（設定で明示的に無効化されていない限り）。
+  if coalesce(cfg->>'rate_limit','true') <> 'false' and p_ip is not null and p_ip <> '' then
+    select count(*) into recent from form_submissions
+    where client_ip = p_ip and created_at > now() - interval '10 minutes';
+    if recent >= 5 then return jsonb_build_object('error','送信が続いています。しばらく時間をおいて再度お試しください。'); end if;
+  end if;
+  insert into form_submissions(payload, status, client_ip) values(p - '_hp', '未対応', nullif(p_ip,''))
+  returning * into v;
+  insert into activities(kind, title, source, source_kind, source_id, status, actor_label)
+  values('フォーム', '公開フォームから新規問い合わせを受信（未取込）: ' || coalesce(p->>'name','(無名)'), '自動', 'form', v.id::text, '未対応', 'システム')
+  on conflict (source_kind, source_id) where source_kind is not null and source_id is not null do nothing;
+  return jsonb_build_object('ok', true);
+end $$;
+
 -- ========== 権限 ==========
 revoke execute on all functions in schema public from public;
 grant execute on all functions in schema public to authenticated;

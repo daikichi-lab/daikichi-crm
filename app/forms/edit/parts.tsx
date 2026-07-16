@@ -103,6 +103,8 @@ type Config = {
   done_title?: string;
   notify_email?: string;
   auto_subscribe?: boolean;
+  rate_limit?: boolean;
+  published?: boolean;
   fields?: string[];
 };
 
@@ -117,6 +119,9 @@ export function FormEditor({ config, publicUrl }: { config: Config; publicUrl: s
   const [doneTitle, setDoneTitle] = useState(config.done_title ?? '送信ありがとうございました');
   const [notifyEmail, setNotifyEmail] = useState(config.notify_email ?? 'info@daikichi-kaikei.example.jp');
   const [autoSubscribe, setAutoSubscribe] = useState(config.auto_subscribe ?? true);
+  const [rateLimit, setRateLimit] = useState(config.rate_limit ?? true);
+  const [published, setPublished] = useState(config.published ?? true);
+  const [qrOpen, setQrOpen] = useState(false);
   const [shown, setShown] = useState<Set<string>>(new Set(config.fields ?? FIELDS.map((f) => f.key)));
 
   const toggleShow = (f: Field) => {
@@ -129,16 +134,29 @@ export function FormEditor({ config, publicUrl }: { config: Config; publicUrl: s
     });
   };
 
+  // 保存する設定を組み立てる（overrides で published 等を明示上書き）。
+  const buildConfig = (overrides: Partial<Config> = {}): Config => ({
+    title, intro, consent,
+    submit_label: submitLabel, done_title: doneTitle,
+    notify_email: notifyEmail, auto_subscribe: autoSubscribe,
+    rate_limit: rateLimit, published,
+    fields: FIELDS.filter((f) => shown.has(f.key)).map((f) => f.key),
+    ...overrides,
+  });
+
   const save = () =>
     start(async () => {
-      const res = await saveFormConfigAction({
-        title, intro, consent,
-        submit_label: submitLabel, done_title: doneTitle,
-        notify_email: notifyEmail, auto_subscribe: autoSubscribe,
-        fields: FIELDS.filter((f) => shown.has(f.key)).map((f) => f.key),
-      });
+      const res = await saveFormConfigAction(buildConfig());
       if (res.error) toast(`保存できません: ${res.error}`);
       else toast('フォームを保存しました');
+    });
+
+  const setPublishState = (next: boolean) =>
+    start(async () => {
+      const res = await saveFormConfigAction(buildConfig({ published: next }));
+      if (res.error) { toast(`保存できません: ${res.error}`); return; }
+      setPublished(next);
+      toast(next ? 'フォームを再公開しました' : 'フォームを公開停止しました');
     });
 
   const copyUrl = async () => {
@@ -222,7 +240,9 @@ export function FormEditor({ config, publicUrl }: { config: Config; publicUrl: s
         {/* 右: 公開・共有／受信後／同意文 */}
         <div>
           <div className="panel">
-            <div className="panel-head"><h3>公開・共有</h3><span className="badge active"><span className="dot" />公開中</span></div>
+            <div className="panel-head"><h3>公開・共有</h3>
+              <span className={`badge ${published ? 'active' : ''}`}><span className="dot" />{published ? '公開中' : '停止中'}</span>
+            </div>
             <div className="panel-body">
               <div className="field"><label>公開URL（ログイン不要）</label>
                 <div className="row" style={{ gap: 6 }}>
@@ -231,29 +251,56 @@ export function FormEditor({ config, publicUrl }: { config: Config; publicUrl: s
                 </div>
                 <span className="hint">名刺・メール・メルマガ・QRなどから案内できます。</span>
               </div>
-              <div className="row mt16" style={{ gap: 18 }}>
-                <label className="row" style={{ gap: 8, fontSize: 13 }}><span className="tg"><input type="checkbox" defaultChecked /><span className="tk" /></span> CAPTCHA（ボット対策）</label>
-                <label className="row" style={{ gap: 8, fontSize: 13 }}><span className="tg"><input type="checkbox" defaultChecked /><span className="tk" /></span> レート制限</label>
+              <div className="row mt16" style={{ gap: 18, alignItems: 'center', flexWrap: 'wrap' }}>
+                <span className="row" style={{ gap: 6, fontSize: 13 }} title="送信フォームに隠しフィールドを仕込み、ボットの自動投稿を破棄します（常時ON）">
+                  <span style={{ color: 'var(--brand-700)', fontWeight: 700 }}>✓</span> ハニーポット（ボット対策・常時ON）
+                </span>
+                <label className="row" style={{ gap: 8, fontSize: 13 }} title="同一IPから10分に5件までに制限">
+                  <span className="tg"><input type="checkbox" checked={rateLimit} onChange={(e) => setRateLimit(e.target.checked)} /><span className="tk" onClick={() => setRateLimit((v) => !v)} /></span>
+                  レート制限（同一IP・10分5件）
+                </label>
               </div>
               <div className="row mt16" style={{ gap: 8 }}>
-                <button className="btn btn-sm" onClick={() => toast('QRコードを表示/ダウンロード')}>QRコード</button>
-                <button
-                  className="btn btn-sm btn-danger"
-                  onClick={() =>
-                    confirm({
-                      title: 'フォームを公開停止しますか？',
-                      body: '停止中は公開URLにアクセスしても受け付けません。いつでも再公開できます。',
-                      confirmLabel: '公開を停止',
-                      danger: true,
-                      onConfirm: () => new Promise<void>((resolve) => start(async () => { await saveFormConfigAction({ published: false }); resolve(); })),
-                    })
-                  }
-                >
-                  公開を停止
-                </button>
+                <button className="btn btn-sm" onClick={() => setQrOpen(true)}>QRコード</button>
+                {published ? (
+                  <button
+                    className="btn btn-sm btn-danger"
+                    disabled={pending}
+                    onClick={() =>
+                      confirm({
+                        title: 'フォームを公開停止しますか？',
+                        body: '停止中は公開URLにアクセスしても受け付けません。いつでも再公開できます。',
+                        confirmLabel: '公開を停止',
+                        danger: true,
+                        onConfirm: () => new Promise<void>((resolve) => { setPublishState(false); resolve(); }),
+                      })
+                    }
+                  >
+                    公開を停止
+                  </button>
+                ) : (
+                  <button className="btn btn-sm btn-primary" disabled={pending} onClick={() => setPublishState(true)}>再公開する</button>
+                )}
               </div>
             </div>
           </div>
+
+          {qrOpen && (
+            <div className="scrim" onClick={(e) => e.target === e.currentTarget && setQrOpen(false)}>
+              <div className="modal" role="dialog" aria-modal="true" style={{ maxWidth: 380 }}>
+                <div className="m-head"><h3>公開フォームのQRコード</h3></div>
+                <div className="m-body" style={{ textAlign: 'center' }}>
+                  {/* SVGは /api/forms/qr がサーバ内生成（外部サービスに問い合わせない）。 */}
+                  <img src="/api/forms/qr" alt="公開フォームのQRコード" width={240} height={240} style={{ maxWidth: '100%', height: 'auto' }} />
+                  <div className="muted" style={{ fontSize: 12, marginTop: 8 }}>名刺・チラシ・掲示などに印刷して案内できます。</div>
+                </div>
+                <div className="m-foot">
+                  <button className="btn" onClick={() => setQrOpen(false)}>閉じる</button>
+                  <a className="btn btn-primary" href="/api/forms/qr" download="daikichi-form-qr.svg">SVGをダウンロード</a>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="panel">
             <div className="panel-head"><h3>受信後の動作</h3></div>

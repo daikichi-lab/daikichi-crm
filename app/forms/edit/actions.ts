@@ -12,6 +12,7 @@ export type FormConfigInput = {
   fields?: string[];
   notify_email?: string;
   auto_subscribe?: boolean;
+  rate_limit?: boolean;
   published?: boolean;
 };
 
