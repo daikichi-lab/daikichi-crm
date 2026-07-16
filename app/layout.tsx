@@ -7,6 +7,11 @@ export const metadata: Metadata = {
   description: '大吉会計 顧客管理＋ビジネスマッチング',
 };
 
+// 認証必須のCRM。全ルートをサーバー描画（動的）に固定し、静的プリレンダを無効化する。
+// これによりビルド時(env未設定)と本番実行時(env有)で静的/動的判定がズレる問題を防ぐ
+// （Cloudflare/OpenNext での "Page changed from static to dynamic at runtime: cookies" 500 対策）。
+export const dynamic = 'force-dynamic';
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="ja">
