@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { useUI } from '@/components/ui';
-import { updateMyProfileAction, signOutAction } from './actions';
+import { updateMyProfileAction, changePasswordAction, signOutAction } from './actions';
 
 export function ProfileForm({ initialName, email }: { initialName: string; email: string }) {
   const { toast } = useUI();
@@ -39,9 +39,10 @@ export function PasswordForm() {
   const [cur, setCur] = useState('');
   const [next, setNext] = useState('');
   const [conf, setConf] = useState('');
+  const [pending, start] = useTransition();
   const submit = () => {
-    if (!cur || !next || !conf) {
-      toast('すべての項目を入力してください');
+    if (!next || !conf) {
+      toast('新しいパスワードを入力してください');
       return;
     }
     if (next.length < 8) {
@@ -52,11 +53,14 @@ export function PasswordForm() {
       toast('新しいパスワードが一致しません');
       return;
     }
-    // dev: Supabase Auth の updateUser へ差し替える（現状はスタブ）。
-    setCur('');
-    setNext('');
-    setConf('');
-    toast('パスワードを変更しました');
+    start(async () => {
+      const res = await changePasswordAction(next);
+      if (res.error) { toast(`変更できません: ${res.error}`); return; }
+      setCur('');
+      setNext('');
+      setConf('');
+      toast('パスワードを変更しました');
+    });
   };
   return (
     <>
@@ -66,7 +70,7 @@ export function PasswordForm() {
         <div className="field"><label>新しいパスワード（確認）</label><input className="input" type="password" placeholder="再入力" value={conf} onChange={(e) => setConf(e.target.value)} /></div>
       </div>
       <div className="row mt16" style={{ justifyContent: 'flex-end' }}>
-        <button className="btn btn-primary" onClick={submit}>パスワードを変更</button>
+        <button className="btn btn-primary" disabled={pending} onClick={submit}>パスワードを変更</button>
       </div>
     </>
   );

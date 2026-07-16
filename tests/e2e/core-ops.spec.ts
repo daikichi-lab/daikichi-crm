@@ -195,9 +195,9 @@ test.describe('アカウント /account', () => {
     await page.goto('/account');
     const change = page.getByRole('button', { name: 'パスワードを変更' });
 
-    // 未入力 → 「すべての項目を入力してください」
+    // 未入力 → 「新しいパスワードを入力してください」
     await change.click();
-    await expect(page.getByText('すべての項目を入力してください')).toBeVisible();
+    await expect(page.getByText('新しいパスワードを入力してください')).toBeVisible();
 
     const cur = page.locator('input[type=password]').nth(0);
     const next = page.locator('input[type=password]').nth(1);

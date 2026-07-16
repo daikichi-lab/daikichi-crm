@@ -2,77 +2,85 @@
 
 import { useState, useTransition } from 'react';
 import { useUI } from '@/components/ui';
-import { inviteUserAction, setUserRoleAction, setUserActiveAction } from './actions';
+import { createUserAction, setUserRoleAction, setUserActiveAction } from './actions';
 
-export function InviteBar() {
+/** 強いランダム仮パスワードを生成（英大小・数字・記号）。 */
+function genPassword(len = 12): string {
+  const sets = ['ABCDEFGHJKLMNPQRSTUVWXYZ', 'abcdefghijkmnpqrstuvwxyz', '23456789', '!@#$%&*?'];
+  const all = sets.join('');
+  const pick = (s: string) => s[Math.floor(Math.random() * s.length)];
+  const chars = sets.map(pick); // 各種別を最低1文字
+  for (let i = chars.length; i < len; i++) chars.push(pick(all));
+  return chars.sort(() => Math.random() - 0.5).join('');
+}
+
+/** ユーザー追加フォーム（氏名・メール・仮パスワード・ロール）。バー/モーダル共用。 */
+function AddUserForm({ onDone }: { onDone?: () => void }) {
   const { toast } = useUI();
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [role, setRole] = useState('staff');
   const [pending, start] = useTransition();
 
   const submit = () =>
     start(async () => {
-      const res = await inviteUserAction(email, email, role);
-      if (res.error) toast(`招待できません: ${res.error}`);
-      else { toast('招待メールを送信しました'); setEmail(''); }
+      const res = await createUserAction({ name, email, password, role });
+      if (res.error) { toast(`追加できません: ${res.error}`); return; }
+      toast(`ユーザーを追加しました（メール・パスワードを本人にお伝えください）`);
+      setName(''); setEmail(''); setPassword(''); setRole('staff');
+      onDone?.();
     });
 
   return (
-    <div className="filterbar">
-      <span className="b" style={{ fontSize: 12.5, color: 'var(--ink-2)' }}>メールで招待</span>
-      <input
-        className="input"
-        placeholder="name@daikichi-accg.co.jp"
-        style={{ minWidth: 260, flex: 1, maxWidth: 340 }}
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        onKeyDown={(e) => { if (e.key === 'Enter') submit(); }}
-      />
-      <select className="select" value={role} onChange={(e) => setRole(e.target.value)}>
-        <option value="staff">staff</option>
-        <option value="admin">admin</option>
-      </select>
-      <button className="btn btn-sm btn-primary" disabled={pending} onClick={submit}>招待を送信</button>
-      <span className="right" />
-      <span className="muted" style={{ fontSize: 11.5 }}>招待リンクからパスワードを設定（Supabase Auth）</span>
+    <div className="form-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+      <div className="field"><label>氏名</label>
+        <input className="input" placeholder="山田 太郎" value={name} onChange={(e) => setName(e.target.value)} /></div>
+      <div className="field"><label>メールアドレス <span className="req">*</span></label>
+        <input className="input" type="email" placeholder="name@daikichi-accg.co.jp" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
+      <div className="field col-2"><label>仮パスワード <span className="req">*</span></label>
+        <div className="row" style={{ gap: 6 }}>
+          <input className="input" style={{ flex: 1 }} placeholder="8文字以上" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <button type="button" className="btn btn-sm" onClick={() => setPassword(genPassword())}>自動生成</button>
+        </div>
+        <span className="hint">本人が初回ログイン後にアカウント画面で変更できます。このメール＋パスワードを本人にお伝えください。</span>
+      </div>
+      <div className="field"><label>ロール</label>
+        <select className="select" value={role} onChange={(e) => setRole(e.target.value)}>
+          <option value="staff">staff（一般スタッフ）</option>
+          <option value="admin">admin（管理者）</option>
+        </select></div>
+      <div className="field" style={{ justifyContent: 'flex-end' }}>
+        <button className="btn btn-primary" disabled={pending} onClick={submit}>ユーザーを追加</button>
+      </div>
     </div>
   );
 }
 
-export function InviteButton() {
-  const { toast } = useUI();
+/** 一覧上部のインライン追加フォーム。 */
+export function AddUserBar() {
+  return (
+    <div className="panel-body" style={{ paddingTop: 12, paddingBottom: 4 }}>
+      <AddUserForm />
+    </div>
+  );
+}
+
+/** トップバーの「＋ ユーザーを追加」ボタン（モーダル）。 */
+export function AddUserButton() {
   const [open, setOpen] = useState(false);
-  const [email, setEmail] = useState('');
-  const [role, setRole] = useState('staff');
-  const [pending, start] = useTransition();
-
-  const submit = () =>
-    start(async () => {
-      const res = await inviteUserAction(email, email, role);
-      if (res.error) toast(`招待できません: ${res.error}`);
-      else { toast('招待メールを送信しました'); setOpen(false); setEmail(''); }
-    });
-
   return (
     <>
-      <button className="btn btn-primary" onClick={() => setOpen(true)}>＋ スタッフを招待</button>
+      <button className="btn btn-primary" onClick={() => setOpen(true)}>＋ ユーザーを追加</button>
       {open && (
         <div className="scrim" onClick={(e) => e.target === e.currentTarget && setOpen(false)}>
-          <div className="modal" role="dialog" aria-modal="true">
-            <div className="m-head"><h3>スタッフを招待</h3></div>
+          <div className="modal" role="dialog" aria-modal="true" style={{ maxWidth: 560 }}>
+            <div className="m-head"><h3>ユーザーを追加</h3></div>
             <div className="m-body">
-              <div className="field"><label>メールアドレス<span className="req">*</span></label>
-                <input className="input" placeholder="name@daikichi-accg.co.jp" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
-              <div className="field mt8"><label>ロール</label>
-                <select className="select" value={role} onChange={(e) => setRole(e.target.value)}>
-                  <option value="staff">staff（一般スタッフ）</option>
-                  <option value="admin">admin（管理者）</option>
-                </select></div>
-              <div className="banner info mt16" style={{ fontSize: 12 }}>招待メールのリンクからパスワードを設定してもらいます（Supabase Auth）。</div>
+              <AddUserForm onDone={() => setOpen(false)} />
             </div>
             <div className="m-foot">
-              <button className="btn" onClick={() => setOpen(false)}>キャンセル</button>
-              <button className="btn btn-primary" disabled={pending} onClick={submit}>招待を送信</button>
+              <button className="btn" onClick={() => setOpen(false)}>とじる</button>
             </div>
           </div>
         </div>
