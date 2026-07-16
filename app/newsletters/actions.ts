@@ -9,7 +9,7 @@ const PUBLIC_URL = process.env.NEXT_PUBLIC_APP_URL || '';
 
 /** 本文（プレーン）を宛先ごとに差し込み、法令フッタ（送信者情報＋配信停止リンク）を付けたHTML/textを作る。 */
 function buildMail(subject: string, body: string, r: { name: string | null; company: string | null; unsubscribe_token?: string | null }) {
-  const subj = renderTemplate(subject, r).replace(/<[^>]*>/g, ''); // 件名はタグ除去
+  const subj = renderTemplate(subject, r, { escape: false }).replace(/<[^>]*>/g, ''); // 件名は非HTML: 素の値＋タグ除去
   const rendered = renderTemplate(body, r); // 差し込み＋エスケープ済
   const from = process.env.EMAIL_FROM || '大吉会計事務所';
   const unsub = r.unsubscribe_token && PUBLIC_URL ? `${PUBLIC_URL}/unsubscribe?token=${encodeURIComponent(r.unsubscribe_token)}` : '';

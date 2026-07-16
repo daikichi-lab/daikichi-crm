@@ -41,10 +41,16 @@ export function esc(s: string): string {
   return String(s ?? '').replace(AMP, '&amp;').replace(LT, '&lt;').replace(GT, '&gt;').replace(QUOT, '&quot;');
 }
 
-/** 差し込み変数を宛先ごとに置換（{{氏名}}/{{会社名}} と英語別名）。値はHTMLエスケープ。 */
-export function renderTemplate(tpl: string, vars: { name?: string | null; company?: string | null }): string {
-  const name = esc(vars.name || 'ご担当者');
-  const company = esc(vars.company || '');
+/** 差し込み変数を宛先ごとに置換（{{氏名}}/{{会社名}} と英語別名）。
+ *  既定は値をHTMLエスケープ（HTML本文向け）。escape:false は素の値（件名など非HTML向け）。 */
+export function renderTemplate(
+  tpl: string,
+  vars: { name?: string | null; company?: string | null },
+  opts: { escape?: boolean } = {},
+): string {
+  const enc = opts.escape === false ? (s: string) => s : esc;
+  const name = enc(vars.name || 'ご担当者');
+  const company = enc(vars.company || '');
   return String(tpl ?? '')
     .replace(/\{\{\s*(氏名|name)\s*\}\}/g, name)
     .replace(/\{\{\s*(会社名|company)\s*\}\}/g, company);

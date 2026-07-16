@@ -97,7 +97,8 @@ export function ContactForm({ mode, companyId, companyName, contactId, initial =
         if (r.error) { toast(`裏面のアップロードに失敗: ${r.error}`); return; }
         back = r.path;
       }
-      const card = front ? { front, back } : undefined;
+      // 表面・裏面いずれかがあれば名刺レコードを作る（裏面のみの取りこぼし防止）。
+      const card = (front || back) ? { front, back } : undefined;
       if (mode === 'edit' && contactId) await updateContactAction(contactId, companyId, payload, card);
       else if (companyId) await createContactAction(companyId, payload, card);
     });

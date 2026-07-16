@@ -5,6 +5,10 @@ import {
   CARDS_BUCKET, DOCS_BUCKET, validateUpload, objectPath, uploadFile, type UploadKind,
 } from '@/lib/data/storage';
 
+// UUID 形式のみ許可（Storageオブジェクトキーのプレフィックスに素の入力を使うため、
+// `..` や `/` を含む値でキー空間を汚染されないようにする＝SEC-5）。
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 // 実ファイルのアップロード窓口（multipart）。認証必須・サーバー側で検証してから Storage 投入（SEC-5/9）。
 // kind=document: company-documents バケットへ→ create_document でメタ登録。
 // kind=card:     business-cards バケットへ→ パスを返す（呼び出し側が upload_business_card で保存）。
@@ -32,6 +36,7 @@ export async function POST(req: Request) {
     // 名刺: 画像を保存し、business_cards への登録まで**サーバー側で完結**（パスをクライアントに往復させない）。
     const contactId = String(form.get('contact_id') || '');
     if (!contactId) return NextResponse.json({ error: '担当者が指定されていません' }, { status: 400 });
+    if (!UUID_RE.test(contactId)) return NextResponse.json({ error: '担当者IDが不正です' }, { status: 400 });
     const path = objectPath(`cards/${contactId}`, file.name, rid);
     const up = await uploadFile(CARDS_BUCKET, path, await file.arrayBuffer(), file.type || 'application/octet-stream');
     if ('error' in up) return NextResponse.json({ error: up.error }, { status: 502 });
@@ -44,6 +49,7 @@ export async function POST(req: Request) {
   const companyId = String(form.get('company_id') || '');
   const category = String(form.get('category') || 'その他');
   if (!companyId) return NextResponse.json({ error: '企業が指定されていません' }, { status: 400 });
+  if (!UUID_RE.test(companyId)) return NextResponse.json({ error: '企業IDが不正です' }, { status: 400 });
   const path = objectPath(companyId, file.name, rid);
   const up = await uploadFile(DOCS_BUCKET, path, await file.arrayBuffer(), file.type || 'application/octet-stream');
   if ('error' in up) return NextResponse.json({ error: up.error }, { status: 502 });

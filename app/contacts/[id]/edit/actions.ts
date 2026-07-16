@@ -21,7 +21,7 @@ type CardInput = { front?: string; back?: string };
 export async function updateContactAction(id: string, companyId: string | undefined, payload: ContactPayload, card?: CardInput) {
   await updateContact(id, payload);
   if (payload.is_primary) await setPrimaryContact(id);
-  if (card?.front) await uploadBusinessCard(id, card.front, card.back);
+  if (card && (card.front || card.back)) await uploadBusinessCard(id, card.front, card.back);
   revalidatePath(`/contacts/${id}`);
   if (companyId) revalidatePath(`/companies/${companyId}`);
   redirect(`/contacts/${id}`);
@@ -32,7 +32,7 @@ export async function createContactAction(companyId: string, payload: ContactPay
   const res = await createContact(companyId, payload);
   const newId: string | undefined = res?.id;
   if (newId && payload.is_primary) await setPrimaryContact(newId);
-  if (newId && card?.front) await uploadBusinessCard(newId, card.front, card.back);
+  if (newId && card && (card.front || card.back)) await uploadBusinessCard(newId, card.front, card.back);
   revalidatePath(`/companies/${companyId}`);
   if (newId) redirect(`/contacts/${newId}`);
   redirect(`/companies/${companyId}#contacts`);

@@ -77,6 +77,23 @@ describe('tasksToIcal', () => {
     expect(ics.includes('\r\n')).toBe(true);
     expect(ics.replace(/\r\n/g, '').includes('\n')).toBe(false);
   });
+
+  it('長い日本語タイトル(>75オクテット)を二重折返しせず、unfoldで完全復元できる', () => {
+    const title = '決算準備' + 'あ'.repeat(40); // 3B×多数 → 余裕で75オクテット超
+    const out = tasksToIcal([{ id: 'long', title, due_date: '2026-08-31' }], { now: NOW, domain: 'test' });
+    // 物理行はすべて75オクテット以内、裸のCRは無い（\r は必ず \r\n の一部）
+    const enc = new TextEncoder();
+    const physical = out.split('\r\n');
+    for (const p of physical) {
+      expect(enc.encode(p).length).toBeLessThanOrEqual(75);
+      expect(p.includes('\r')).toBe(false);
+      expect(p.includes('\n')).toBe(false);
+    }
+    // RFC5545 unfold（CRLF+先頭スペースを除去）→ SUMMARY 論理行が元タイトルを復元
+    const unfolded = out.replace(/\r\n[ \t]/g, '');
+    const summaryLine = unfolded.split('\r\n').find((l) => l.startsWith('SUMMARY:'));
+    expect(summaryLine).toBe(`SUMMARY:${title}`);
+  });
 });
 
 describe('meetingsToIcal', () => {

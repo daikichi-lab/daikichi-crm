@@ -113,6 +113,7 @@ export type IcalMeeting = {
 
 type BuildOpts = { now?: Date; domain?: string; calName?: string };
 
+// 論理行を渡す（折返しは wrap が1回だけ行う）。呼び出し側で foldLine を掛けないこと（二重折返し防止）。
 function wrap(lines: string[], calName: string): string {
   const head = [
     'BEGIN:VCALENDAR',
@@ -120,7 +121,7 @@ function wrap(lines: string[], calName: string): string {
     `PRODID:${PRODID}`,
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
-    foldLine(`X-WR-CALNAME:${escapeText(calName)}`),
+    `X-WR-CALNAME:${escapeText(calName)}`,
     `X-WR-TIMEZONE:${TZID}`,
     ...VTIMEZONE,
   ];
@@ -146,10 +147,10 @@ export function tasksToIcal(tasks: IcalTask[], opts: BuildOpts = {}): string {
     lines.push('BEGIN:VTODO');
     lines.push(`UID:task-${t.id}@${domain}`);
     lines.push(`DTSTAMP:${stamp}`);
-    lines.push(foldLine(`SUMMARY:${escapeText(t.title || '(無題)')}`));
+    lines.push(`SUMMARY:${escapeText(t.title || '(無題)')}`);
     if (start) lines.push(`DTSTART;VALUE=DATE:${start}`);
     if (due) lines.push(`DUE;VALUE=DATE:${due}`);
-    if (descParts.length) lines.push(foldLine(`DESCRIPTION:${escapeText(descParts.join(' / '))}`));
+    if (descParts.length) lines.push(`DESCRIPTION:${escapeText(descParts.join(' / '))}`);
     lines.push(`STATUS:${done ? 'COMPLETED' : 'NEEDS-ACTION'}`);
     if (done) lines.push('PERCENT-COMPLETE:100');
     lines.push('END:VTODO');
@@ -176,9 +177,9 @@ export function meetingsToIcal(meetings: IcalMeeting[], opts: BuildOpts = {}): s
     lines.push(`DTSTAMP:${stamp}`);
     lines.push(`DTSTART;TZID=${TZID}:${start}`);
     lines.push(`DTEND;TZID=${TZID}:${end}`);
-    lines.push(foldLine(`SUMMARY:${escapeText(m.title || '(打ち合わせ)')}`));
-    if (m.location) lines.push(foldLine(`LOCATION:${escapeText(m.location)}`));
-    if (descParts.length) lines.push(foldLine(`DESCRIPTION:${escapeText(descParts.join(' / '))}`));
+    lines.push(`SUMMARY:${escapeText(m.title || '(打ち合わせ)')}`);
+    if (m.location) lines.push(`LOCATION:${escapeText(m.location)}`);
+    if (descParts.length) lines.push(`DESCRIPTION:${escapeText(descParts.join(' / '))}`);
     lines.push('END:VEVENT');
   }
   return wrap(lines, opts.calName ?? '大吉CRM 打ち合わせ');

@@ -47,7 +47,7 @@ export async function createCompanyWithContactAction(company: ScanCompany, conta
   await requireUser();
   const res = await createCompanyWithContact(company, contact);
   const contactId: string | undefined = res?.contact_id ?? res?.contact?.id;
-  if (contactId && frontCard) await uploadBusinessCard(contactId, frontCard, backCard);
+  if (contactId && (frontCard || backCard)) await uploadBusinessCard(contactId, frontCard, backCard);
   revalidatePath('/companies');
   return res as { id?: string; company_id?: string; contact_id?: string; error?: string };
 }
@@ -57,7 +57,7 @@ export async function addContactToCompanyAction(companyId: string, contact: Scan
   await requireUser();
   const res = await addContactToCompany(companyId, contact);
   const contactId: string | undefined = res?.id ?? res?.contact_id;
-  if (contactId && frontCard) await uploadBusinessCard(contactId, frontCard, backCard);
+  if (contactId && (frontCard || backCard)) await uploadBusinessCard(contactId, frontCard, backCard);
   revalidatePath(`/companies/${companyId}`);
   return res as { id?: string; error?: string };
 }

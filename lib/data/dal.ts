@@ -119,7 +119,7 @@ export async function restoreContact(id: string): Promise<any> { return callRpc(
 export async function addContactToCompany(companyId: string, p: J): Promise<any> { return callRpc('add_contact_to_company', { p_company_id: companyId, p }, await authedCtx()); }
 export async function createCompanyWithContact(company: J, contact: J): Promise<any> { return callRpc('create_company_with_contact', { p_company: company, p_contact: contact }, await authedCtx()); }
 export async function detectDuplicateCompany(name: string, email?: string): Promise<any> { return callRpc('detect_duplicate_company', { p_name: name, p_email: email }, await authedCtx()); }
-export async function uploadBusinessCard(contactId: string, front: string, back?: string): Promise<any> { return callRpc('upload_business_card', { p_contact_id: contactId, p_front: front, p_back: back }, await authedCtx()); }
+export async function uploadBusinessCard(contactId: string, front?: string, back?: string): Promise<any> { return callRpc('upload_business_card', { p_contact_id: contactId, p_front: front ?? null, p_back: back ?? null }, await authedCtx()); }
 export async function deleteBusinessCard(id: string): Promise<any> { return callRpc('delete_business_card', { p_id: id }, await authedCtx()); }
 export async function listContactCards(contactId: string): Promise<any> { return callRpc('list_contact_cards', { p_contact_id: contactId }, await authedCtx()); }
 
