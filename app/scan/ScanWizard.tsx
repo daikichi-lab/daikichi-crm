@@ -4,7 +4,7 @@ import { useState, useTransition, useEffect, useRef } from 'react';
 import { useUI } from '@/components/ui';
 import { Icon } from '@/components/icons';
 import { detectDuplicateAction, createCompanyWithContactAction, addContactToCompanyAction, uploadScanImageAction } from './actions';
-import { parseBusinessCard } from './ocr-parse';
+import { parseBusinessCard, type ParsedCard } from './ocr-parse';
 
 type Masters = { industries: string[]; areas: string[]; sizes: string[] };
 type DupCandidate = { id: string; name: string; industry?: string; area?: string; status?: string };
@@ -22,16 +22,21 @@ export function ScanWizard({ masters }: { masters: Masters }) {
 
   // step: 1 取り込み / 2 読み取り / 3 確認・補正
   const [step, setStep] = useState<1 | 2 | 3>(1);
+  // プレビューで表示・操作している面（表/裏）
+  const [side, setSide] = useState<'front' | 'back'>('front');
 
-  // 実画像（表/裏）と OCR
-  const frontRef = useRef<HTMLInputElement>(null);
-  const backRef = useRef<HTMLInputElement>(null);
+  // 実画像（表/裏）と OCR。撮影=カメラ(capture) / ファイル=画像選択(captureなし) を面ごとに分ける。
+  const frontCamRef = useRef<HTMLInputElement>(null);
+  const frontFileRef = useRef<HTMLInputElement>(null);
+  const backCamRef = useRef<HTMLInputElement>(null);
+  const backFileRef = useRef<HTMLInputElement>(null);
   const [frontFile, setFrontFile] = useState<File | null>(null);
   const [backFile, setBackFile] = useState<File | null>(null);
   const [frontUrl, setFrontUrl] = useState<string>('');
   const [backUrl, setBackUrl] = useState<string>('');
   const [ocrPct, setOcrPct] = useState(0);
   const [ocrRunning, setOcrRunning] = useState(false);
+  const [ocrStage, setOcrStage] = useState('');
   const [ocrText, setOcrText] = useState('');
 
   // 抽出フォーム
@@ -69,9 +74,9 @@ export function ScanWizard({ masters }: { masters: Masters }) {
     toast('裏面を追加しました');
   };
 
-  const applyParsed = (text: string) => {
-    setOcrText(text);
-    const p = parseBusinessCard(text);
+  // ParsedCard を各入力欄へ反映（存在する項目のみ）。
+  const applyCard = (p: ParsedCard, rawText: string) => {
+    setOcrText(rawText);
     if (p.company) setCompany(p.company);
     if (p.name) setName(p.name);
     if (p.title) setTitle(p.title);
@@ -79,23 +84,61 @@ export function ScanWizard({ masters }: { masters: Masters }) {
     if (p.phone) setPhone(p.phone);
     if (p.mobile) setMobile(p.mobile);
     if (p.address) setAddress(p.address);
+    if (p.type) setType(p.type); // 社名の法人格から企業分類（法人/個人事業主）を自動設定
+  };
+  const applyParsed = (text: string) => applyCard(parseBusinessCard(text), text);
+
+  // 1枚を OCR してテキストを返す。①日本語高精度=PaddleOCR（ブラウザ内 onnxruntime-web）→
+  // 空/失敗なら ②Tesseract(best) にフォールバック。画像は外部OCRサービスに送らない（C-7）。
+  const ocrImage = async (file: Blob): Promise<string> => {
+    // ① PaddleOCR
+    try {
+      const { recognizeWithPaddle } = await import('./paddle-ocr');
+      const t = await recognizeWithPaddle(file);
+      if (t && t.trim().length >= 2) return t;
+    } catch { /* Tesseract へ */ }
+    // ② フォールバック: Tesseract(best)（前処理あり）
+    try {
+      const [{ createWorker }, { preprocessCardImage }] = await Promise.all([
+        import('tesseract.js'),
+        import('./preprocess'),
+      ]);
+      const input = await preprocessCardImage(file);
+      const worker = await createWorker('jpn+eng', 1, {
+        langPath: 'https://tessdata.projectnaptha.com/4.0.0_best',
+        logger: (m: { status: string; progress: number }) => {
+          if (m.status === 'recognizing text') { setOcrStage(`読み取り中 ${Math.round(m.progress * 100)}%`); setOcrPct(Math.round(m.progress * 100)); }
+          else if (/traineddata|loading|initiali/i.test(m.status)) setOcrStage('言語モデルを取得中…（初回のみ）');
+        },
+      });
+      const { data } = await worker.recognize(input);
+      await worker.terminate();
+      return data.text || '';
+    } catch {
+      return '';
+    }
   };
 
-  // ブラウザ内 Tesseract.js（画像を外部OCRサービスに送らない）。失敗時は手入力へフォールバック。
+  // 表面を読み取り、裏面があれば読み取って「空欄のみ」補完する（表面優先）。
   const runOcr = async () => {
     if (!frontFile) { toast('先に名刺画像を取り込んでください'); return; }
     setOcrRunning(true);
     setOcrPct(0);
     try {
-      const { createWorker } = await import('tesseract.js');
-      const worker = await createWorker('jpn+eng', 1, {
-        logger: (m: { status: string; progress: number }) => {
-          if (m.status === 'recognizing text') setOcrPct(Math.round(m.progress * 100));
-        },
-      });
-      const { data } = await worker.recognize(frontFile);
-      await worker.terminate();
-      applyParsed(data.text || '');
+      setOcrStage(backFile ? '表面を読み取り中…（初回はモデルDL）' : '読み取り中…（初回はモデルDL）');
+      const frontText = await ocrImage(frontFile);
+      let parsed = parseBusinessCard(frontText);
+      let rawText = frontText;
+      if (backFile) {
+        setOcrStage('裏面を読み取り中…');
+        const backText = await ocrImage(backFile);
+        if (backText && backText.trim()) {
+          const back = parseBusinessCard(backText);
+          parsed = { ...back, ...parsed }; // 表面優先・裏面で空欄を補完
+          rawText = `【表面】\n${frontText}\n\n【裏面】\n${backText}`;
+        }
+      }
+      applyCard(parsed, rawText);
       setOcrPct(100);
       setStep(3);
       toast('読み取りました。内容を必ず確認・補正してください。');
@@ -177,6 +220,31 @@ export function ScanWizard({ masters }: { masters: Masters }) {
 
   const stepClass = (n: number) => `s${step >= n ? ' on' : ''}`;
 
+  // 表示中の面の画像URL・入力起動ヘルパ
+  const curUrl = side === 'front' ? frontUrl : backUrl;
+  const curFile = side === 'front' ? frontFile : backFile;
+  const openCam = () => (side === 'front' ? frontCamRef : backCamRef).current?.click();
+  const openFile = () => (side === 'front' ? frontFileRef : backFileRef).current?.click();
+
+  // 横向きに取り込まれた名刺を90°回転して補正（OCRは水平な文字を前提）。表面は再読み取りを促す。
+  const rotateCurrent = async () => {
+    const file = side === 'front' ? frontFile : backFile;
+    if (!file) { toast('先に画像を取り込んでください'); return; }
+    const { rotateImage90 } = await import('./preprocess');
+    const rotated = new File([await rotateImage90(file)], file.name || 'card.png', { type: 'image/png' });
+    if (side === 'front') {
+      if (frontUrl) URL.revokeObjectURL(frontUrl);
+      setFrontFile(rotated);
+      setFrontUrl(URL.createObjectURL(rotated));
+      setStep(2); // 向きが変わったので再読み取りへ
+    } else {
+      if (backUrl) URL.revokeObjectURL(backUrl);
+      setBackFile(rotated);
+      setBackUrl(URL.createObjectURL(rotated));
+      toast('裏面を回転しました');
+    }
+  };
+
   return (
     <>
       <div className="steps" data-scan-steps>
@@ -188,39 +256,61 @@ export function ScanWizard({ masters }: { masters: Masters }) {
 
       <div className="page-head"><div><h2>名刺から顧客を作成</h2><div className="sub">読み取り後に必ず内容を確認・補正してから作成します（OCR: ブラウザ内 Tesseract.js・画像は外部送信しません）</div></div></div>
 
-      {/* 隠しファイル入力（撮影=capture / ファイル選択） */}
-      <input ref={frontRef} type="file" accept="image/*" capture="environment" hidden onChange={(e) => pickFront(e.target.files?.[0])} />
-      <input ref={backRef} type="file" accept="image/*" capture="environment" hidden onChange={(e) => pickBack(e.target.files?.[0])} />
+      {/* 隠しファイル入力: 撮影=カメラ起動(capture) / ファイル=保存済み画像を選択(captureなし)。表・裏それぞれ。 */}
+      <input ref={frontCamRef} type="file" accept="image/*" capture="environment" hidden onChange={(e) => { pickFront(e.target.files?.[0]); e.target.value = ''; }} />
+      <input ref={frontFileRef} type="file" accept="image/*" hidden onChange={(e) => { pickFront(e.target.files?.[0]); e.target.value = ''; }} />
+      <input ref={backCamRef} type="file" accept="image/*" capture="environment" hidden onChange={(e) => { pickBack(e.target.files?.[0]); e.target.value = ''; }} />
+      <input ref={backFileRef} type="file" accept="image/*" hidden onChange={(e) => { pickBack(e.target.files?.[0]); e.target.value = ''; }} />
 
       <div className="scan-split">
         {/* 左: 画像とOCR */}
         <div>
           <div className="scan-preview">
-            <div className="row" style={{ justifyContent: 'space-between', color: '#cdddea', fontSize: 12.5, fontWeight: 700 }}>
-              <span>取り込んだ名刺</span>
+            <div className="row" style={{ justifyContent: 'space-between', color: '#cdddea', fontSize: 12.5, fontWeight: 700, flexWrap: 'wrap', gap: 8 }}>
+              <span className="row" style={{ gap: 8 }}>
+                <span>取り込んだ名刺</span>
+                {/* 表/裏 切替（両面を確認できる） */}
+                <span className="row" style={{ gap: 0, border: '1px solid #3a4c5e', borderRadius: 8, overflow: 'hidden' }}>
+                  {(['front', 'back'] as const).map((sd) => (
+                    <button
+                      key={sd}
+                      className="btn btn-sm"
+                      aria-pressed={side === sd}
+                      onClick={() => setSide(sd)}
+                      style={{ padding: '2px 12px', borderRadius: 0, border: 0, background: side === sd ? '#2b6cb0' : 'transparent', color: side === sd ? '#fff' : '#cdddea' }}
+                    >
+                      {sd === 'front' ? '表' : '裏'}{(sd === 'front' ? frontFile : backFile) ? ' ✓' : ''}
+                    </button>
+                  ))}
+                </span>
+              </span>
               <span className="row" style={{ gap: 6 }}>
-                <button className="btn btn-sm" data-icon="card" onClick={() => frontRef.current?.click()}>撮影</button>
-                <button className="btn btn-sm" onClick={() => frontRef.current?.click()}>ファイル</button>
+                <button className="btn btn-sm" onClick={rotateCurrent} disabled={!curFile} title="90°回転（横向きの名刺を補正）">↻ 回転</button>
+                <button className="btn btn-sm" data-icon="card" onClick={openCam}>撮影</button>
+                <button className="btn btn-sm" onClick={openFile}>ファイル</button>
               </span>
             </div>
-            {step === 1 || !frontUrl ? (
-              <div className="shot" role="button" tabIndex={0} onClick={() => frontRef.current?.click()} style={{ display: 'grid', placeItems: 'center', background: '#1f2832', color: '#9fb6c9', cursor: 'pointer' }}>
-                <div style={{ textAlign: 'center', fontSize: 13 }}><div style={{ fontSize: 26 }}>＋</div>タップして撮影 / ファイルを選択</div>
-              </div>
-            ) : (
+            {curUrl ? (
               <div className="shot" style={{ background: '#0d1116' }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={frontUrl} alt="取り込んだ名刺（表）" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                <img src={curUrl} alt={`取り込んだ名刺（${side === 'front' ? '表' : '裏'}）`} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              </div>
+            ) : (
+              <div className="shot" role="button" tabIndex={0} onClick={openFile} style={{ display: 'grid', placeItems: 'center', background: '#1f2832', color: '#9fb6c9', cursor: 'pointer' }}>
+                <div style={{ textAlign: 'center', fontSize: 13 }}><div style={{ fontSize: 26 }}>＋</div>タップして{side === 'front' ? '表面' : '裏面'}を撮影 / ファイルを選択</div>
               </div>
             )}
-            <div style={{ color: '#9fb6c9', fontSize: 12 }}>裏面（任意）: <button className="linklike" onClick={() => backRef.current?.click()} style={{ color: '#bcd2e4', background: 'none', border: 0, cursor: 'pointer', padding: 0 }}>{backFile ? '✓ 追加済み（変更）' : '＋ 追加'}</button></div>
+            <div style={{ color: '#9fb6c9', fontSize: 12 }}>
+              表面はOCRの対象です。裏面は任意（保存のみ）。 — 表 {frontFile ? '✓取込済' : '未取込'} / 裏 {backFile ? '✓取込済' : '未取込'}
+              {side === 'back' && !backFile && <>　<button className="linklike" onClick={openFile} style={{ color: '#bcd2e4', background: 'none', border: 0, cursor: 'pointer', padding: 0 }}>＋ 裏面を追加</button></>}
+            </div>
           </div>
 
           <div className="panel mt16">
             <div className="panel-body">
               <div className="row" style={{ justifyContent: 'space-between', marginBottom: 8 }}>
                 <span className="b">OCR 読み取り</span>
-                <span className="muted" style={{ fontSize: 12 }}>{step >= 3 ? '完了' : ocrRunning ? `${ocrPct}%` : step === 2 ? '待機中' : '未取込'}</span>
+                <span className="muted" style={{ fontSize: 12 }}>{step >= 3 ? '完了' : ocrRunning ? (ocrStage || `${ocrPct}%`) : step === 2 ? '待機中' : '未取込'}</span>
               </div>
               <div className="progress"><i style={{ width: step >= 3 ? '100%' : ocrRunning ? `${ocrPct}%` : '0%' }} /></div>
               <div className="muted" style={{ fontSize: 12, marginTop: 8 }}>画像はブラウザ内で処理。外部サービスには送信していません。初回は言語データの取得に少し時間がかかります。</div>
