@@ -29,6 +29,29 @@ export async function cardSignedUrlAction(contactId: string, face: 'front' | 'ba
   return { url: url ?? undefined };
 }
 
+/** 名刺履歴（過去の名刺）の一覧。メタのみ（生パスは返さない）。 */
+export async function listContactCardsAction(contactId: string): Promise<{ cards?: Array<{ id: string; ocr_status: string; has_front: boolean; has_back: boolean; created_at: string }>; error?: string }> {
+  if (!(await getCurrentUser())) return { error: 'unauthorized' };
+  const { listContactCards } = await import('@/lib/data/dal');
+  const rows = await listContactCards(contactId);
+  return { cards: Array.isArray(rows) ? rows : [] };
+}
+
+/** 特定の名刺（cardId）の署名URL。パスはサーバー側で認可済みレコードから解決（IDOR対策）。
+ *  cardId が当該 contact の名刺であることを get_contact（RLS配下）で検証してから発行する。 */
+export async function cardHistorySignedUrlAction(contactId: string, cardId: string, face: 'front' | 'back' = 'front'): Promise<{ url?: string }> {
+  if (!(await getCurrentUser())) return {};
+  const { getContact } = await import('@/lib/data/dal');
+  const c = await getContact(contactId, true);
+  if (!c || c.error) return {};
+  const cards: Array<{ id?: string; front_path?: string | null; back_path?: string | null }> = c.cards ?? c.business_cards ?? [];
+  const card = cards.find((x) => String(x.id) === String(cardId));
+  if (!card) return {}; // 当該 contact の名刺でなければ拒否
+  const path = face === 'back' ? card.back_path : card.front_path;
+  const url = await signedUrl(CARDS_BUCKET, path, 120);
+  return { url: url ?? undefined };
+}
+
 /** 資料の削除（論理削除＋実体掃除）。 */
 export async function deleteDocumentAction(id: string, companyId?: string): Promise<{ ok?: boolean; error?: string }> {
   if (!(await getCurrentUser())) return { error: 'unauthorized' };

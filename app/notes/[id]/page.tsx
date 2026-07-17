@@ -7,7 +7,7 @@ import { AppShell } from '@/components/AppShell';
 import { Icon } from '@/components/icons';
 import { TourButton, type GuideTourStep } from '@/components/TourButton';
 import { UserAvatar } from '@/components/ui-bits';
-import { NoteActions, TodoChecklist, RecoButtons } from './parts';
+import { NoteActions, TodoChecklist, RecoButtons, SummaryPanel } from './parts';
 
 const GUIDE_TOUR: GuideTourStep[] = [
   { sel: '.grid-2', title: '1件の議事録',
@@ -77,11 +77,7 @@ export default async function NoteDetailPage({ params }: { params: Promise<{ id:
               <h3>要点（自動でまとめ）</h3>
               <span className="tag right" style={{ fontSize: 10.5, border: '1px solid var(--line-strong)', padding: '1px 6px', borderRadius: 4, color: 'var(--ink-3)' }}>手元のClaudeが要約・外部課金なし</span>
             </div>
-            <div className="panel-body">
-              {n.summary
-                ? <p style={{ margin: 0, fontSize: 13.5, color: 'var(--ink-2)', lineHeight: 1.8 }}>{n.summary}</p>
-                : <div className="muted">要点はまだありません。</div>}
-            </div>
+            <SummaryPanel id={n.id} summary={n.summary} />
           </div>
 
           <div className="panel">
@@ -116,7 +112,7 @@ export default async function NoteDetailPage({ params }: { params: Promise<{ id:
 
           <div className="panel">
             <div className="panel-head"><h3>次のアクション（おすすめ）</h3></div>
-            <RecoButtons company={n.company} />
+            <RecoButtons company={n.company} companyId={n.company_id} />
           </div>
 
           <div className="panel">

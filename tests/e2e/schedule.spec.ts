@@ -304,9 +304,13 @@ test.describe('期限・タスク (/schedule)', () => {
     await expect(page.locator('#view-list tr', { hasText: MANUAL_TASK })).toHaveCount(0);
   });
 
-  test('カレンダー書出ボタンでトーストが出る', async ({ page }) => {
+  test('カレンダー書出ボタンで .ics がダウンロードされる', async ({ page }) => {
     await page.goto('/schedule');
-    await page.getByRole('button', { name: 'カレンダー書出' }).click();
-    await expect(page.locator('.toast', { hasText: 'Googleカレンダーへ書き出しました' })).toBeVisible();
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByRole('button', { name: 'カレンダー書出' }).click(),
+    ]);
+    expect(download.suggestedFilename()).toMatch(/\.ics$/);
+    await expect(page.locator('.toast', { hasText: 'カレンダー' })).toBeVisible();
   });
 });

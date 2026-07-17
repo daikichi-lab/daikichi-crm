@@ -119,8 +119,9 @@ export async function restoreContact(id: string): Promise<any> { return callRpc(
 export async function addContactToCompany(companyId: string, p: J): Promise<any> { return callRpc('add_contact_to_company', { p_company_id: companyId, p }, await authedCtx()); }
 export async function createCompanyWithContact(company: J, contact: J): Promise<any> { return callRpc('create_company_with_contact', { p_company: company, p_contact: contact }, await authedCtx()); }
 export async function detectDuplicateCompany(name: string, email?: string): Promise<any> { return callRpc('detect_duplicate_company', { p_name: name, p_email: email }, await authedCtx()); }
-export async function uploadBusinessCard(contactId: string, front: string, back?: string): Promise<any> { return callRpc('upload_business_card', { p_contact_id: contactId, p_front: front, p_back: back }, await authedCtx()); }
+export async function uploadBusinessCard(contactId: string, front?: string, back?: string): Promise<any> { return callRpc('upload_business_card', { p_contact_id: contactId, p_front: front ?? null, p_back: back ?? null }, await authedCtx()); }
 export async function deleteBusinessCard(id: string): Promise<any> { return callRpc('delete_business_card', { p_id: id }, await authedCtx()); }
+export async function listContactCards(contactId: string): Promise<any> { return callRpc('list_contact_cards', { p_contact_id: contactId }, await authedCtx()); }
 
 // ===== company_documents（資料・Storage） =====
 export async function createDocument(p: J): Promise<{ id?: string; error?: string }> { return callRpc('create_document', { p }, await authedCtx()); }
@@ -146,11 +147,15 @@ export async function recordActivity(p: J): Promise<any> { return callRpc('recor
 
 // ===== notes =====
 export async function updateNoteTodos(id: string, todos: string[]): Promise<any> { return callRpc('update_note_todos', { p_id: id, p_todos: todos }, await authedCtx()); }
+export async function createNote(p: J): Promise<{ id?: string; error?: string }> { return callRpc('create_note', { p }, await authedCtx()); }
+export async function updateNoteSummary(id: string, summary: string): Promise<any> { return callRpc('update_note_summary', { p_id: id, p_summary: summary }, await authedCtx()); }
 
 // ===== newsletters =====
 export async function saveNewsletterDraft(p: J): Promise<any> { return callRpc('save_newsletter_draft', { p }, await authedCtx()); }
 export async function sendNewsletter(p: J): Promise<any> { return callRpc('send_newsletter', { p }, await authedCtx()); }
 export async function duplicateNewsletter(id: string): Promise<any> { return callRpc('duplicate_newsletter', { p_id: id }, await authedCtx()); }
+export async function newsletterRecipientsForSend(id: string): Promise<{ id: string; email: string; name: string | null; company: string | null }[]> { return callRpc('newsletter_recipients_for_send', { p_id: id }, await authedCtx()); }
+export async function markNewsletterFailed(id: string, failed: string[]): Promise<{ sent: number; failed: number }> { return callRpc('mark_newsletter_failed', { p_id: id, p_failed: failed }, await authedCtx()); }
 
 // ===== forms =====
 export async function importFormSubmission(id: string): Promise<any> { return callRpc('import_form_submission', { p_id: id }, await authedCtx()); }
@@ -171,7 +176,7 @@ export async function updateMyProfile(name: string): Promise<any> { return callR
 
 // ===== 公開（anon） =====
 const anonCtx = { uid: null, role: 'anon' as const };
-export async function submitPublicForm(p: J): Promise<any> { return callRpc('submit_public_form', { p }, anonCtx); }
+export async function submitPublicForm(p: J, ip?: string): Promise<any> { return callRpc('submit_public_form', { p, p_ip: ip }, anonCtx); }
 export async function getPublicFormConfig(): Promise<any> { return callRpc('get_public_form_config', {}, anonCtx); }
 export async function getSubscriptionByToken(token: string): Promise<any> { return callRpc('get_subscription_by_token', { p_token: token }, anonCtx); }
 export async function updateSubscription(token: string, topics: string[]): Promise<any> { return callRpc('update_subscription', { p_token: token, p_topics: topics }, anonCtx); }

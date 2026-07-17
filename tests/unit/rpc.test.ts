@@ -246,3 +246,47 @@ describe('セッション失効: 無効化ユーザーは解決されない（se
     await db.query(`delete from app_users where id='${uid}'`);
   });
 });
+
+describe('公開フォーム設定: マージ保存・公開停止・レート制限（0012）', () => {
+  beforeAll(async () => { await asUser(db, YAMADA); });
+
+  it('update_form_config は部分保存で既存値を消さない（浅いマージ）', async () => {
+    await call(`select update_form_config('{"title":"設定T1","intro":"設定I1","published":true}'::jsonb) r`);
+    await call(`select update_form_config('{"published":false}'::jsonb) r`);
+    const cfg = await call(`select get_public_form_config() r`);
+    expect(cfg.title).toBe('設定T1');   // 部分保存で消えていない
+    expect(cfg.intro).toBe('設定I1');
+    expect(cfg.published).toBe(false);
+    await call(`select update_form_config('{"published":true}'::jsonb) r`); // 後片付け
+  });
+
+  it('published=false のとき submit_public_form は受付を拒否する（fail-closed）', async () => {
+    await call(`select update_form_config('{"published":false}'::jsonb) r`);
+    const res = await call(`select submit_public_form('{"name":"停止中テスト","type":"法人"}'::jsonb) r`);
+    expect(res.error).toBeTruthy();
+    await call(`select update_form_config('{"published":true}'::jsonb) r`);
+  });
+
+  it('ハニーポット _hp が埋まっていると受理扱いで破棄（保存しない）', async () => {
+    const before = (await db.query(`select count(*)::int n from form_submissions`)).rows[0].n;
+    const res = await call(`select submit_public_form('{"name":"ボット","_hp":"trap"}'::jsonb) r`);
+    expect(res.ok).toBe(true);
+    const after = (await db.query(`select count(*)::int n from form_submissions`)).rows[0].n;
+    expect(after).toBe(before); // 実体は保存されていない
+  });
+
+  it('レート制限: 同一IPは10分5件まで、rate_limit=false で解除', async () => {
+    const ip = '203.0.113.9';
+    await call(`select update_form_config('{"published":true,"rate_limit":true}'::jsonb) r`);
+    for (let i = 0; i < 5; i++) {
+      const r = await call(`select submit_public_form(('{"name":"RL${i}","type":"法人"}')::jsonb, '${ip}') r`);
+      expect(r.ok).toBe(true);
+    }
+    const sixth = await call(`select submit_public_form('{"name":"RL6","type":"法人"}'::jsonb, '${ip}') r`);
+    expect(sixth.error).toBeTruthy(); // 6件目は拒否
+    await call(`select update_form_config('{"rate_limit":false}'::jsonb) r`);
+    const ok = await call(`select submit_public_form('{"name":"RL7","type":"法人"}'::jsonb, '${ip}') r`);
+    expect(ok.ok).toBe(true); // 無効化で通る
+    await call(`select update_form_config('{"rate_limit":true}'::jsonb) r`);
+  });
+});

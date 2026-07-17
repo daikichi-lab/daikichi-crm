@@ -3,7 +3,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, useTransition } from 'react';
 import { useUI } from '@/components/ui';
 import { Icon } from '@/components/icons';
-import { getSegmentAction, saveNewsletterDraftAction, sendNewsletterAction } from '../actions';
+import { getSegmentAction, saveNewsletterDraftAction, sendNewsletterAction, testSendNewsletterAction } from '../actions';
 
 type Sample = { name: string; company: string; email: string };
 
@@ -99,8 +99,16 @@ export function ComposeForm({
     });
   };
 
-  const claudeDraft = () => toast('Claude（MCP）に本文の下書きを依頼しました');
-  const testSend = () => toast('テストメールを送信しました');
+  // 本文の下書きは手元のClaude（MCP経由）に依頼する運用（アプリからは有料LLMを呼ばない＝C-1）。
+  const claudeDraft = () => toast('本文の下書きは手元のClaude（MCP）に依頼してください（件名・本文をここに貼り付け）');
+  const testSend = () => {
+    const to = window.prompt('テスト送信先のメールアドレスを入力してください');
+    if (!to) return;
+    startTransition(async () => {
+      const res = await testSendNewsletterAction(subject, body, to.trim());
+      toast(res.error ?? `${to} にテスト送信しました`);
+    });
+  };
 
   const send = () => {
     const n = count ?? 0;
@@ -114,7 +122,7 @@ export function ComposeForm({
     } else {
       confirm({
         title: `${n}人にメルマガを送信しますか？`,
-        body: <span>選択中のトピックの購読者のうち、同意あり・配信停止していない {n}人 に今すぐ送信します。日次上限内で自動スロットル配信されます。</span>,
+        body: <span>選択中のトピックの購読者のうち、同意あり・配信停止していない {n}人 に今すぐ送信します。送信者情報と配信停止リンクは自動で本文末尾に付与されます。</span>,
         confirmLabel: '送信する',
         onConfirm: async () => { await sendNewsletterAction(payload()); },
       });

@@ -231,6 +231,29 @@ test.describe('フォーム管理 /forms/edit', () => {
     await page.locator('.panel', { hasText: '公開URL' }).getByRole('button', { name: 'コピー' }).click();
     await expect(page.locator('.toast', { hasText: 'URLをコピーしました' })).toBeVisible();
   });
+
+  test('QRコードボタンでモーダルにQR(SVG)が表示され、DLリンクがある', async ({ page }) => {
+    await page.goto('/forms/edit');
+    await page.getByRole('button', { name: 'QRコード' }).click();
+    const modal = page.locator('.scrim .modal', { hasText: 'QRコード' });
+    await expect(modal.locator('img[alt="公開フォームのQRコード"]')).toBeVisible();
+    await expect(modal.getByRole('link', { name: 'SVGをダウンロード' })).toHaveAttribute('href', '/api/forms/qr');
+    await modal.getByRole('button', { name: '閉じる' }).click();
+    await expect(modal).toHaveCount(0);
+  });
+
+  test('レート制限トグルを切って保存できる（公開設定の実保存）', async ({ page }) => {
+    await page.goto('/forms/edit');
+    const rl = page.locator('label', { hasText: 'レート制限' }).locator('.tk');
+    await rl.click(); // OFF
+    await page.locator('.page-head .actions').getByRole('button', { name: '保存' }).click();
+    await expect(page.locator('.toast', { hasText: 'フォームを保存しました' })).toBeVisible();
+    // 元へ戻す（次テストに影響させない）
+    await page.reload();
+    await page.locator('label', { hasText: 'レート制限' }).locator('.tk').click(); // ON
+    await page.locator('.page-head .actions').getByRole('button', { name: '保存' }).click();
+    await expect(page.locator('.toast', { hasText: 'フォームを保存しました' }).last()).toBeVisible();
+  });
 });
 
 // =====================================================================

@@ -3,7 +3,7 @@ import { useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUI } from '@/components/ui';
 import { setPrimaryContactAction, softDeleteContactAction } from './actions';
-import { cardSignedUrlAction } from '@/app/storage-actions';
+import { cardSignedUrlAction, listContactCardsAction, cardHistorySignedUrlAction } from '@/app/storage-actions';
 
 /** topbar の削除ボタン（確認ダイアログ → soft delete） */
 export function DeleteContactButton({ id, name, companyId }: { id: string; name: string; companyId?: string }) {
@@ -113,11 +113,60 @@ export function CardReplaceButton({ contactId }: { contactId: string }) {
   );
 }
 
-export function CardActionButton({ label, msg, icon }: { label: string; msg: string; icon?: boolean }) {
+type CardHist = { id: string; ocr_status: string; has_front: boolean; has_back: boolean; created_at: string };
+
+/** 名刺の履歴（過去の名刺一覧）。各名刺の表/裏を署名URLで開ける（パスはサーバ側で解決）。 */
+export function CardHistoryButton({ contactId }: { contactId: string }) {
   const { toast } = useUI();
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [cards, setCards] = useState<CardHist[]>([]);
+
+  const load = async () => {
+    setOpen(true);
+    setLoading(true);
+    const r = await listContactCardsAction(contactId);
+    setCards(r.cards ?? []);
+    setLoading(false);
+  };
+
+  const openFace = async (cardId: string, face: 'front' | 'back') => {
+    toast('名刺を拡大表示（署名URL・期限付き）');
+    const r = await cardHistorySignedUrlAction(contactId, cardId, face);
+    if (r.url && /^https?:\/\//.test(r.url)) window.open(r.url, '_blank', 'noopener');
+  };
+
   return (
-    <button className="btn btn-sm" {...(icon ? { 'data-icon': 'card', 'data-iw': '14' } : {})} onClick={() => toast(msg)}>
-      {label}
-    </button>
+    <>
+      <button className="btn btn-sm" onClick={load}>履歴</button>
+      {open && (
+        <div className="scrim" onClick={(e) => e.target === e.currentTarget && setOpen(false)}>
+          <div className="modal" role="dialog" aria-modal="true" style={{ maxWidth: 520 }}>
+            <div className="m-head"><h3>過去の名刺（履歴）</h3></div>
+            <div className="m-body">
+              {loading && <div className="muted">読み込み中…</div>}
+              {!loading && cards.length === 0 && <div className="muted">保存された名刺はまだありません。</div>}
+              {!loading && cards.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {cards.map((c, i) => (
+                    <div key={c.id} className="row" style={{ justifyContent: 'space-between', alignItems: 'center', gap: 10, padding: '8px 10px', border: '1px solid var(--line)', borderRadius: 6 }}>
+                      <div>
+                        <div className="num" style={{ fontSize: 12.5 }}>{c.created_at}{i === 0 && <span className="badge active" style={{ marginLeft: 8, height: 18, fontSize: 10 }}>最新</span>}</div>
+                        <div className="muted" style={{ fontSize: 11 }}>OCR: {c.ocr_status}</div>
+                      </div>
+                      <div className="row" style={{ gap: 6 }}>
+                        {c.has_front && <button className="btn btn-sm" onClick={() => openFace(c.id, 'front')}>表面</button>}
+                        {c.has_back && <button className="btn btn-sm" onClick={() => openFace(c.id, 'back')}>裏面</button>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="m-foot"><button className="btn" onClick={() => setOpen(false)}>閉じる</button></div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

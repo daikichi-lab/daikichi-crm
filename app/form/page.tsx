@@ -8,6 +8,7 @@ export const metadata = {
 
 export default async function PublicFormPage() {
   const config = (await getPublicFormConfig()) ?? {};
+  const stopped = config.published === false;
 
   return (
     <div className="pub-wrap">
@@ -16,16 +17,25 @@ export default async function PublicFormPage() {
         <div><h1>大吉会計事務所</h1><div className="sub">お客様情報のご登録フォーム</div></div>
       </div>
 
-      <div className="pub-hero">
-        <h2>{config.title ?? '事業の「求めてること」「提供できること」を教えてください'}</h2>
-        <p>{config.intro ?? 'いただいた情報は、顧問先・お客様同士のビジネス紹介（協業先・お客様のご紹介）に活用します。送信内容は担当者が確認のうえ登録します。'}</p>
-      </div>
+      {stopped ? (
+        <div className="pub-hero" style={{ textAlign: 'center' }}>
+          <h2>現在このフォームは受付を停止しています</h2>
+          <p>お手数ですが、大吉会計事務所までお電話・メールでお問い合わせください。</p>
+        </div>
+      ) : (
+        <>
+          <div className="pub-hero">
+            <h2>{config.title ?? '事業の「求めてること」「提供できること」を教えてください'}</h2>
+            <p>{config.intro ?? 'いただいた情報は、顧問先・お客様同士のビジネス紹介（協業先・お客様のご紹介）に活用します。送信内容は担当者が確認のうえ登録します。'}</p>
+          </div>
 
-      <PublicForm config={config} />
+          <PublicForm config={config} />
 
-      <div className="muted" style={{ textAlign: 'center', fontSize: 11.5, marginTop: 18 }}>
-        大吉会計事務所 ／ このフォームは公開URLです（ログイン不要）。送信内容はスタッフ確認後に登録されます。
-      </div>
+          <div className="muted" style={{ textAlign: 'center', fontSize: 11.5, marginTop: 18 }}>
+            大吉会計事務所 ／ このフォームは公開URLです（ログイン不要）。送信内容はスタッフ確認後に登録されます。
+          </div>
+        </>
+      )}
     </div>
   );
 }

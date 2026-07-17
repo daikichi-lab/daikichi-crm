@@ -67,13 +67,17 @@ test.describe('打ち合わせ /meetings', () => {
     await expect(page).toHaveURL(new RegExp(`/companies/${SEED.daikichi}`));
   });
 
-  test('再同期ボタンで toast が出る', async ({ page }) => {
+  test('カレンダー書出ボタンで .ics がダウンロードされる', async ({ page }) => {
     await page.goto('/meetings');
-    const btn = page.getByRole('button', { name: '再同期' });
+    const btn = page.getByRole('button', { name: 'カレンダーに書き出す' });
     await expect(btn).toBeVisible();
     await expect(btn).toBeEnabled();
-    await btn.click();
-    await expect(page.locator('.toast')).toContainText('カレンダーを再同期しました');
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      btn.click(),
+    ]);
+    expect(download.suggestedFilename()).toMatch(/\.ics$/);
+    await expect(page.locator('.toast')).toContainText('.ics');
   });
 
   test('検索フォームは送信で /meetings?q= に遷移する', async ({ page }) => {
@@ -129,23 +133,28 @@ test.describe('議事録一覧 /notes', () => {
     await expect(page.locator('.page-head h2')).toContainText('6月度 定例MTG');
   });
 
-  test('取り込みボタン（topbar）で toast が出る', async ({ page }) => {
+  test('取り込みボタン（topbar）で取込モーダルが開く', async ({ page }) => {
     await page.goto('/notes');
     const btn = page.getByRole('button', { name: '＋ 議事録を取り込む' });
     await expect(btn).toBeVisible();
     await btn.click();
-    await expect(page.locator('.toast')).toContainText('議事録の取り込みを開始しました');
+    const modal = page.locator('.scrim .modal', { hasText: '議事録を取り込む' });
+    await expect(modal).toBeVisible();
+    // タイトル必須・貼付/TXTの入力欄が出る
+    await expect(modal.getByText('文字起こし全文')).toBeVisible();
+    await modal.getByRole('button', { name: 'キャンセル' }).click();
+    await expect(modal).toHaveCount(0);
   });
 
-  test('パネル内「取り込む」ボタンでも toast が出る', async ({ page }) => {
+  test('パネル内「取り込む」ボタンでも取込モーダルが開く', async ({ page }) => {
     await page.goto('/notes');
     const btn = page.getByRole('button', { name: '取り込む', exact: true });
     await expect(btn).toBeVisible();
     await btn.click();
-    await expect(page.locator('.toast')).toContainText('議事録の取り込みを開始しました');
+    await expect(page.locator('.scrim .modal', { hasText: '議事録を取り込む' })).toBeVisible();
   });
 
-  test('自動連携設定の details を開きフォルダ変更 toast が出る', async ({ page }) => {
+  test('自動連携設定の details を開きフォルダ変更 toast が出る（今後対応予定の案内）', async ({ page }) => {
     await page.goto('/notes');
     const details = page.locator('details.setup');
     await details.locator('summary').click();
@@ -153,7 +162,7 @@ test.describe('議事録一覧 /notes', () => {
     const change = page.getByRole('button', { name: '変更' });
     await expect(change).toBeVisible();
     await change.click();
-    await expect(page.locator('.toast')).toContainText('フォルダを選び直します');
+    await expect(page.locator('.toast')).toContainText('今後対応予定');
   });
 
   test('「使い方」の案内人ツアーが起動し、ESCで閉じる', async ({ page }) => {
@@ -223,26 +232,34 @@ test.describe('議事録詳細 /notes/[id]', () => {
     await expect(page).toHaveURL(new RegExp(`/companies/${SEED.tech}`));
   });
 
-  test('全文コピー・編集ボタンで toast が出る', async ({ page }) => {
+  test('全文コピーで toast、要点の「編集」で入力欄が開く', async ({ page }) => {
     await page.context().grantPermissions(['clipboard-read', 'clipboard-write']).catch(() => {});
     await openNote(page, '6月度 定例MTG');
 
     await page.getByRole('button', { name: '全文コピー' }).click();
     await expect(page.locator('.toast', { hasText: '全文をコピーしました' })).toBeVisible();
 
-    await page.getByRole('button', { name: '編集' }).click();
-    await expect(page.locator('.toast', { hasText: '要点を編集できます' })).toBeVisible();
+    // 要点パネルの「編集」で人手補正の textarea が現れる（トーストではなく編集UI）
+    const summaryPanel = page.locator('.panel', { hasText: '要点（自動でまとめ）' });
+    await summaryPanel.getByRole('button', { name: '編集' }).click();
+    await expect(summaryPanel.locator('textarea')).toBeVisible();
+    await summaryPanel.getByRole('button', { name: 'キャンセル' }).click();
   });
 
-  test('次のアクション（おすすめ）の起票ボタンで toast が出る', async ({ page }) => {
+  test('次のアクション（おすすめ）: タグ追加でトースト、紹介候補でマッチングへ遷移', async ({ page }) => {
     await openNote(page, '6月度 定例MTG');
     const reco = page.locator('.panel', { hasText: '次のアクション（おすすめ）' });
 
+    // 検出タグを企業に追加 → マッチングに反映のトースト
     await reco.getByRole('button', { name: '追加' }).click();
     await expect(page.locator('.toast', { hasText: 'マッチングに反映' })).toBeVisible();
 
-    await reco.getByRole('button', { name: '紹介を起票' }).click();
-    await expect(page.locator('.toast', { hasText: '起票しました' })).toBeVisible();
+    // 紹介候補を見る → /matching?base=<companyId> へ遷移
+    await Promise.all([
+      page.waitForURL(/\/matching\?base=/),
+      reco.getByRole('button', { name: '紹介候補を見る' }).click(),
+    ]);
+    expect(page.url()).toMatch(/\/matching\?base=/);
   });
 
   test('「次にやること」をチェックで完了→一覧から外れる（楽観更新＋toast）', async ({ page }) => {

@@ -4,8 +4,9 @@
  * --------------------------------------------------------------
  * - 依存パッケージなし。Node標準のみ（stdio上の JSON-RPC 2.0 を手書き実装）。
  * - 仕様は docs/claude-integration.md（カスタムMCP一択・X系 と SEC-X系）に準拠。
- * - 現状は「デモデータ」を返す。本番化は §SUPABASE の箇所を Supabase RPC 呼び出しに
- *   差し替えるだけ（ツール名・入出力・操作方法は変えない＝C-6）。
+ * - データ源は環境変数で自動切替（§SUPABASE）: SUPABASE_URL＋読み取り専用キーがあれば
+ *   Supabase の RPC（PostgREST）を叩き、無ければデモデータを返す。ツール名・入出力・
+ *   操作方法・read-only は不変（UIとロジック共有＝C-6）。
  *
  * セキュリティ姿勢（デモでも順守）:
  *  - read-only：書き込みツールは一切持たない（SEC-X1）。
@@ -275,6 +276,45 @@ const TOOLS = [
 ];
 const HANDLERS = { search_companies:t_search_companies, get_company:t_get_company, list_contacts:t_list_contacts, find_matches:t_find_matches, suggest_matches:t_suggest_matches, list_tags:t_list_tags, get_masters:t_get_masters, get_newsletter_segment:t_get_newsletter_segment, search_documents:t_search_documents, get_company_timeline:t_get_company_timeline };
 
+// ====================== §SUPABASE 本番データ源（PostgREST RPC・任意） ======================
+// 環境変数が設定されていれば、各ツールのデータ源を Supabase の RPC 呼び出しへ差し替える。
+// ツール名・入出力・read-only は不変（UIとロジック共有＝C-6）。未設定ならデモデータのまま。
+// 鍵は「読み取り専用ロール＋ホワイトリストRPCの EXECUTE」を想定（service_role は使わない＝SEC-X3/X6）。
+const SUPA_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '').replace(/\/+$/, '');
+const SUPA_KEY = process.env.SUPABASE_MCP_KEY || process.env.SUPABASE_READONLY_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const LIVE = !!(SUPA_URL && SUPA_KEY);
+
+// PostgREST の RPC を叩く（POST /rest/v1/rpc/<fn>）。返り値は関数の jsonb をそのまま。
+async function callRpc(fn, params){
+  const res = await fetch(`${SUPA_URL}/rest/v1/rpc/${fn}`, {
+    method:'POST',
+    headers:{ 'apikey':SUPA_KEY, 'Authorization':`Bearer ${SUPA_KEY}`, 'Content-Type':'application/json', 'Accept':'application/json' },
+    body: JSON.stringify(params || {}),
+  });
+  if(!res.ok){ const txt = await res.text().catch(()=> ''); throw new Error(`RPC ${fn} HTTP ${res.status}: ${txt.slice(0,300)}`); }
+  return res.json();
+}
+
+// MCPツール引数 → RPC名＋パラメータ名（SQL関数の引数名）へのマッピング。出力はRPCと同一形（デモと整合）。
+const LIVE_HANDLERS = {
+  search_companies: a => callRpc('search_companies', { p_type:a.type??null, p_industry:a.industry??null, p_area:a.area??null, p_status:a.status??null, p_needs:a.needs??null, p_offers:a.offers??null, p_keyword:a.keyword??null, p_limit:a.limit??20, p_size:a.size??null }),
+  get_company: a => callRpc('get_company', { p_company:a.company_id, p_reveal:!!a.reveal_contact_info }),
+  list_contacts: a => callRpc('list_contacts', { p_keyword:a.keyword??null, p_company:a.company??null, p_primary_only:!!a.primary_only, p_reveal:!!a.reveal_contact_info, p_limit:a.limit??50 }),
+  find_matches: a => callRpc('find_matches', { p_company:a.company_id, p_limit:a.limit??10 }),
+  suggest_matches: a => callRpc('suggest_matches', { p_limit:a.limit??10 }),
+  list_tags: () => callRpc('list_tags', {}),
+  get_masters: () => callRpc('get_masters', {}),
+  get_newsletter_segment: a => callRpc('get_newsletter_segment', { p_topics:(a.topic_ids||a.topics||null), p_status:a.status??null, p_industry:a.industry??null, p_area:a.area??null }),
+  search_documents: a => callRpc('search_documents', { p_keyword:a.keyword??null, p_category:a.category??null, p_company:a.company??null, p_limit:a.limit??50 }),
+  get_company_timeline: a => callRpc('get_company_timeline', { p_company:a.company_id, p_kind:a.kind??null, p_source:a.source??null, p_limit:a.limit??30 }),
+};
+
+// ツールを実行（LIVE時はRPC、そうでなければデモ）。LIVE時のRPC失敗はエラーを返す（デモ値で誤魔化さない）。
+async function runTool(name, args){
+  if(LIVE && LIVE_HANDLERS[name]) return await LIVE_HANDLERS[name](args);
+  return HANDLERS[name](args);
+}
+
 // ====================== JSON-RPC over stdio ======================
 const SERVER_INFO = { name:'daikichi-crm-demo', version:'0.1.0' };
 let PROTOCOL = '2024-11-05';
@@ -295,10 +335,12 @@ function handle(msg){
     case 'tools/list': return ok(id, { tools: TOOLS });
     case 'tools/call': {
       const name = params?.name; const args = params?.arguments || {};
-      const fn = HANDLERS[name];
-      if(!fn) return ok(id, { ...asText(`未知のツール: ${name}`), isError:true });
-      try { return ok(id, asText(fn(args))); }
-      catch(e){ return ok(id, { ...asText('エラー: '+(e?.message||e)), isError:true }); }
+      if(!HANDLERS[name]) return ok(id, { ...asText(`未知のツール: ${name}`), isError:true });
+      // LIVE(RPC)は非同期のため、応答は解決後に送る（他メソッドは同期のまま）。
+      runTool(name, args)
+        .then(result => ok(id, asText(result)))
+        .catch(e => ok(id, { ...asText('エラー: '+(e?.message||e)), isError:true }));
+      return;
     }
     default:
       if(id!==undefined) return err(id, -32601, `Method not found: ${method}`);
@@ -318,10 +360,13 @@ process.stdin.on('data', chunk=>{
   }
 });
 process.stdin.on('end', ()=> process.exit(0));
-log(`started (read-only, demo data: ${COMPANIES.length} companies, ${DOCUMENTS.length} documents, ${ACTIVITIES.length} activities)`);
+log(`started (read-only, ${LIVE ? `LIVE: Supabase RPC @ ${SUPA_URL}` : `demo data: ${COMPANIES.length} companies, ${DOCUMENTS.length} documents, ${ACTIVITIES.length} activities`})`);
 
-/* §SUPABASE 本番化メモ:
- *  各 t_* を Supabase の RPC 呼び出しに置換する（fetch で PostgREST /rest/v1/rpc/<fn>）。
- *  接続は service_role ではなく「読み取り専用ロール＋ホワイトリストRPCの EXECUTE」（SEC-X3/X6）。
- *  鍵は process.env（ローカル）/ Cloudflare Secrets（リモート）から読み、Claudeには渡さない。
+/* §SUPABASE 本番化メモ（実装済み・上の LIVE_HANDLERS / callRpc）:
+ *  - 有効化: 環境変数 SUPABASE_URL と 読み取り専用キー（SUPABASE_MCP_KEY 等）を設定すると
+ *    各ツールが PostgREST の /rest/v1/rpc/<fn> を叩く。未設定ならデモデータ（既定）。
+ *  - 認可: service_role は使わない。「読み取り専用ロール＋ホワイトリストRPCの EXECUTE」を想定
+ *    （SEC-X3/X6）。DB側で対象RPCの列挙10関数のみに EXECUTE を付与し、RLSで read を制限する。
+ *  - 鍵は process.env（ローカル）/ Cloudflare Secrets（リモート）から読み、Claudeには渡さない。
+ *  - LIVE時のRPC失敗はエラーとして返す（デモ値で誤魔化さない）。
  */

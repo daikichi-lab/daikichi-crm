@@ -1,9 +1,10 @@
 'use client';
 import Link from 'next/link';
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useRef, useEffect } from 'react';
 import { useUI } from '@/components/ui';
 import { Icon } from '@/components/icons';
 import { createContactAction, updateContactAction } from './actions';
+import { uploadScanImageAction } from '@/app/scan/actions';
 
 export type ContactInitial = {
   name?: string;
@@ -33,11 +34,34 @@ export function ContactForm({ mode, companyId, companyName, contactId, initial =
   const { toast } = useUI();
   const [pending, start] = useTransition();
   const [f, setF] = useState<ContactInitial>(initial);
-  // dev: ドロップゾーンはパス文字列で表現（実画像アップロードは本番で差し替え）
-  const [front, setFront] = useState<string | undefined>(initial.has_front_card ? `cards/${contactId ?? 'new'}-front.jpg` : undefined);
-  const [back, setBack] = useState<string | undefined>(undefined);
+
+  // 名刺画像は実ファイルを保持し、保存時に非公開バケットへアップロードして Storage パスを紐付ける。
+  const frontRef = useRef<HTMLInputElement>(null);
+  const backRef = useRef<HTMLInputElement>(null);
+  const [frontFile, setFrontFile] = useState<File | null>(null);
+  const [backFile, setBackFile] = useState<File | null>(null);
+  const [frontUrl, setFrontUrl] = useState('');
+  const [backUrl, setBackUrl] = useState('');
+  // 編集時に既存の表面名刺がある（新たに選ぶまでは既存を維持）
+  const [hasExistingFront, setHasExistingFront] = useState(!!initial.has_front_card);
+
+  useEffect(() => () => { if (frontUrl) URL.revokeObjectURL(frontUrl); }, [frontUrl]);
+  useEffect(() => () => { if (backUrl) URL.revokeObjectURL(backUrl); }, [backUrl]);
 
   const set = (k: keyof ContactInitial) => (e: React.ChangeEvent<HTMLInputElement>) => setF((p) => ({ ...p, [k]: e.target.value }));
+
+  const pickFront = (file: File | undefined) => {
+    if (!file) return;
+    if (frontUrl) URL.revokeObjectURL(frontUrl);
+    setFrontFile(file); setFrontUrl(URL.createObjectURL(file)); setHasExistingFront(false);
+    toast('表面の名刺を取り込みました');
+  };
+  const pickBack = (file: File | undefined) => {
+    if (!file) return;
+    if (backUrl) URL.revokeObjectURL(backUrl);
+    setBackFile(file); setBackUrl(URL.createObjectURL(file));
+    toast('裏面の名刺を取り込みました');
+  };
 
   const submit = () => {
     if (!f.name?.trim()) { toast('氏名を入力してください'); return; }
@@ -57,8 +81,24 @@ export function ContactForm({ mode, companyId, companyName, contactId, initial =
         sns_other: f.sns_other || undefined,
       },
     };
-    const card = front ? { front, back } : undefined;
     start(async () => {
+      // 新たに選択された名刺画像を実アップロードして Storage パスを得る
+      let front: string | undefined;
+      let back: string | undefined;
+      if (frontFile) {
+        const fd = new FormData(); fd.append('file', frontFile);
+        const r = await uploadScanImageAction(fd);
+        if (r.error) { toast(`名刺のアップロードに失敗: ${r.error}`); return; }
+        front = r.path;
+      }
+      if (backFile) {
+        const fd = new FormData(); fd.append('file', backFile);
+        const r = await uploadScanImageAction(fd);
+        if (r.error) { toast(`裏面のアップロードに失敗: ${r.error}`); return; }
+        back = r.path;
+      }
+      // 表面・裏面いずれかがあれば名刺レコードを作る（裏面のみの取りこぼし防止）。
+      const card = (front || back) ? { front, back } : undefined;
       if (mode === 'edit' && contactId) await updateContactAction(contactId, companyId, payload, card);
       else if (companyId) await createContactAction(companyId, payload, card);
     });
@@ -73,6 +113,10 @@ export function ContactForm({ mode, companyId, companyName, contactId, initial =
         <div><h2>{title}</h2><div className="sub">{companyName}</div></div>
         <div className="actions"><Link className="btn" href="/scan"><Icon name="card" size={15} />名刺から自動入力（OCR）</Link></div>
       </div>
+
+      {/* 隠しファイル入力（撮影=capture / ファイル選択） */}
+      <input ref={frontRef} type="file" accept="image/*" capture="environment" hidden onChange={(e) => pickFront(e.target.files?.[0])} />
+      <input ref={backRef} type="file" accept="image/*" capture="environment" hidden onChange={(e) => pickBack(e.target.files?.[0])} />
 
       <div className="grid-2">
         <div className="panel">
@@ -131,25 +175,35 @@ export function ContactForm({ mode, companyId, companyName, contactId, initial =
           <div className="panel-body" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div>
               <div className="muted" style={{ fontSize: 12, fontWeight: 700, marginBottom: 6 }}>表面</div>
-              {front ? (
+              {frontFile ? (
                 <>
                   <div className="card-slot filled">
                     <span className="face-tag">表</span>
-                    <div className="fakecard"><div className="lines">
-                      <div style={{ fontWeight: 700, fontSize: 13 }}>{companyName}</div>
-                      <div style={{ fontSize: 11, marginTop: 6 }}>{[f.department, f.title].filter(Boolean).join(' ')}</div>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={frontUrl} alt="表面の名刺" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                  </div>
+                  <div className="row mt8">
+                    <button type="button" className="btn btn-sm" data-icon="card" onClick={() => frontRef.current?.click()}>差し替え</button>
+                    <button type="button" className="btn btn-sm btn-danger" onClick={() => { setFrontFile(null); setFrontUrl(''); toast('表面を取り消しました'); }}>取消</button>
+                  </div>
+                </>
+              ) : hasExistingFront ? (
+                <>
+                  <div className="card-slot filled">
+                    <span className="face-tag">表</span>
+                    <div className="fakecard"><div className="lines" style={{ padding: '14px 16px' }}>
+                      <div style={{ fontWeight: 800, fontSize: 13 }}>{companyName}</div>
+                      <div style={{ fontSize: 11, marginTop: 6 }}>登録済みの名刺があります</div>
                       <div style={{ fontSize: 14, fontWeight: 700 }}>{f.name}</div>
-                      <div className="num" style={{ fontSize: 10, marginTop: 8 }}>{[f.phone, f.email].filter(Boolean).join(' ／ ')}</div>
                     </div></div>
                   </div>
                   <div className="row mt8">
-                    <button type="button" className="btn btn-sm" data-icon="card" onClick={() => { setFront(`cards/${contactId ?? 'new'}-front.jpg`); toast('カメラを起動しました'); }}>撮影</button>
-                    <button type="button" className="btn btn-sm" onClick={() => { setFront(`cards/${contactId ?? 'new'}-front.jpg`); toast('表面を差し替えました'); }}>差し替え</button>
-                    <button type="button" className="btn btn-sm btn-danger" onClick={() => { setFront(undefined); toast('表面を削除しました'); }}>削除</button>
+                    <button type="button" className="btn btn-sm" data-icon="card" onClick={() => frontRef.current?.click()}>差し替え（新しい画像を選択）</button>
                   </div>
+                  <span className="hint">既存の名刺は担当者ページの「履歴」で確認できます。</span>
                 </>
               ) : (
-                <div className="card-slot" role="button" tabIndex={0} onClick={() => { setFront(`cards/${contactId ?? 'new'}-front.jpg`); toast('表面の名刺を取り込みました'); }}>
+                <div className="card-slot" role="button" tabIndex={0} onClick={() => frontRef.current?.click()}>
                   <span className="big">＋</span>
                   <div>タップして撮影 / ファイルを選択</div>
                 </div>
@@ -157,16 +211,17 @@ export function ContactForm({ mode, companyId, companyName, contactId, initial =
             </div>
             <div>
               <div className="muted" style={{ fontSize: 12, fontWeight: 700, marginBottom: 6 }}>裏面（任意）</div>
-              {back ? (
+              {backFile ? (
                 <>
                   <div className="card-slot filled">
                     <span className="face-tag">裏</span>
-                    <div className="fakecard"><div className="lines" style={{ color: '#5a6b7d', fontSize: 10 }}><div>裏面を取り込み済み</div></div></div>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={backUrl} alt="裏面の名刺" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                   </div>
-                  <div className="row mt8"><button type="button" className="btn btn-sm btn-danger" onClick={() => { setBack(undefined); toast('裏面を削除しました'); }}>削除</button></div>
+                  <div className="row mt8"><button type="button" className="btn btn-sm btn-danger" onClick={() => { setBackFile(null); setBackUrl(''); toast('裏面を取り消しました'); }}>取消</button></div>
                 </>
               ) : (
-                <div className="card-slot" role="button" tabIndex={0} onClick={() => { setBack(`cards/${contactId ?? 'new'}-back.jpg`); toast('裏面の名刺を取り込みました'); }}>
+                <div className="card-slot" role="button" tabIndex={0} onClick={() => backRef.current?.click()}>
                   <span className="big">＋</span>
                   <div>タップして撮影 / ファイルを選択</div>
                 </div>

@@ -1,5 +1,6 @@
 'use server';
 
+import { headers } from 'next/headers';
 import { submitPublicForm } from '@/lib/data/dal';
 
 export type PublicFormInput = {
@@ -17,12 +18,27 @@ export type PublicFormInput = {
   sns?: string;
   message?: string;
   newsletter?: boolean;
+  _hp?: string; // ハニーポット（人間は空のまま。ボットが埋めると破棄）
 };
+
+/** リクエストヘッダから発信元IPを推定。
+ *  信頼できるのは Cloudflare が上書きする cf-connecting-ip（本番の配信経路＝Cloudflare Workers）。
+ *  x-forwarded-for はクライアント偽装可能なため、CF固有ヘッダが無い場合の best-effort フォールバックに限る。
+ *  → IPレート制限はあくまで補助。ボット対策の主軸はハニーポット（submit_public_form）。オリジンへの
+ *    直接到達は塞ぎ、cf-connecting-ip のみを権威とする運用が前提（SEC）。 */
+async function clientIp(): Promise<string | undefined> {
+  const h = await headers();
+  const cf = h.get('cf-connecting-ip');
+  if (cf) return cf;
+  const xff = h.get('x-forwarded-for'); // 非CF/ローカルのみ。偽装可能なので権威としない。
+  return xff ? xff.split(',')[0].trim() : undefined;
+}
 
 export async function submitPublicFormAction(p: PublicFormInput): Promise<{ ok?: boolean; error?: string }> {
   if (!p.name || !p.name.trim()) return { error: '会社名 / 屋号は必須です' };
   if (!p.contact || !p.contact.trim()) return { error: 'ご担当者名は必須です' };
   if (!p.email || !p.email.trim()) return { error: 'メールは必須です' };
-  const res = await submitPublicForm(p as Record<string, unknown>);
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(p.email.trim())) return { error: 'メールの形式が正しくありません' };
+  const res = await submitPublicForm(p as Record<string, unknown>, await clientIp());
   return res?.error ? { error: res.error } : { ok: true };
 }

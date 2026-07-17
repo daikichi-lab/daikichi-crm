@@ -196,10 +196,10 @@ test.describe('メルマガ作成 /newsletters/compose', () => {
     await expect(body).toHaveValue(/お客様情報フォーム/);
   });
 
-  test('「Claudeで下書き」ボタンで toast が出る', async ({ page }) => {
+  test('「Claudeで下書き」ボタンで手元Claude（MCP）依頼の案内 toast が出る', async ({ page }) => {
     await page.goto('/newsletters/compose');
     await page.getByRole('button', { name: /Claudeで下書き/ }).click();
-    await expect(page.locator('.toast', { hasText: 'Claude（MCP）に本文の下書きを依頼しました' })).toBeVisible();
+    await expect(page.locator('.toast', { hasText: '手元のClaude（MCP）' })).toBeVisible();
   });
 
   test('下書き保存で toast が出て、id 付き URL に置き換わる（新規ドラフト作成）', async ({ page }) => {
