@@ -4,19 +4,19 @@ import { useTransition } from 'react';
 import { useUI } from '@/components/ui';
 import { recordActivityAction } from './actions';
 
-const ACTORS = ['山田 健太', '佐藤 京子', '田中 一郎'];
+type U = { id: string; name: string };
 const KINDS = ['電話', '面談・訪問', 'メール', '議事録', '紹介', 'メルマガ', 'フォーム', '名刺', 'メモ'];
 const PERIODS: { value: string; label: string }[] = [
   { value: 'today', label: '今日' }, { value: 'week', label: '今週' }, { value: 'month', label: '今月' },
 ];
 
 /* topbar: ＋活動を記録（モーダルフォーム → recordActivity） */
-export function RecordActivityButton() {
+export function RecordActivityButton({ users, me }: { users: U[]; me?: string }) {
   const { confirm, toast } = useUI();
   const router = useRouter();
   const [, start] = useTransition();
   const open = () => {
-    const draft = { kind: '電話', company: '', title: '', actor: ACTORS[0] };
+    const draft = { kind: '電話', company: '', title: '', actor: me || users[0]?.name || '' };
     confirm({
       title: '活動を記録',
       confirmLabel: '記録',
@@ -32,7 +32,7 @@ export function RecordActivityButton() {
           <div className="field"><label>内容</label><input className="input" placeholder="例: 初回提案のフォロー連絡" onChange={(e) => (draft.title = e.target.value)} /></div>
           <div className="field"><label>担当</label>
             <select className="select" defaultValue={draft.actor} onChange={(e) => (draft.actor = e.target.value)}>
-              {ACTORS.map((a) => <option key={a} value={a}>{a}</option>)}
+              {users.map((u) => <option key={u.id} value={u.name}>{u.name}</option>)}
             </select>
           </div>
         </div>
@@ -50,7 +50,7 @@ export function RecordActivityButton() {
 }
 
 /* 絞り込み（期間・種別・担当）→ URLクエリ */
-export function ActivityFilterBar() {
+export function ActivityFilterBar({ users }: { users: U[] }) {
   const router = useRouter();
   const sp = useSearchParams();
   const update = (patch: Record<string, string>) => {
@@ -69,7 +69,7 @@ export function ActivityFilterBar() {
       </select>
       <select className="select btn-sm" style={{ height: 32 }} aria-label="担当" value={sp.get('actor') ?? ''} onChange={(e) => update({ actor: e.target.value })}>
         <option value="">担当：すべて</option>
-        {ACTORS.map((a) => <option key={a} value={a}>{a}</option>)}
+        {users.map((u) => <option key={u.id} value={u.name}>{u.name}</option>)}
       </select>
     </div>
   );

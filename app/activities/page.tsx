@@ -2,7 +2,7 @@ import './activities.css';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth/session';
-import { listActivities } from '@/lib/data/dal';
+import { listActivities, listUsers } from '@/lib/data/dal';
 import { AppShell } from '@/components/AppShell';
 import { Icon } from '@/components/icons';
 import { TourButton, type GuideTourStep } from '@/components/TourButton';
@@ -59,8 +59,12 @@ export default async function ActivitiesPage({ searchParams }: { searchParams: P
   const sp = await searchParams;
 
   const period = sp.period ?? 'week';
-  const res = await listActivities({ kind: sp.kind, actor: sp.actor, period });
+  const [res, usersRaw] = await Promise.all([
+    listActivities({ kind: sp.kind, actor: sp.actor, period }),
+    listUsers(),
+  ]);
   const items: Act[] = res.items ?? [];
+  const users = (Array.isArray(usersRaw) ? usersRaw : []) as { id: string; name: string }[];
 
   // 日別グルーピング（itemsの day を順序維持で）
   const days: { day: string; rows: Act[] }[] = [];
@@ -81,7 +85,7 @@ export default async function ActivitiesPage({ searchParams }: { searchParams: P
         <input name="q" placeholder="企業・内容で絞り込み…" defaultValue={sp.q ?? ''} />
       </form>
       <div className="spacer" />
-      <RecordActivityButton />
+      <RecordActivityButton users={users} me={user.name} />
       <TourButton steps={GUIDE_TOUR} />
       <UserAvatar initial={user.avatar} />
     </>
@@ -109,7 +113,7 @@ export default async function ActivitiesPage({ searchParams }: { searchParams: P
           <div className="panel-head">
             <h3>タイムライン</h3>
             <span className="count">最近の活動</span>
-            <ActivityFilterBar />
+            <ActivityFilterBar users={users} />
           </div>
           <div className="panel-body">
             {items.length === 0 && <div className="muted" style={{ padding: 20, textAlign: 'center' }}>この期間に活動はありません。</div>}
