@@ -87,13 +87,18 @@ export function ScanWizard({ masters }: { masters: Masters }) {
     setOcrRunning(true);
     setOcrPct(0);
     try {
-      const { createWorker } = await import('tesseract.js');
+      const [{ createWorker }, { preprocessCardImage }] = await Promise.all([
+        import('tesseract.js'),
+        import('./preprocess'),
+      ]);
+      // 前処理（グレースケール＋コントラスト伸長＋拡大）で読み取り精度を上げる。失敗時は元画像。
+      const input = await preprocessCardImage(frontFile);
       const worker = await createWorker('jpn+eng', 1, {
         logger: (m: { status: string; progress: number }) => {
           if (m.status === 'recognizing text') setOcrPct(Math.round(m.progress * 100));
         },
       });
-      const { data } = await worker.recognize(frontFile);
+      const { data } = await worker.recognize(input);
       await worker.terminate();
       applyParsed(data.text || '');
       setOcrPct(100);

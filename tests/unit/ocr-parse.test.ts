@@ -53,4 +53,69 @@ describe('parseBusinessCard', () => {
     expect(p.phone).toBeUndefined();
     expect(p.name).toBe('山田 花子');
   });
+
+  // --- 以下、実カード(株式会社LIEN)で顕在化した取りこぼしの回帰テスト ---
+
+  it('同一行に Tel と Fax が並んでも Tel を電話に採用し Fax は無視する', () => {
+    const p = parseBusinessCard('Tel.072-967-7170  Fax.072-967-7171');
+    expect(p.phone).toBe('072-967-7170');
+  });
+
+  it('Mobile ラベルの携帯を拾う', () => {
+    const p = parseBusinessCard('Mobile.080-4403-5699');
+    expect(p.mobile).toBe('080-4403-5699');
+  });
+
+  it('メールの "Mail." ラベルをローカル部から除去する', () => {
+    const p = parseBusinessCard('Mail.azuma@lien.makeup');
+    expect(p.email).toBe('azuma@lien.makeup');
+  });
+
+  it('ローカル部が "mail" の普通のメールは変えない', () => {
+    expect(parseBusinessCard('mail@example.com').email).toBe('mail@example.com');
+    expect(parseBusinessCard('info@example.co.jp').email).toBe('info@example.co.jp');
+  });
+
+  it('会社名は化けたロゴ行より綺麗な候補を優先する', () => {
+    const text = [
+      '株式会社 L (NEN N',
+      '代表取締役',
+      '東 広',
+      '株式会社LIEN',
+      '〒578-0921 大阪府東大阪市水走2丁目11-2',
+    ].join('\n');
+    const p = parseBusinessCard(text);
+    expect(p.company).toBe('株式会社LIEN');
+  });
+
+  it('役職は最長一致を優先（代表取締役 > 代表）', () => {
+    expect(parseBusinessCard('代表取締役 東 広').title).toBe('代表取締役');
+  });
+
+  it('住所の字間スペースを詰め、末尾のOCRノイズを除去する', () => {
+    const p = parseBusinessCard('〒578-0921 大 阪 府 東 大 阪 市 水 走 2 丁目 11-2 \\');
+    expect(p.address).toContain('大阪府東大阪市');
+    expect(p.address).not.toContain('\\');
+  });
+
+  it('実カード相当の全文をまとめて振り分ける', () => {
+    const text = [
+      '株式会社 L (NEN N',
+      '代表取締役',
+      '東 広  HIROSHI AZUMA',
+      '株式会社LIEN',
+      '〒578-0921 大阪府東大阪市水走2丁目11-2',
+      'Tel.072-967-7170  Fax.072-967-7171',
+      'Mail.azuma@lien.makeup  HP.https://lien.makeup',
+      'Mobile.080-4403-5699',
+    ].join('\n');
+    const p = parseBusinessCard(text);
+    expect(p.company).toBe('株式会社LIEN');
+    expect(p.title).toBe('代表取締役');
+    expect(p.email).toBe('azuma@lien.makeup');
+    expect(p.phone).toBe('072-967-7170');
+    expect(p.mobile).toBe('080-4403-5699');
+    expect(p.url).toBe('https://lien.makeup');
+    expect(p.address).toContain('大阪府東大阪市');
+  });
 });
