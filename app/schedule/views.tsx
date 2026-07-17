@@ -61,6 +61,14 @@ export function ScheduleViews({ items, counts, today, users, initialView }: {
   }, [filtered, byId]);
   const tops = useMemo(() => filtered.filter((i) => !i.parent_id || !byId.has(i.parent_id)), [filtered, byId]);
 
+  // ---- アコーディオン：子課題を持つ親の一括開閉 ----
+  const collapsibleIds = useMemo(() => tops.filter((t) => (kidsOf.get(t.id)?.length ?? 0) > 0).map((t) => t.id), [tops, kidsOf]);
+  const allCollapsed = collapsibleIds.length > 0 && collapsibleIds.every((id) => closedIds.has(id));
+  const toggleAll = useCallback(
+    () => setClosedIds(allCollapsed ? new Set() : new Set(collapsibleIds)),
+    [allCollapsed, collapsibleIds],
+  );
+
   // ---- 操作（server actions → refresh） ----
   const refresh = useCallback(() => router.refresh(), [router]);
   const go = useCallback((href: string) => { setMenuId(null); router.push(href); }, [router]);
@@ -556,6 +564,12 @@ export function ScheduleViews({ items, counts, today, users, initialView }: {
         {openOnly
           ? <span className="filter-pill">未完了のみ <span className="x" onClick={() => updateQuery({ status: '' })}>×</span></span>
           : <button className="btn btn-sm btn-ghost" onClick={() => updateQuery({ status: 'open' })}>未完了のみ</button>}
+        {view === 'list' && collapsibleIds.length > 0 && (
+          <button className="btn btn-sm btn-ghost accordion-all" style={{ marginLeft: 'auto' }} onClick={toggleAll}
+            title="子課題を持つ親課題をまとめて開閉">
+            {allCollapsed ? '▸ 子課題をすべて開く' : '▾ 子課題をすべて閉じる'}
+          </button>
+        )}
       </div>
       {view === 'list' && listView}
       {view === 'board' && boardView}

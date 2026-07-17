@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useUI } from '@/components/ui';
 import { Icon } from '@/components/icons';
 import { StatusBadge, TagChip } from '@/components/ui-bits';
-import { setPrimaryContactAction, createCompanyTaskAction } from './actions';
+import { setPrimaryContactAction } from './actions';
 import { documentSignedUrlAction, deleteDocumentAction } from '@/app/storage-actions';
 
 type Contact = {
@@ -175,7 +175,7 @@ function OverviewPane({ companyId, overview: o, schedule, timeline }: { companyI
                 </div>
               );
             })}
-            <AddTaskButton companyId={companyId} />
+            <Link className="btn btn-sm btn-ghost" href={`/schedule/new?company=${companyId}`}>＋ タスクを追加</Link>
           </div>
         </div>
         {extraEntries.length > 0 && (
@@ -442,29 +442,3 @@ export function DeleteCompanyButton({ id, name, action }: { id: string; name: st
   );
 }
 
-export function AddTaskButton({ companyId }: { companyId: string }) {
-  const { confirm, toast } = useUI();
-  const [, start] = useTransition();
-  return (
-    <button className="btn btn-sm btn-ghost" onClick={() => confirm({
-      title: 'タスクを追加',
-      body: <TaskForm />,
-      confirmLabel: '追加',
-      onConfirm: () => {
-        const title = (document.getElementById('task-title') as HTMLInputElement | null)?.value?.trim() ?? '';
-        const due = (document.getElementById('task-due') as HTMLInputElement | null)?.value ?? '';
-        if (!title) { toast('内容を入力してください'); return; }
-        start(async () => { await createCompanyTaskAction(companyId, title, due); toast('タスクを追加しました'); });
-      },
-    })}>＋ タスクを追加</button>
-  );
-}
-function TaskForm() {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <div className="muted" style={{ fontSize: 12 }}>この企業に紐づく手動タスク（内容・期日）を追加します。</div>
-      <div className="field"><label htmlFor="task-title">内容</label><input id="task-title" className="input" placeholder="例: 試算表の確認・送付" /></div>
-      <div className="field"><label htmlFor="task-due">期日</label><input id="task-due" className="input" type="date" /></div>
-    </div>
-  );
-}
