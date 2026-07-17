@@ -300,3 +300,18 @@ describe('メルマガ集計 get_newsletter_segment（0013）', () => {
     expect(seg.unsubscribed).toBeGreaterThanOrEqual(0);
   });
 });
+
+describe('ユーザー論理削除 app_delete_user/restore（0014）', () => {
+  const TANAKA = '33333333-3333-3333-3333-333333333333';
+  it('他ユーザーを論理削除→一覧にdeleted_at・メール認証不可→復元できる', async () => {
+    expect((await call(`select app_delete_user('${TANAKA}') r`)).ok).toBe(true);
+    const listed = (await call(`select app_list_users() r`)).find((u: { id: string; deleted_at: string | null }) => u.id === TANAKA);
+    expect(listed.deleted_at).toBeTruthy();
+    expect(await call(`select app_find_user_by_email('tanaka@daikichi.example') r`)).toBeNull(); // 削除済みは認証不可
+    expect((await call(`select app_restore_user('${TANAKA}') r`)).ok).toBe(true);
+    expect((await call(`select app_find_user_by_email('tanaka@daikichi.example') r`))?.id).toBe(TANAKA);
+  });
+  it('自分自身は削除できない', async () => {
+    expect((await call(`select app_delete_user('${YAMADA}') r`)).error).toContain('自分自身');
+  });
+});

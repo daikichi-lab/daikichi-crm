@@ -171,6 +171,8 @@ export async function addIndustry(label: string): Promise<any> { return callRpc(
 export async function addNewsletterTopic(label: string): Promise<any> { return callRpc('add_newsletter_topic', { p_label: label }, await authedCtx()); }
 export async function inviteUser(name: string, email: string, role = 'staff'): Promise<any> { return callRpc('app_invite_user', { p_name: name, p_email: email, p_role: role }, await authedCtx()); }
 export async function setUserRole(id: string, role: string): Promise<any> { return callRpc('app_set_user_role', { p_id: id, p_role: role }, await authedCtx()); }
+export async function deleteUser(id: string): Promise<any> { return callRpc('app_delete_user', { p_id: id }, await authedCtx()); }
+export async function restoreUser(id: string): Promise<any> { return callRpc('app_restore_user', { p_id: id }, await authedCtx()); }
 export async function setUserActive(id: string, active: boolean): Promise<any> { return callRpc('app_set_user_active', { p_id: id, p_active: active }, await authedCtx()); }
 export async function updateMyProfile(name: string): Promise<any> { return callRpc('app_update_my_profile', { p_name: name }, await authedCtx()); }
 

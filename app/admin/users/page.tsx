@@ -7,19 +7,19 @@ import { AppShell } from '@/components/AppShell';
 import { Icon } from '@/components/icons';
 import { TourButton, type GuideTourStep } from '@/components/TourButton';
 import { UserAvatar } from '@/components/ui-bits';
-import { AddUserBar, AddUserButton, RoleSelect, ActiveToggleButton } from './parts';
+import { AddUserButton, RoleSelect, ActiveToggleButton, DeleteUserButton, RestoreUserButton } from './parts';
 
 const GUIDE_TOUR: GuideTourStep[] = [
   { sel: 'nav.admin-tabs', title: '管理メニュー',
     body: 'ユーザーとタグ・業種マスタを切替（管理者のみ）。' },
   { sel: '.panel.mt16', title: 'スタッフの追加と権限',
-    body: '上の欄から<b>氏名・メール・仮パスワード</b>でユーザーを追加。メールとパスワードを本人に伝えてください。行内でロール（staff/admin）の変更、無効化／有効化ができます。' },
+    body: '右上の<b>「＋ユーザーを追加」</b>から氏名・メール・仮パスワードで追加。行内でロール（staff/admin）変更・無効化／有効化・<b>削除</b>ができます。削除は論理削除で、活動履歴の担当名は残り復元も可能です。' },
   { title: '多層防御',
     body: '画面の出し分けはUX、強制力は<b>RLS＋サーバー側チェック</b>。adminのみの操作はDB側でも検証されます。' },
 ];
 
 
-type User = { id: string; name: string; email: string; role: 'staff' | 'admin'; active: boolean; avatar_initial: string };
+type User = { id: string; name: string; email: string; role: 'staff' | 'admin'; active: boolean; avatar_initial: string; deleted_at: string | null };
 
 export default async function AdminUsersPage() {
   const user = await getCurrentUser();
@@ -27,8 +27,10 @@ export default async function AdminUsersPage() {
   if (user.role !== 'admin') redirect('/dashboard');
 
   const users: User[] = (await listUsers()) ?? [];
-  const activeCount = users.filter((u) => u.active).length;
-  const inactiveCount = users.length - activeCount;
+  const live = users.filter((u) => !u.deleted_at);
+  const activeCount = live.filter((u) => u.active).length;
+  const inactiveCount = live.length - activeCount;
+  const deletedCount = users.length - live.length;
 
   const topbar = (
     <>
@@ -57,8 +59,7 @@ export default async function AdminUsersPage() {
       </div>
 
       <div className="panel mt16">
-        <div className="panel-head"><h3>スタッフ</h3><span className="count num">{users.length}名（有効 {activeCount} / 無効 {inactiveCount}）</span></div>
-        <AddUserBar />
+        <div className="panel-head"><h3>スタッフ</h3><span className="count num">{live.length}名（有効 {activeCount} / 無効 {inactiveCount}）{deletedCount > 0 ? ` ・削除済み ${deletedCount}` : ''}</span></div>
         <div className="table-wrap">
           <table className="table">
             <thead>
@@ -67,26 +68,43 @@ export default async function AdminUsersPage() {
             <tbody>
               {users.map((u) => {
                 const self = u.id === user.id;
+                const deleted = !!u.deleted_at;
                 return (
-                  <tr key={u.id} style={{ cursor: 'default', opacity: u.active ? 1 : 0.7 }}>
-                    <td className="name">{u.name}{self && <span className="muted" style={{ fontWeight: 600 }}>（自分）</span>}</td>
+                  <tr key={u.id} style={{ cursor: 'default', opacity: deleted ? 0.55 : u.active ? 1 : 0.7 }}>
+                    <td className="name">
+                      {u.name}
+                      {deleted
+                        ? <span className="muted" style={{ fontWeight: 600 }}>（削除済み）</span>
+                        : self && <span className="muted" style={{ fontWeight: 600 }}>（自分）</span>}
+                    </td>
                     <td className="num">{u.email}</td>
                     <td>
-                      <RoleSelect
-                        id={u.id}
-                        name={u.name}
-                        role={u.role}
-                        disabled={self || !u.active}
-                        title={self ? '自分のロールは変更できません' : !u.active ? '無効ユーザーのロールは変更できません' : undefined}
-                      />
+                      {deleted
+                        ? <span className="muted">—</span>
+                        : <RoleSelect
+                            id={u.id}
+                            name={u.name}
+                            role={u.role}
+                            disabled={self || !u.active}
+                            title={self ? '自分のロールは変更できません' : !u.active ? '無効ユーザーのロールは変更できません' : undefined}
+                          />}
                     </td>
                     <td>
-                      {u.active
-                        ? <span className="badge active"><span className="dot" />有効</span>
-                        : <span className="badge off"><span className="dot" />無効</span>}
+                      {deleted
+                        ? <span className="badge off"><span className="dot" />削除済み</span>
+                        : u.active
+                          ? <span className="badge active"><span className="dot" />有効</span>
+                          : <span className="badge off"><span className="dot" />無効</span>}
                     </td>
                     <td className="right num muted">—</td>
-                    <td className="right"><ActiveToggleButton id={u.id} name={u.name} active={u.active} self={self} /></td>
+                    <td className="right">
+                      {deleted
+                        ? <RestoreUserButton id={u.id} name={u.name} />
+                        : <span className="row" style={{ gap: 6, justifyContent: 'flex-end' }}>
+                            <ActiveToggleButton id={u.id} name={u.name} active={u.active} self={self} />
+                            <DeleteUserButton id={u.id} name={u.name} self={self} />
+                          </span>}
+                    </td>
                   </tr>
                 );
               })}

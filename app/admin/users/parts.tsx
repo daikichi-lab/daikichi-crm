@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { useUI } from '@/components/ui';
-import { createUserAction, setUserRoleAction, setUserActiveAction } from './actions';
+import { createUserAction, setUserRoleAction, setUserActiveAction, deleteUserAction, restoreUserAction } from './actions';
 
 /** 強いランダム仮パスワードを生成（英大小・数字・記号）。CSPRNG（Web Crypto）を使用。 */
 function genPassword(len = 14): string {
@@ -62,15 +63,6 @@ function AddUserForm({ onDone }: { onDone?: () => void }) {
       <div className="field" style={{ justifyContent: 'flex-end' }}>
         <button className="btn btn-primary" disabled={pending} onClick={submit}>ユーザーを追加</button>
       </div>
-    </div>
-  );
-}
-
-/** 一覧上部のインライン追加フォーム。 */
-export function AddUserBar() {
-  return (
-    <div className="panel-body" style={{ paddingTop: 12, paddingBottom: 4 }}>
-      <AddUserForm />
     </div>
   );
 }
@@ -166,6 +158,56 @@ export function ActiveToggleButton({ id, name, active, self }: { id: string; nam
       })}
     >
       有効化
+    </button>
+  );
+}
+
+/** 論理削除ボタン（退職等）。自分は不可。履歴の担当名は「名前（削除済み）」で保持される。 */
+export function DeleteUserButton({ id, name, self }: { id: string; name: string; self?: boolean }) {
+  const { confirm, toast } = useUI();
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  if (self) return null;
+  return (
+    <button
+      className="btn btn-sm btn-danger"
+      disabled={pending}
+      onClick={() =>
+        confirm({
+          title: 'このユーザーを削除しますか？',
+          body: `「${name}」を削除します。ログインできなくなりますが、活動履歴などに残る担当名は「${name}（削除済み）」として保持されます。あとで復元できます。`,
+          confirmLabel: '削除する',
+          danger: true,
+          onConfirm: () => new Promise<void>((resolve) => start(async () => {
+            const res = await deleteUserAction(id);
+            if (res.error) toast(`削除できません: ${res.error}`);
+            else { toast(`「${name}」を削除しました`); router.refresh(); }
+            resolve();
+          })),
+        })
+      }
+    >
+      削除
+    </button>
+  );
+}
+
+/** 削除済みユーザーの復元ボタン。 */
+export function RestoreUserButton({ id, name }: { id: string; name: string }) {
+  const { toast } = useUI();
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  return (
+    <button
+      className="btn btn-sm"
+      disabled={pending}
+      onClick={() => start(async () => {
+        const res = await restoreUserAction(id);
+        if (res.error) toast(`復元できません: ${res.error}`);
+        else { toast(`「${name}」を復元しました`); router.refresh(); }
+      })}
+    >
+      復元
     </button>
   );
 }

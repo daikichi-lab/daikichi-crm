@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { inviteUser, setUserRole, setUserActive } from '@/lib/data/dal';
+import { inviteUser, setUserRole, setUserActive, deleteUser, restoreUser } from '@/lib/data/dal';
 import { requireAdmin, authMode } from '@/lib/auth/session';
 
 /**
@@ -58,6 +58,18 @@ export async function setUserRoleAction(id: string, role: string): Promise<{ ok?
 
 export async function setUserActiveAction(id: string, active: boolean): Promise<{ ok?: boolean; error?: string }> {
   const res = await setUserActive(id, active);
+  revalidatePath('/admin/users');
+  return res?.error ? { error: res.error } : { ok: true };
+}
+
+/** 論理削除（退職等）。活動履歴の担当名は保持される。 */
+export async function deleteUserAction(id: string): Promise<{ ok?: boolean; error?: string }> {
+  const res = await deleteUser(id);
+  revalidatePath('/admin/users');
+  return res?.error ? { error: res.error } : { ok: true };
+}
+export async function restoreUserAction(id: string): Promise<{ ok?: boolean; error?: string }> {
+  const res = await restoreUser(id);
   revalidatePath('/admin/users');
   return res?.error ? { error: res.error } : { ok: true };
 }
