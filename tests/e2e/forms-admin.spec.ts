@@ -283,14 +283,18 @@ test.describe('管理: ユーザー /admin/users（admin）', () => {
     expect(errors, errors.join('\n')).toHaveLength(0);
   });
 
-  test('インライン追加フォームでユーザー追加→toast', async ({ page }) => {
+  test('ユーザーの論理削除→（削除済み）表示→復元', async ({ page }) => {
     await page.goto('/admin/users');
-    // インラインの追加フォーム（スタッフ一覧パネル内）でメール＋自動生成パスワードを入れて追加
-    const panel = page.locator('.panel', { hasText: 'スタッフ' });
-    await panel.locator('input[type=email]').fill(`add${Date.now()}@daikichi.example`);
-    await panel.getByRole('button', { name: '自動生成' }).click();
-    await panel.getByRole('button', { name: 'ユーザーを追加', exact: true }).click();
-    await expect(page.locator('.toast', { hasText: 'ユーザーを追加しました' })).toBeVisible();
+    const row = page.locator('table.table tbody tr', { hasText: '田中 一郎' });
+    await row.getByRole('button', { name: '削除', exact: true }).click();
+    // 確認モーダルで実行
+    await page.locator('.scrim .modal').getByRole('button', { name: '削除する' }).click();
+    await expect(page.locator('.toast', { hasText: '削除しました' })).toBeVisible();
+    // 「（削除済み）」表示になり、操作は「復元」に変わる
+    await expect(row).toContainText('（削除済み）');
+    await row.getByRole('button', { name: '復元', exact: true }).click();
+    await expect(page.locator('.toast', { hasText: '復元しました' })).toBeVisible();
+    await expect(row).not.toContainText('（削除済み）');
   });
 
   test('追加モーダル（＋ユーザーを追加）の開閉と追加', async ({ page }) => {

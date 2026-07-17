@@ -2,7 +2,7 @@ import './newsletters.css';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth/session';
-import { listNewsletters, getMasters } from '@/lib/data/dal';
+import { listNewsletters, getMasters, getNewsletterSegment } from '@/lib/data/dal';
 import { AppShell } from '@/components/AppShell';
 import { Icon } from '@/components/icons';
 import { TourButton, type GuideTourStep } from '@/components/TourButton';
@@ -45,8 +45,10 @@ export default async function NewslettersPage({ searchParams }: { searchParams: 
   if (!user) redirect('/login');
   const sp = await searchParams;
 
-  const [res, masters] = await Promise.all([listNewsletters(), getMasters()]);
+  const [res, masters, seg] = await Promise.all([listNewsletters(), getMasters(), getNewsletterSegment()]);
   const topics: string[] = masters.newsletter_topics ?? [];
+  const consentedCount = seg.count ?? 0;        // 配信先（同意あり）＝実データ
+  const unsubscribedCount = seg.unsubscribed ?? 0; // 配信停止（opt_in=false）＝実データ（0013未適用DBでは0）
   const all: Item[] = res.items ?? [];
 
   const filtered = all.filter((n) => {
@@ -86,9 +88,9 @@ export default async function NewslettersPage({ searchParams }: { searchParams: 
 
       <div className="stats mt16">
         <div className="stat"><div className="k">今月の配信</div><div className="v num">{monthCount} <small>件</small></div><div className="d">送信済 {sentThisCount} ・ 予約 {scheduledCount}</div></div>
-        <div className="stat"><div className="k">配信先（同意あり）</div><div className="v num">180 <small>人</small></div></div>
+        <div className="stat"><div className="k">配信先（同意あり）</div><div className="v num">{consentedCount} <small>人</small></div></div>
         <div className="stat gold"><div className="k">配信トピック</div><div className="v num">{topics.length}</div></div>
-        <div className="stat"><div className="k">配信停止</div><div className="v num">12 <small>人</small></div></div>
+        <div className="stat"><div className="k">配信停止</div><div className="v num">{unsubscribedCount} <small>人</small></div></div>
       </div>
 
       <div className="panel mt16">
