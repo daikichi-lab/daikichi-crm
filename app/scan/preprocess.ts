@@ -44,7 +44,8 @@ export function grayscaleContrastStretch(data: Uint8ClampedArray): { lo: number;
 export async function preprocessCardImage(file: Blob): Promise<Blob> {
   try {
     if (typeof document === 'undefined' || typeof createImageBitmap === 'undefined') return file;
-    const bmp = await createImageBitmap(file);
+    // EXIF の向き情報を反映（スマホ縦横撮影の自動補正）。
+    const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
     // 長辺 ~1600px を目安に拡大（小さい写真の文字を読みやすく／上限で速度も担保）。
     const target = 1600;
     const scale = Math.min(2.5, Math.max(1, target / Math.max(bmp.width, bmp.height)));
@@ -62,6 +63,31 @@ export async function preprocessCardImage(file: Blob): Promise<Blob> {
     const img = ctx.getImageData(0, 0, w, h);
     grayscaleContrastStretch(img.data);
     ctx.putImageData(img, 0, 0);
+    const blob: Blob | null = await new Promise((res) => canvas.toBlob((b) => res(b), 'image/png'));
+    return blob || file;
+  } catch {
+    return file;
+  }
+}
+
+/**
+ * 画像を90°回転して新しい Blob を返す（既定は時計回り）。
+ * 名刺が横向きに取り込まれた場合の手動補正用（OCRは水平な文字を前提とするため）。
+ * DOM/canvas が無い環境や失敗時は元 Blob を返す。
+ */
+export async function rotateImage90(file: Blob, clockwise = true): Promise<Blob> {
+  try {
+    if (typeof document === 'undefined' || typeof createImageBitmap === 'undefined') return file;
+    const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
+    const canvas = document.createElement('canvas');
+    canvas.width = bmp.height; // 90°回転で幅・高さを入れ替える
+    canvas.height = bmp.width;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) { bmp.close?.(); return file; }
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate(((clockwise ? 1 : -1) * Math.PI) / 2);
+    ctx.drawImage(bmp, -bmp.width / 2, -bmp.height / 2);
+    bmp.close?.();
     const blob: Blob | null = await new Promise((res) => canvas.toBlob((b) => res(b), 'image/png'));
     return blob || file;
   } catch {

@@ -318,7 +318,9 @@ test.describe('名刺スキャン /scan', () => {
     await page.locator('input[type=file][capture]').nth(1)
       .setInputFiles({ name: 'back.png', mimeType: 'image/png', buffer: CARD_PNG });
     await expect(page.locator('.toast', { hasText: '裏面を追加しました' })).toBeVisible();
-    await expect(page.getByText('追加済み')).toBeVisible();
+    // 新UI: 裏面が取り込まれると「裏」トグルに ✓ が付き、状態表示が「裏 ✓取込済」になる
+    await expect(page.getByRole('button', { name: /裏\s*✓/ })).toBeVisible();
+    await expect(page.getByText(/裏 ✓取込済/)).toBeVisible();
   });
 
   test('新規作成: 一意な会社名で作成し企業詳細URLへ遷移する（実画像アップロード込み）', async ({ page }) => {
