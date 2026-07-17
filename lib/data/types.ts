@@ -72,6 +72,7 @@ export type Masters = {
 export type NewsletterSegment = {
   topic_ids: string[];
   count: number;
+  unsubscribed?: number; // 配信停止(opt_in=false)の全体件数（0013で追加・未適用DBでは未定義→0扱い）
   note: string;
   sample: { name: string; company: string; email: string }[];
 };
