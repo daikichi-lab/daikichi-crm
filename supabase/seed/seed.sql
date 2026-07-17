@@ -8,7 +8,8 @@ insert into app_users (id, name, email, role, active, avatar_initial) values
   ('11111111-1111-1111-1111-111111111111','山田 健太','yamada@daikichi.example','admin', true,'山'),
   ('22222222-2222-2222-2222-222222222222','佐藤 京子','sato@daikichi.example','staff', true,'佐'),
   ('33333333-3333-3333-3333-333333333333','田中 一郎','tanaka@daikichi.example','staff', true,'田'),
-  ('44444444-4444-4444-4444-444444444444','塩尻','fuga.shiojiri@daikichi-accg.co.jp','admin', true,'塩')
+  ('44444444-4444-4444-4444-444444444444','塩尻','fuga.shiojiri@daikichi-accg.co.jp','admin', true,'塩'),
+  ('55555555-5555-5555-5555-555555555555','大吉info','info@daikichi-accg.co.jp','admin', true,'大')
 on conflict (id) do nothing;
 
 -- ===== マスタ: 業種(18) / メルマガトピック(5) / タグ(13) =====
