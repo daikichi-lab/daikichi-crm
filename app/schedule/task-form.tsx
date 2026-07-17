@@ -9,6 +9,9 @@ import { useUI } from '@/components/ui';
 import { Icon } from '@/components/icons';
 import { createTaskAction, updateScheduleItemAction, taskFormLookupAction } from './actions';
 import { KINDS, STATUSES } from './task-utils';
+import { RichEditor } from '@/components/RichEditor';
+import { isRichEmpty } from '@/lib/richtext';
+import { sanitizeRichHtml } from '@/lib/richtext-client';
 
 type User = { id: string; name: string };
 type Company = { id: string; name: string; industry: string | null };
@@ -31,9 +34,10 @@ const EMPTY_LOOKUP: Lookup = { parents: [], notes: [], docs: [] };
 const PROGRESS_OPTS = [0, 25, 50, 75, 100];
 const REPEAT_OPTS = ['なし', '毎週', '毎月', '毎年'];
 
-export function TaskForm({ users, companies, mode, initial, parentPreset }: {
+export function TaskForm({ users, companies, mode, initial, parentPreset, companyPreset }: {
   users: User[]; companies: Company[]; mode: 'create' | 'edit';
   initial?: TaskFormInitial; parentPreset?: ParentPreset | null;
+  companyPreset?: { id: string; name: string } | null;
 }) {
   const router = useRouter();
   const { toast } = useUI();
@@ -43,7 +47,8 @@ export function TaskForm({ users, companies, mode, initial, parentPreset }: {
   const [scope, setScope] = useState<Scope>(initial?.scope ?? parentPreset?.scope ?? 'client');
   const [picked, setPicked] = useState<{ id: string; name: string } | null>(
     initial?.company_id ? { id: initial.company_id, name: initial.company ?? '' }
-      : parentPreset?.company_id ? { id: parentPreset.company_id, name: parentPreset.company ?? '' } : null,
+      : parentPreset?.company_id ? { id: parentPreset.company_id, name: parentPreset.company ?? '' }
+      : companyPreset ? { id: companyPreset.id, name: companyPreset.name } : null,
   );
   const [query, setQuery] = useState(picked?.name ?? '');
   const [comboOpen, setComboOpen] = useState(false);
@@ -107,7 +112,8 @@ export function TaskForm({ users, companies, mode, initial, parentPreset }: {
     if (doc) extra.doc = doc;
     if (f.repeat && f.repeat !== 'なし') extra.repeat = f.repeat;
     const payload = {
-      title: f.title.trim(), kind: f.kind, description: f.description,
+      title: f.title.trim(), kind: f.kind,
+      description: isRichEmpty(f.description) ? '' : sanitizeRichHtml(f.description),
       start_date: f.start_date, due_date: f.due_date,
       assignee: f.assignee, status: f.status, progress: f.progress, extra,
     };
@@ -265,13 +271,8 @@ export function TaskForm({ users, companies, mode, initial, parentPreset }: {
         <div className={`panel-body gated${gateOpen ? '' : ' off'}`}>
           <div className="field col-2" style={{ marginBottom: 14 }}>
             <label>説明</label>
-            <textarea
-              className="input" rows={7}
-              placeholder={'仕事の内容・手順・注意点・完了の条件などを記載します。\n\n例:\n・4月決算の法人税・消費税の申告一式。\n・電子申告は e-Tax / eLTAX。納付書の送付は不要（ダイレクト納付設定済み）。\n・完了条件: 受信通知の保存＋お客様への納付案内メール送信まで。'}
-              value={f.description}
-              onChange={(e) => set({ description: e.target.value })}
-            />
-            <span className="hint">チェックリストや関連資料のURLも書けます。議事録・資料は下の関連リンクで紐付け</span>
+            <RichEditor value={f.description} onChange={(html) => set({ description: html })} disabled={locked} />
+            <span className="hint">太字・箇条書き・見出し・リンクが使えます。URL は自動でクリック可能なリンクになります。議事録・資料は下の関連リンクで紐付け</span>
           </div>
           <div className="form-grid">
             <div className="field">

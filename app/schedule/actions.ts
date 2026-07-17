@@ -1,6 +1,7 @@
 'use server';
 import { revalidatePath } from 'next/cache';
 import { createTask, updateScheduleItem, completeScheduleItem, deleteTask, addTaskComment, taskFormLookup } from '@/lib/data/dal';
+import { stripDangerousHtml } from '@/lib/richtext';
 
 export type TaskPayload = {
   title?: string; company_id?: string; parent_id?: string; scope?: 'client' | 'internal';
@@ -13,8 +14,13 @@ function revalidate(id?: string) {
   if (id) revalidatePath(`/schedule/${id}`);
 }
 
+// 説明（リッチテキストHTML）はサーバ側でも危険な構造を除去（多層防御）。最終防御は描画時の DOMPurify。
+function sanitizePayload(p: TaskPayload): TaskPayload {
+  return p.description == null ? p : { ...p, description: stripDangerousHtml(p.description) };
+}
+
 export async function createTaskAction(p: TaskPayload) {
-  const r = await createTask(p);
+  const r = await createTask(sanitizePayload(p));
   revalidate(p.parent_id);
   return r;
 }
@@ -26,7 +32,7 @@ export async function completeScheduleItemAction(id: string) {
 }
 
 export async function updateScheduleItemAction(id: string, p: TaskPayload) {
-  const r = await updateScheduleItem(id, p);
+  const r = await updateScheduleItem(id, sanitizePayload(p));
   revalidate(id);
   return r;
 }

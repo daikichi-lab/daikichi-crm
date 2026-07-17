@@ -53,9 +53,9 @@ td.st{ white-space:nowrap; }
 /* ============ 親課題・子課題ツリー（一覧） ============ */
 td.ttl{ min-width:280px; }
 .tin{ display:flex; align-items:center; gap:6px; white-space:nowrap; }
-.tw{ width:18px; height:18px; flex:none; border:none; background:transparent; color:var(--ink-3); cursor:pointer; border-radius:4px; display:grid; place-items:center; font-size:11px; padding:0; }
-.tw:hover{ background:var(--brand-50); color:var(--brand-600); }
-.tw::before{ content:"▾"; }
+.tw{ width:20px; height:20px; flex:none; border:1px solid var(--line); background:var(--surface); color:var(--ink-2); cursor:pointer; border-radius:5px; display:grid; place-items:center; font-size:11px; padding:0; transition:background .12s,color .12s,border-color .12s; }
+.tw:hover{ background:var(--brand-50); color:var(--brand-700); border-color:#cfe0ef; }
+.tw::before{ content:"▾"; line-height:1; }
 tr.closed .tw::before{ content:"▸"; }
 .tsp{ width:18px; flex:none; }
 .tname{ font-weight:700; color:var(--ink); }
@@ -220,8 +220,45 @@ td.act{ width:36px; position:relative; padding-left:0; }
 
 /* ============ 課題詳細（/schedule/[id]） ============ */
 .tid{ color:var(--ink-3); font-weight:700; font-size:14px; }
-.desc-body{ font-size:13.5px; line-height:1.9; color:var(--ink-2); white-space:pre-wrap; }
-.desc-body b{ color:var(--ink); }
+/* 課題説明（リッチテキスト表示）。SSRフォールバックの素テキストは inline の white-space:pre-wrap で改行保持 */
+.desc-body{ font-size:13.5px; line-height:1.9; color:var(--ink-2); word-break:break-word; }
+.desc-body > :first-child{ margin-top:0; }
+.desc-body > :last-child{ margin-bottom:0; }
+.desc-body p{ margin:0 0 .6em; }
+.desc-body b, .desc-body strong{ color:var(--ink); font-weight:700; }
+.desc-body a{ color:var(--brand-600); text-decoration:underline; text-underline-offset:2px; word-break:break-all; }
+.desc-body a:hover{ color:var(--brand-700); }
+.desc-body ul, .desc-body ol{ margin:.3em 0 .7em; padding-left:1.5em; }
+.desc-body li{ margin:.15em 0; }
+.desc-body h1, .desc-body h2, .desc-body h3{ color:var(--ink); line-height:1.4; margin:.9em 0 .35em; }
+.desc-body h1{ font-size:17px; } .desc-body h2{ font-size:15.5px; } .desc-body h3{ font-size:14px; }
+.desc-body blockquote{ margin:.5em 0; padding:.2em 0 .2em .9em; border-left:3px solid var(--line-strong); color:var(--ink-3); }
+.desc-body code{ font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.92em; background:var(--surface-3); padding:.1em .35em; border-radius:4px; }
+.desc-body pre{ background:var(--surface-3); padding:10px 12px; border-radius:var(--radius-sm); overflow-x:auto; }
+.desc-body pre code{ background:none; padding:0; }
+.desc-body hr{ border:0; border-top:1px solid var(--line); margin:.9em 0; }
+
+/* 課題説明（リッチテキストエディタ = TipTap） */
+.rich-editor{ border:1px solid var(--line-strong); border-radius:var(--radius-sm); background:#fff; overflow:hidden; }
+.rich-editor.is-disabled{ opacity:.55; pointer-events:none; }
+.rich-editor:focus-within{ border-color:var(--brand-500); box-shadow:0 0 0 3px var(--brand-50); }
+.rich-toolbar{ display:flex; flex-wrap:wrap; gap:4px; padding:6px; border-bottom:1px solid var(--line); background:var(--surface-2); }
+.rt-btn{ min-width:30px; height:28px; padding:0 8px; border:1px solid transparent; border-radius:5px; background:transparent;
+  color:var(--ink-2); font-size:12.5px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; line-height:1; }
+.rt-btn:hover{ background:#fff; border-color:var(--line); }
+.rt-btn.on{ background:var(--brand-50); border-color:#cfe0ef; color:var(--brand-700); }
+.rt-btn:disabled{ opacity:.5; cursor:default; }
+.rich-input{ min-height:170px; padding:11px 12px; font-size:13.5px; line-height:1.9; color:var(--ink-2); outline:none; }
+.rich-input:focus, .rich-input:focus-visible{ outline:none; }
+.rich-input > :first-child{ margin-top:0; } .rich-input > :last-child{ margin-bottom:0; }
+.rich-input p{ margin:0 0 .6em; }
+.rich-input strong, .rich-input b{ color:var(--ink); }
+.rich-input a{ color:var(--brand-600); text-decoration:underline; word-break:break-all; }
+.rich-input ul, .rich-input ol{ margin:.3em 0 .7em; padding-left:1.5em; }
+.rich-input li{ margin:.15em 0; }
+.rich-input h1, .rich-input h2, .rich-input h3{ color:var(--ink); line-height:1.4; margin:.9em 0 .35em; }
+.rich-input h1{ font-size:17px; } .rich-input h2{ font-size:15.5px; } .rich-input h3{ font-size:14px; }
+.rich-input blockquote{ margin:.5em 0; padding:.2em 0 .2em .9em; border-left:3px solid var(--line-strong); color:var(--ink-3); }
 
 .subrow{ display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line); }
 .subrow:last-child{ border-bottom:0; }
@@ -238,6 +275,8 @@ td.act{ width:36px; position:relative; padding-left:0; }
 .cmt .body{ flex:1; }
 .cmt .hd{ font-size:12px; color:var(--ink-3); margin-bottom:3px; } .cmt .hd b{ color:var(--ink); font-size:12.5px; }
 .cmt .tx{ font-size:13px; color:var(--ink-2); line-height:1.7; }
+.cmt .tx a{ color:var(--brand-600); text-decoration:underline; text-underline-offset:2px; word-break:break-all; }
+.cmt .tx a:hover{ color:var(--brand-700); }
 
 .hist{ display:flex; flex-direction:column; gap:8px; font-size:12px; color:var(--ink-3); }
 .hist .h{ display:flex; gap:8px; } .hist .h b{ color:var(--ink-2); font-weight:700; }

@@ -2,7 +2,7 @@ import '../schedule.css';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth/session';
-import { listUsers, searchCompanies, getTask } from '@/lib/data/dal';
+import { listUsers, searchCompanies, getTask, getCompany } from '@/lib/data/dal';
 import { AppShell } from '@/components/AppShell';
 import { UserAvatar } from '@/components/ui-bits';
 import { TaskForm, type ParentPreset } from '../task-form';
@@ -24,6 +24,13 @@ export default async function NewTaskPage({ searchParams }: { searchParams: Prom
     if (p && !p.error && !p.parent) {
       parentPreset = { id: p.id, title: p.title, scope: p.scope, company_id: p.company_id, company: p.company };
     }
+  }
+
+  // ?company=<id> → その企業を初期選択（顧客の課題として。企業欄は変更可）
+  let companyPreset: { id: string; name: string } | null = null;
+  if (sp.company && !parentPreset) {
+    const c = await getCompany(sp.company);
+    if (c && !('error' in c)) companyPreset = { id: c.id, name: c.name };
   }
 
   const topbar = (
@@ -48,7 +55,7 @@ export default async function NewTaskPage({ searchParams }: { searchParams: Prom
             </div>
           </div>
         </div>
-        <TaskForm users={users ?? []} companies={companies} mode="create" parentPreset={parentPreset} />
+        <TaskForm users={users ?? []} companies={companies} mode="create" parentPreset={parentPreset} companyPreset={companyPreset} />
       </div>
     </AppShell>
   );

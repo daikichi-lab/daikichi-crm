@@ -8,6 +8,9 @@ import { UserAvatar } from '@/components/ui-bits';
 import { CalendarExportButton } from '../parts';
 import { STATUS_BADGE, kindClass, dueMeta, fmtMD } from '../task-utils';
 import { CompleteTaskButton, ChildCheck, CommentBox, DeleteTaskButton } from './parts';
+import { RichText } from '@/components/RichText';
+import { LinkedText } from '@/components/LinkedText';
+import { isRichEmpty } from '@/lib/richtext';
 
 type Child = { id: string; title: string; kind: string; status: string; due_date: string | null; start_date: string | null; assignee: string | null; progress: number };
 
@@ -62,8 +65,8 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
           <div className="panel">
             <div className="panel-head"><h3>説明</h3><div className="actions"><Link className="btn btn-sm btn-ghost" href={`/schedule/${t.id}/edit`}>編集</Link></div></div>
             <div className="panel-body">
-              {t.description
-                ? <div className="desc-body">{t.description}</div>
+              {t.description && !isRichEmpty(t.description)
+                ? <RichText html={t.description} className="desc-body" />
                 : <div className="muted" style={{ fontSize: 13 }}>説明はまだありません。「編集」から仕事の内容・手順・完了条件を記載できます。</div>}
             </div>
           </div>
@@ -105,7 +108,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
                   <span className="av">{c.avatar}</span>
                   <div className="body">
                     <div className="hd"><b>{c.author}</b> ・ <span className="num">{c.at}</span></div>
-                    <div className="tx">{c.body}</div>
+                    <LinkedText text={c.body} className="tx" />
                   </div>
                 </div>
               ))}
