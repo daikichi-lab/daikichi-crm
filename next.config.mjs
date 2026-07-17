@@ -30,6 +30,17 @@ const nextConfig = {
         '@gutenye/ocr-common': false,
       };
     }
+    // onnxruntime-web の .wasm はランタイムで CDN から取得する（paddle-ocr.ts の ort.env.wasm.wasmPaths）。
+    // バンドルすると単一ファイル(ort-wasm-simd-threaded.jsep.wasm)が 25.6MiB となり Cloudflare の
+    // アセット上限(25MiB)に触れてデプロイ失敗するため、出力しない（emit:false）。
+    config.module = config.module || {};
+    config.module.rules = config.module.rules || [];
+    config.module.rules.push({
+      test: /\.wasm$/,
+      include: /[\\/]onnxruntime-web[\\/]/,
+      type: 'asset/resource',
+      generator: { emit: false },
+    });
     return config;
   },
 };
