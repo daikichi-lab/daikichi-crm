@@ -18,7 +18,9 @@ export default async function SchedulePage({ searchParams }: { searchParams: Pro
   if (!user) redirect('/login');
   const sp = await searchParams;
 
-  const res = await listSchedule({ status: sp.status, assignee: sp.assignee, kind: sp.kind, q: sp.q });
+  // 完了/未完了の切替は全ビュー共通のクライアント側トグル（views.tsx）で行うため、
+  // ここでは status で絞らず全件取得する（上部の統計カードも全件から算出）。
+  const res = await listSchedule({ assignee: sp.assignee, kind: sp.kind, q: sp.q });
   const users = (await listUsers()) ?? [];
   const items: TaskItem[] = res.items ?? [];
   const view = (VIEW_KEYS as readonly string[]).includes(sp.view ?? '') ? (sp.view as (typeof VIEW_KEYS)[number]) : 'list';
@@ -54,7 +56,7 @@ export default async function SchedulePage({ searchParams }: { searchParams: Pro
         <div className="stat"><div className="k">未完了の課題</div><div className="v num">{res.open ?? 0} <small>件</small></div><div className="d">今月 完了 {res.done_month ?? 0} 件</div></div>
       </div>
 
-      <ScheduleViews items={items} counts={res} today={res.today} users={users} initialView={view} />
+      <ScheduleViews items={items} today={res.today} users={users} initialView={view} />
 
       <div className="panel mt16">
         <div className="panel-head"><h3>自動生成のルール</h3></div>

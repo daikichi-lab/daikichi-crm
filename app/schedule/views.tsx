@@ -8,7 +8,7 @@ import { useUI } from '@/components/ui';
 import { startTour, endTour, type TourStep } from '@/components/tour';
 import { completeScheduleItemAction, updateScheduleItemAction, deleteTaskAction } from './actions';
 import {
-  type TaskItem, type ScheduleCounts, KINDS, STATUS_BADGE,
+  type TaskItem, KINDS, STATUS_BADGE,
   kindClass, ganttKind, dayNum, dayInfo, fmtMD, dueMeta, shortCo,
 } from './task-utils';
 
@@ -29,14 +29,15 @@ const BOARD_SEEN_KEY = 'daikichi.schedule.board.v1';
 const GANTT_DAYS = 47;
 const GANTT_TODAY_IDX = 8;
 
-export function ScheduleViews({ items, counts, today, users, initialView }: {
-  items: TaskItem[]; counts: ScheduleCounts; today: string; users: User[]; initialView: ViewKey;
+export function ScheduleViews({ items, today, users, initialView }: {
+  items: TaskItem[]; today: string; users: User[]; initialView: ViewKey;
 }) {
   const router = useRouter();
   const sp = useSearchParams();
   const { toast, confirm } = useUI();
   const [view, setView] = useState<ViewKey>(initialView);
   const [scope, setScope] = useState<Scope>('all');
+  const [showDone, setShowDone] = useState(false); // false=未完了（完了を隠す） / true=完了済みのみ
   const [closedIds, setClosedIds] = useState<Set<string>>(new Set());
   const [menuId, setMenuId] = useState<string | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
@@ -45,8 +46,22 @@ export function ScheduleViews({ items, counts, today, users, initialView }: {
   const justDragged = useRef(false);
   const [calYM, setCalYM] = useState(() => ({ y: +today.slice(0, 4), m: +today.slice(5, 7) }));
 
+  // ---- 完了/未完了モード（全ビュー共通）: 未完了は完了を隠し、完了済みは完了のみ表示 ----
+  const statusItems = useMemo(
+    () => items.filter((i) => (showDone ? i.status === '完了' : i.status !== '完了')),
+    [items, showDone],
+  );
+  // 状態トグルの件数（現スコープ内の未完了/完了）
+  const scopeItems = useMemo(() => (scope === 'all' ? items : items.filter((i) => i.scope === scope)), [items, scope]);
+  const activeN = useMemo(() => scopeItems.filter((i) => i.status !== '完了').length, [scopeItems]);
+  const doneN = useMemo(() => scopeItems.filter((i) => i.status === '完了').length, [scopeItems]);
+  // スコープタブの件数（現モード内の全体/顧客/所内）
+  const scopeAllN = statusItems.length;
+  const scopeClientN = useMemo(() => statusItems.filter((i) => i.scope === 'client').length, [statusItems]);
+  const scopeInternalN = useMemo(() => statusItems.filter((i) => i.scope === 'internal').length, [statusItems]);
+
   // ---- ツリー構築（絞り込みで親が消えた子はトップレベル扱い） ----
-  const filtered = useMemo(() => (scope === 'all' ? items : items.filter((i) => i.scope === scope)), [items, scope]);
+  const filtered = useMemo(() => (scope === 'all' ? statusItems : statusItems.filter((i) => i.scope === scope)), [statusItems, scope]);
   const byId = useMemo(() => new Map(filtered.map((i) => [i.id, i])), [filtered]);
   const kidsOf = useMemo(() => {
     const m = new Map<string, TaskItem[]>();
@@ -63,6 +78,8 @@ export function ScheduleViews({ items, counts, today, users, initialView }: {
 
   // ---- アコーディオン：子課題を持つ親の一括開閉 ----
   const collapsibleIds = useMemo(() => tops.filter((t) => (kidsOf.get(t.id)?.length ?? 0) > 0).map((t) => t.id), [tops, kidsOf]);
+  // 件数内訳（表示中の集合から算出：親＝子を持つ親／子＝親が表示中の子）
+  const dispChildren = useMemo(() => filtered.filter((i) => i.parent_id && byId.has(i.parent_id)).length, [filtered, byId]);
   const allCollapsed = collapsibleIds.length > 0 && collapsibleIds.every((id) => closedIds.has(id));
   const toggleAll = useCallback(
     () => setClosedIds(allCollapsed ? new Set() : new Set(collapsibleIds)),
@@ -144,7 +161,6 @@ export function ScheduleViews({ items, counts, today, users, initialView }: {
     for (const [k, v] of Object.entries(patch)) { if (v) params.set(k, v); else params.delete(k); }
     router.push(`/schedule?${params.toString()}`);
   };
-  const openOnly = sp.get('status') === 'open';
 
   // ---- 使い方ツアー（トップバーの「使い方」→ CustomEvent 経由で起動） ----
   const runTour = useCallback(() => {
@@ -191,6 +207,7 @@ export function ScheduleViews({ items, counts, today, users, initialView }: {
   // ================= 一覧（親子ツリー） =================
   const renderRow = (it: TaskItem, isChild: boolean) => {
     const done = it.status === '完了';
+    const kc = kidsOf.get(it.id)?.length ?? 0; // 現モードで表示中の子課題数
     const dm = dueMeta(it.due_date, today, done);
     const cls = [
       done ? 'done' : '',
@@ -206,11 +223,11 @@ export function ScheduleViews({ items, counts, today, users, initialView }: {
         </td>
         <td className="ttl">
           <span className="tin">
-            {it.kids > 0
+            {kc > 0
               ? <button className="tw" title="子課題を開閉" onClick={(e) => { e.stopPropagation(); setClosedIds((s) => { const n = new Set(s); if (n.has(it.id)) n.delete(it.id); else n.add(it.id); return n; }); }} />
               : isChild ? <span className="tguide">└</span> : <span className="tsp" />}
             <span className="tname">{it.title}</span>
-            {it.kids > 0 && <span className="tsub">子課題 {it.kids}</span>}
+            {kc > 0 && <span className="tsub">子課題 {kc}</span>}
           </span>
         </td>
         <td className={isChild ? 'muted co' : it.scope === 'internal' ? 'co office-co' : 'name co'} onClick={(e) => e.stopPropagation()}>
@@ -260,7 +277,7 @@ export function ScheduleViews({ items, counts, today, users, initialView }: {
           </thead>
           <tbody>
             {tops.length === 0 && (
-              <tr><td colSpan={9} className="muted" style={{ textAlign: 'center', padding: 28 }}>条件に一致する課題がありません。</td></tr>
+              <tr><td colSpan={9} className="muted" style={{ textAlign: 'center', padding: 28 }}>{showDone ? '完了済みの課題はありません。' : '未完了の課題はありません。'}</td></tr>
             )}
             {tops.map((t) => (
               <Fragment key={t.id}>
@@ -529,7 +546,7 @@ export function ScheduleViews({ items, counts, today, users, initialView }: {
     <div className="panel mt16">
       <div className="panel-head">
         <h3>課題</h3>
-        <span className="count">{counts.count} 件（親課題 {counts.parents}・子課題 {counts.children}）</span>
+        <span className="count">{filtered.length} 件（親課題 {collapsibleIds.length}・子課題 {dispChildren}）{showDone ? '・完了済み' : ''}</span>
         <div className="actions" id="view-tabs">
           {VIEWS.map((v) => (
             <button key={v.key} id={`tab-${v.key}`} className={`btn btn-sm${view === v.key ? '' : ' btn-ghost'}`} onClick={() => setView(v.key)}>
@@ -541,9 +558,13 @@ export function ScheduleViews({ items, counts, today, users, initialView }: {
       </div>
       <div className="filterbar">
         <div className="scope-tabs">
-          <button className={scope === 'all' ? 'on' : ''} onClick={() => setScope('all')}>すべて <small className="num">{counts.scope_all}</small></button>
-          <button className={scope === 'client' ? 'on' : ''} onClick={() => setScope('client')}>顧客の課題 <small className="num">{counts.scope_client}</small></button>
-          <button className={scope === 'internal' ? 'on' : ''} onClick={() => setScope('internal')}>所内の課題 <small className="num">{counts.scope_internal}</small></button>
+          <button className={scope === 'all' ? 'on' : ''} onClick={() => setScope('all')}>すべて <small className="num">{scopeAllN}</small></button>
+          <button className={scope === 'client' ? 'on' : ''} onClick={() => setScope('client')}>顧客の課題 <small className="num">{scopeClientN}</small></button>
+          <button className={scope === 'internal' ? 'on' : ''} onClick={() => setScope('internal')}>所内の課題 <small className="num">{scopeInternalN}</small></button>
+        </div>
+        <div className="scope-tabs status-tabs">
+          <button className={!showDone ? 'on' : ''} onClick={() => setShowDone(false)}>未完了 <small className="num">{activeN}</small></button>
+          <button className={showDone ? 'on' : ''} onClick={() => setShowDone(true)}>完了済み <small className="num">{doneN}</small></button>
         </div>
         {view === 'cal' && (
           <div className="row" style={{ gap: 6 }}>
@@ -561,9 +582,6 @@ export function ScheduleViews({ items, counts, today, users, initialView }: {
           <option value="">種別：すべて</option>
           {KINDS.map((k) => <option key={k} value={k}>{k}</option>)}
         </select>
-        {openOnly
-          ? <span className="filter-pill">未完了のみ <span className="x" onClick={() => updateQuery({ status: '' })}>×</span></span>
-          : <button className="btn btn-sm btn-ghost" onClick={() => updateQuery({ status: 'open' })}>未完了のみ</button>}
         {view === 'list' && collapsibleIds.length > 0 && (
           <button className="btn btn-sm btn-ghost accordion-all" style={{ marginLeft: 'auto' }} onClick={toggleAll}
             title="子課題を持つ親課題をまとめて開閉">

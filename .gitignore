@@ -26,3 +26,7 @@ playwright-report/
 # --- Cloudflare / wrangler ローカル秘密 ---
 .dev.vars
 cloudflare-env.d.ts
+
+# 他リポジトリ(daikichi-corp)からの配布用スナップショット。CRMには含めない
+財務分析7点セット_プロンプト一式/
+財務分析7点セット_プロンプト一式.zip
