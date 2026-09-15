@@ -282,15 +282,18 @@ test.describe('期限・タスク (/schedule)', () => {
     await expect(page.locator('.filterbar select[aria-label="種別"]')).toHaveValue('手動タスク');
   });
 
-  test('「未完了のみ」トグルで status=open が付き、ピルで解除できる', async ({ page }) => {
+  test('未完了/完了済みトグル: 既定は完了を隠し、完了済みで完了のみ表示', async ({ page }) => {
     await page.goto('/schedule');
-    await page.getByRole('button', { name: '未完了のみ' }).click();
-    await page.waitForURL(/status=open/);
-    const pill = page.locator('.filter-pill', { hasText: '未完了のみ' });
-    await expect(pill).toBeVisible();
-    await pill.locator('.x').click();
-    await page.waitForURL((u) => !u.search.includes('status=open'));
-    await expect(page.getByRole('button', { name: '未完了のみ' })).toBeVisible();
+    const donifiedChild = '申告書ドラフト作成'; // seed: 完了済みの子課題
+    // 既定（未完了）: 完了済みの課題は一覧に出ない
+    await expect(page.locator('#view-list tr', { hasText: donifiedChild })).toHaveCount(0);
+    // 「完了済み」タブへ: 完了のみが表示される
+    await page.locator('.status-tabs button', { hasText: '完了済み' }).click();
+    await expect(page.locator('#view-list tr', { hasText: donifiedChild }).first()).toBeVisible();
+    await expect(page.locator('.panel-head .count')).toContainText('完了済み');
+    // 未完了へ戻すと消える
+    await page.locator('.status-tabs button', { hasText: '未完了' }).click();
+    await expect(page.locator('#view-list tr', { hasText: donifiedChild })).toHaveCount(0);
   });
 
   test('トップバー検索(q)で題名・企業を絞り込める', async ({ page }) => {

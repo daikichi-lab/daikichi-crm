@@ -49,6 +49,9 @@ td.st{ white-space:nowrap; }
 .scope-tabs button:hover{ color:var(--brand-700); }
 .scope-tabs button.on{ background:var(--surface); color:var(--brand-700); box-shadow:var(--shadow-1); }
 .scope-tabs button small{ font-weight:700; color:var(--ink-3); margin-left:4px; }
+/* 未完了／完了済み トグル（scope-tabs を流用。完了済みは緑で「片付いた」感を出す） */
+.status-tabs button:nth-child(2):hover{ color:var(--green-700); }
+.status-tabs button:nth-child(2).on{ color:var(--green-700); }
 
 /* ============ 親課題・子課題ツリー（一覧） ============ */
 td.ttl{ min-width:280px; }
